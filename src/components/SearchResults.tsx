@@ -2,7 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
 import { useBibleStore, selectActivePane, MAX_PANES } from '../store/bibleStore';
 import type { SearchResult } from '../store/bibleStore';
-import { getChapter } from '../data/bibleLoader';
+import { getChapterText } from '../data/bibleLoader';
 
 // Highlight matched substring
 function HighlightedText({ text, query }: { text: string; query: string }) {
@@ -29,7 +29,7 @@ function getContextVerse(
   translation: import('../data/bibleLoader').Translation,
 ): string | null {
   if (verseIndex < 0) return null;
-  const verses = getChapter(translation, book, chapter);
+  const verses = getChapterText(translation, book, chapter);
   if (verseIndex >= verses.length) return null;
   return verses[verseIndex] ?? null;
 }

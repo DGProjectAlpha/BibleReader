@@ -16,8 +16,16 @@ export interface BibleBook {
   chapters: import('./kjvLoader').TaggedVerse[][];
 }
 
+// Shared interface: only the methods common to all loader modules
+interface BibleLoader {
+  getData(): BibleBook[];
+  getChapter(bookName: string, chapter: number): import('./kjvLoader').TaggedVerse[];
+  getChapterText(bookName: string, chapter: number): string[];
+  getBook(bookName: string): import('./kjvLoader').TaggedVerse[][];
+}
+
 // Map translation keys to their loaded data modules
-const loaders: Record<Translation, typeof kjv> = {
+const loaders: Record<Translation, BibleLoader> = {
   KJV: kjv,
   ASV: asv,
 };

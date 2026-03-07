@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 import { useBibleStore, selectActivePane } from '../store/bibleStore';
 import type { SearchScope, SearchResult } from '../store/bibleStore';
 import { books } from '../data/books';
-import { getChapter, getBook } from '../data/bibleLoader';
+import { getChapterText, getBook } from '../data/bibleLoader';
 import type { Translation } from '../data/bibleLoader';
 
 // Run the actual text search against the active translation
@@ -31,7 +31,7 @@ function runSearch(
   for (const book of booksToSearch) {
     if (scope === 'chapter') {
       // Only search the specified chapter
-      const verses = getChapter(translation, book.name, scopeChapter);
+      const verses = getChapterText(translation, book.name, scopeChapter);
       verses.forEach((text, i) => {
         if (text.toLowerCase().includes(needle)) {
           results.push({ book: book.name, chapter: scopeChapter, verse: i + 1, text });
@@ -41,7 +41,8 @@ function runSearch(
       // Search all chapters in this book
       const chapters = getBook(translation, book.name);
       chapters.forEach((verses, chIdx) => {
-        verses.forEach((text, vIdx) => {
+        verses.forEach((taggedVerse, vIdx) => {
+          const text = taggedVerse.map((t) => t.word).join(' ');
           if (text.toLowerCase().includes(needle)) {
             results.push({ book: book.name, chapter: chIdx + 1, verse: vIdx + 1, text });
           }
