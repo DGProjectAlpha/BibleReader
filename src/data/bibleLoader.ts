@@ -12,7 +12,7 @@ import * as rst from './rstLoader';
 export type Translation = string;
 
 // The two built-in translation keys
-export const BUILTIN_TRANSLATIONS = ['KJV', 'ASV', 'RST'] as const;
+export const BUILTIN_TRANSLATIONS = ['KJV', 'ASV', 'SYN'] as const;
 export type BuiltinTranslation = typeof BUILTIN_TRANSLATIONS[number];
 
 export type { WordToken, TaggedVerse } from './kjvLoader';
@@ -34,7 +34,7 @@ interface BibleLoader {
 const loaders: Record<string, BibleLoader> = {
   KJV: kjv,
   ASV: asv,
-  RST: rst,
+  SYN: rst,
 };
 
 /**
@@ -161,4 +161,4 @@ export function getChapterCount(translation: Translation, bookName: string): num
   return resolveLoader(translation).getBook(bookName).length;
 }
 
-export const TRANSLATIONS: Translation[] = ['KJV', 'ASV', 'RST'];
+export const TRANSLATIONS: Translation[] = ['KJV', 'ASV', 'SYN'];
