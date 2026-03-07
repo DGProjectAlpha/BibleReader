@@ -63,7 +63,7 @@ export function App() {
       {/* Main column: header bar + search overlay + multi-pane reading area */}
       <div className="relative flex flex-col flex-1 overflow-hidden">
         {/* Top header bar — always visible, contains the search button/bar */}
-        <div className="shrink-0">
+        <div className="relative z-10 shrink-0">
           {/* When search is closed, render a minimal header strip with the search button */}
           {!searchOpen ? (
             <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
