@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import { useBibleStore, selectActivePane } from '../store/bibleStore';
+import { useBibleStore, selectActivePane, MAX_PANES } from '../store/bibleStore';
 import type { SearchResult } from '../store/bibleStore';
 import { getChapter } from '../data/bibleLoader';
 
@@ -38,11 +38,13 @@ interface ResultCardProps {
   query: string;
   onClick: () => void;
   onSyncAll?: () => void;
+  onOpenParallel?: () => void;
   multiPane: boolean;
+  canAddPane: boolean;
   translation: import('../data/bibleLoader').Translation;
 }
 
-function ResultCard({ result, query, onClick, onSyncAll, multiPane, translation }: ResultCardProps) {
+function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPane, canAddPane, translation }: ResultCardProps) {
   const verseIndex = result.verse - 1; // convert to 0-indexed
 
   const prevVerse = getContextVerse(result.book, result.chapter, verseIndex - 1, translation);
@@ -94,17 +96,25 @@ function ResultCard({ result, query, onClick, onSyncAll, multiPane, translation 
         )}
       </button>
 
-      {/* Sync all panes — only shown in multi-pane mode, on hover */}
-      {multiPane && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity px-4 pb-2">
+      {/* Action buttons */}
+      <div className="px-4 pb-3 flex items-center gap-3">
+        {multiPane && (
           <button
             onClick={onSyncAll}
-            className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 hover:underline"
+            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-sm transition-colors"
           >
-            Sync all panes to this location
+            Sync all panes to here
           </button>
-        </div>
-      )}
+        )}
+        {canAddPane && (
+          <button
+            onClick={onOpenParallel}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:underline"
+          >
+            Open parallel
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -118,10 +128,10 @@ export function SearchResults() {
   const searchQuery = useBibleStore((s) => s.searchQuery);
   const searchOpen = useBibleStore((s) => s.searchOpen);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
-  const setScrollToVerse = useBibleStore((s) => s.setScrollToVerse);
   const activePane = useBibleStore(selectActivePane);
   const updatePane = useBibleStore((s) => s.updatePane);
   const navigateAllPanes = useBibleStore((s) => s.navigateAllPanes);
+  const addPaneWithRef = useBibleStore((s) => s.addPaneWithRef);
   const paneCount = useBibleStore((s) => s.panes.length);
 
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
@@ -156,18 +166,25 @@ export function SearchResults() {
   // Only render when search is open and we have results
   if (!searchOpen || searchResults.length === 0) return null;
 
+  // navigateTo: updates active pane (sync logic in updatePane propagates to all panes when syncScroll is on)
   const navigateTo = (result: SearchResult) => {
     updatePane(activePane.id, {
       selectedBook: result.book,
       selectedChapter: result.chapter,
+      scrollToVerse: result.verse,
     });
-    setScrollToVerse(result.verse);
     setSearchOpen(false);
   };
 
+  // syncAllTo: explicitly syncs all panes regardless of syncScroll toggle
   const syncAllTo = (result: SearchResult) => {
-    navigateAllPanes(result.book, result.chapter);
-    setScrollToVerse(result.verse);
+    navigateAllPanes(result.book, result.chapter, result.verse);
+    setSearchOpen(false);
+  };
+
+  // openParallel: add a new pane pointed at this result without touching existing panes
+  const openParallel = (result: SearchResult) => {
+    addPaneWithRef(result.book, result.chapter, activePane.selectedTranslation, result.verse);
     setSearchOpen(false);
   };
 
@@ -203,7 +220,9 @@ export function SearchResults() {
             query={searchQuery}
             onClick={() => navigateTo(r)}
             onSyncAll={() => syncAllTo(r)}
+            onOpenParallel={() => openParallel(r)}
             multiPane={paneCount > 1}
+            canAddPane={paneCount < MAX_PANES}
             translation={activePane.selectedTranslation}
           />
         ))}
