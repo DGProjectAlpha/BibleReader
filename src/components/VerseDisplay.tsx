@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bookmark, Highlighter, X, NotebookPen } from 'lucide-react';
+import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
 import { getChapter, TRANSLATIONS } from '../data/bibleLoader';
@@ -36,6 +36,7 @@ interface VerseDisplayProps {
 export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove }: VerseDisplayProps) {
   const pane = useBibleStore((s) => s.panes.find((p) => p.id === paneId));
   const updatePane = useBibleStore((s) => s.updatePane);
+  const togglePaneSync = useBibleStore((s) => s.togglePaneSync);
   const setStrongsWord = useBibleStore((s) => s.setStrongsWord);
   const addBookmark = useBibleStore((s) => s.addBookmark);
   const removeBookmark = useBibleStore((s) => s.removeBookmark);
@@ -45,8 +46,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const getHighlightForVerse = useBibleStore((s) => s.getHighlightForVerse);
   const getNoteForVerse = useBibleStore((s) => s.getNoteForVerse);
 
-  const scrollToVerse = useBibleStore((s) => s.scrollToVerse);
-  const setScrollToVerse = useBibleStore((s) => s.setScrollToVerse);
+  const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
 
   const [verses, setVerses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,16 +98,15 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
     }
   }, [selectedBook, selectedChapter, selectedTranslation]);
 
-  // Auto-scroll to target verse after chapter loads
+  // Auto-scroll to target verse after chapter loads; each pane clears its own scroll target
   useEffect(() => {
     if (!scrollToVerse || isLoading || verses.length === 0) return;
-    // Only scroll if the active pane matches this pane
     const el = document.getElementById(`verse-${paneId}-${scrollToVerse}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setScrollToVerse(null);
+      updatePane(paneId, { scrollToVerse: null });
     }
-  }, [scrollToVerse, isLoading, verses, paneId, setScrollToVerse]);
+  }, [scrollToVerse, isLoading, verses, paneId, updatePane]);
 
   const setSelectedTranslation = (t: Translation) =>
     updatePane(id, { selectedTranslation: t });
@@ -117,46 +116,65 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   return (
     <div
       onClick={onActivate}
-      className={`flex flex-col flex-1 min-w-0 overflow-y-auto border-r last:border-r-0 transition-colors
+      className={`flex flex-col flex-1 min-w-0 border-r last:border-r-0 transition-colors
         ${isActive
           ? 'border-blue-500 dark:border-blue-400'
           : 'border-gray-200 dark:border-gray-700'}
         bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
     >
-      <div className="p-6">
-        {/* Header: title + translation switcher + close button */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold truncate">
-            {selectedBook
-              ? `${selectedBook} ${selectedChapter}`
-              : <span className="text-gray-400 dark:text-gray-500">Select a book</span>
-            }
-          </h2>
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b
+        border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+        <h2 className="text-xl font-bold truncate">
+          {selectedBook
+            ? `${selectedBook} ${selectedChapter}`
+            : <span className="text-gray-400 dark:text-gray-500">Select a book</span>
+          }
+        </h2>
 
-          <div className="flex items-center gap-2 shrink-0 ml-3">
-            <select
-              value={selectedTranslation}
-              onChange={(e) => { e.stopPropagation(); setSelectedTranslation(e.target.value as Translation); }}
-              onClick={(e) => e.stopPropagation()}
-              className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          <select
+            value={selectedTranslation}
+            onChange={(e) => { e.stopPropagation(); setSelectedTranslation(e.target.value as Translation); }}
+            onClick={(e) => e.stopPropagation()}
+            className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            {TRANSLATIONS.map((t: Translation) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          {canRemove && (
+            <button
+              onClick={(e) => { e.stopPropagation(); togglePaneSync(paneId); }}
+              title={pane.synced ? 'Unsync pane (currently synced)' : 'Sync pane with others'}
+              className={`flex items-center gap-1 px-2 py-1 rounded text-sm font-medium border transition-colors
+                ${pane.synced
+                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-800/50'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
-              {TRANSLATIONS.map((t: Translation) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+              {pane.synced
+                ? <><Link2 size={13} strokeWidth={2} /><span>Synced</span></>
+                : <><Link2Off size={13} strokeWidth={2} /><span>Sync</span></>
+              }
+            </button>
+          )}
 
-            {canRemove && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                title="Close pane"
-                className="ml-1 px-2 py-1 rounded text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none"
-              >
-                ×
-              </button>
-            )}
-          </div>
+          {canRemove && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              title="Close pane"
+              className="ml-1 px-2 py-1 rounded text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none"
+            >
+              ×
+            </button>
+          )}
         </div>
+      </div>
 
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-6">
         {/* Loading state */}
         {isLoading && (
           <div className="text-gray-400 dark:text-gray-500 italic">Loading...</div>
