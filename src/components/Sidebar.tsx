@@ -2,11 +2,16 @@ import { useState } from 'react';
 import { useBibleStore } from '../store/bibleStore';
 import { BookmarkPanel } from './BookmarkPanel';
 import { NotesPanel } from './NotesPanel';
-import { Moon, Sun, Bookmark, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ManageTranslationsPanel } from './ManageTranslationsPanel';
+import { Moon, Sun, Bookmark, FileText, ChevronLeft, ChevronRight, Upload, Languages } from 'lucide-react';
 
-type SidebarTab = 'bookmarks' | 'notes';
+type SidebarTab = 'bookmarks' | 'notes' | 'translations';
 
-export function Sidebar() {
+interface SidebarProps {
+  onOpenImport?: () => void;
+}
+
+export function Sidebar({ onOpenImport }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bookmarks');
   const [collapsed, setCollapsed] = useState(false);
 
@@ -14,10 +19,12 @@ export function Sidebar() {
   const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
   const bookmarkCount = useBibleStore((s) => s.bookmarks.length);
   const noteCount = useBibleStore((s) => s.notes.length);
+  const translationCount = useBibleStore((s) => s.customTranslations.length);
 
   const tabs: { id: SidebarTab; icon: React.ReactNode; label: string; badge?: number }[] = [
-    { id: 'bookmarks', icon: <Bookmark size={15} />,  label: 'Bookmarks', badge: bookmarkCount },
-    { id: 'notes',     icon: <FileText size={15} />,  label: 'Notes',     badge: noteCount },
+    { id: 'bookmarks',    icon: <Bookmark size={15} />,  label: 'Bookmarks',    badge: bookmarkCount },
+    { id: 'notes',        icon: <FileText size={15} />,  label: 'Notes',        badge: noteCount },
+    { id: 'translations', icon: <Languages size={15} />, label: 'Translations', badge: translationCount },
   ];
 
   // Collapsed: show a narrow strip with vertical label + expand button
@@ -37,7 +44,7 @@ export function Sidebar() {
           onClick={() => setCollapsed(false)}
           title="Expand panel"
         >
-          {activeTab === 'bookmarks' ? 'BOOKMARKS' : 'NOTES'}
+          {activeTab === 'bookmarks' ? 'BOOKMARKS' : activeTab === 'notes' ? 'NOTES' : 'TRANSLATIONS'}
         </span>
       </div>
     );
@@ -49,6 +56,16 @@ export function Sidebar() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.06]">
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
         <div className="flex items-center gap-1">
+          {onOpenImport && (
+            <button
+              onClick={onOpenImport}
+              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
+              aria-label="Import Bible translation"
+              title="Import Bible translation"
+            >
+              <Upload size={16} />
+            </button>
+          )}
           <button
             onClick={toggleDarkMode}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
@@ -100,6 +117,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'bookmarks' && <BookmarkPanel fullHeight />}
         {activeTab === 'notes' && <NotesPanel fullHeight />}
+        {activeTab === 'translations' && <ManageTranslationsPanel />}
       </div>
     </div>
   );
