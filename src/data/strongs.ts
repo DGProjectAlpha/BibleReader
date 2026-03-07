@@ -14,13 +14,13 @@ export interface StrongsEntry {
   pron?: string;      // pronunciation
   derivation?: string;
   strongs_def?: string;
-  kjv_def: string;
+  kjv_def?: string;
 }
 
 type StrongsMap = Record<string, StrongsEntry>;
 
-const hebrew = hebrewData as StrongsMap;
-const greek = greekData as StrongsMap;
+const hebrew = hebrewData as unknown as StrongsMap;
+const greek = greekData as unknown as StrongsMap;
 
 /**
  * Look up a Strong's number.
@@ -68,7 +68,7 @@ function buildReverseIndex(): Map<string, string[]> {
   const addEntries = (map: StrongsMap) => {
     for (const [num, entry] of Object.entries(map)) {
       // Parse words from kjv_def and strongs_def; deduplicate per entry
-      const text = `${entry.kjv_def} ${entry.strongs_def ?? ''}`;
+      const text = `${entry.kjv_def ?? ''} ${entry.strongs_def ?? ''}`;
       const uniqueKeys = new Set(
         text
           .toLowerCase()
