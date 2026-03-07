@@ -8,6 +8,8 @@ export type { WordToken, TaggedVerse };
 
 export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
 
+export type Theme = 'dark-blue' | 'dark-oled' | 'light-cool' | 'light-warm';
+
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
 
 export interface VerseKey {
@@ -86,6 +88,8 @@ interface BibleStore {
   setSelectedChapter: (chapter: number) => void;
   setSelectedTranslation: (translation: Translation) => void;
 
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleDarkMode: () => void;
   toggleSyncScroll: () => void;
 
@@ -166,6 +170,7 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   activePaneIndex: 0,
   syncScroll: false,
   darkMode: false,
+  theme: 'light-cool',
   fontSize: 16,
   fontFamily: 'sans',
 
@@ -276,7 +281,21 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       return { panes };
     }),
 
-  toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+  setTheme: (theme) =>
+    set({
+      theme,
+      darkMode: theme === 'dark-blue' || theme === 'dark-oled',
+    }),
+  toggleDarkMode: () =>
+    set((state) => {
+      const next = !state.darkMode;
+      // When toggling, preserve the current variant within that mode
+      const nextTheme: Theme =
+        next
+          ? state.theme === 'dark-oled' ? 'dark-oled' : 'dark-blue'
+          : state.theme === 'light-warm' ? 'light-warm' : 'light-cool';
+      return { darkMode: next, theme: nextTheme };
+    }),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
   setFontSize: (size) => set({ fontSize: size }),
   setFontFamily: (family) => set({ fontFamily: family }),

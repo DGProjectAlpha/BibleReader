@@ -64,6 +64,7 @@ export function App() {
   }, [addCustomTranslation]);
 
   const darkMode = useBibleStore((s) => s.darkMode);
+  const theme = useBibleStore((s) => s.theme);
   const fontSize = useBibleStore((s) => s.fontSize);
   const fontFamily = useBibleStore((s) => s.fontFamily);
   const panes = useBibleStore((s) => s.panes);
@@ -75,13 +76,15 @@ export function App() {
   const searchOpen = useBibleStore((s) => s.searchOpen);
 
   // Sync dark mode to <html> class for Tailwind's dark: variant
+  // and data-theme attribute for CSS variable theming
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [darkMode, theme]);
 
   // Sync font prefs to CSS custom properties on <html>
   useEffect(() => {
@@ -156,7 +159,7 @@ export function App() {
           <button
             onClick={addPane}
             title="Add pane"
-            className="shrink-0 w-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors text-2xl border-l border-black/[0.10] dark:border-white/[0.10]"
+            className="shrink-0 w-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors text-2xl border-l border-black/[0.10] dark:border-white/[0.12]"
           >
             +
           </button>

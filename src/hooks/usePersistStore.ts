@@ -31,6 +31,8 @@ import {
   setSyncScroll,
   setFontSize,
   setFontFamily,
+  getTheme,
+  saveTheme,
   verseKey,
 } from '../utils/persistence';
 import { registerCustomTranslation } from '../data/bibleLoader';
@@ -41,7 +43,7 @@ export function usePersistStore() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, customTranslationsMeta] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, customTranslationsMeta] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
@@ -49,6 +51,7 @@ export function usePersistStore() {
           getSyncScroll(),
           getFontSize(),
           getFontFamily(),
+          getTheme(),
           getCustomTranslations(),
         ]);
 
@@ -114,6 +117,7 @@ export function usePersistStore() {
           syncScroll: syncScroll !== null ? syncScroll : state.syncScroll,
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
+          theme: theme !== null ? theme : state.theme,
           customTranslations: customTranslationsMeta.length > 0 ? customTranslationsMeta : state.customTranslations,
         }));
       } catch (err) {
@@ -207,6 +211,7 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
     if (state.syncScroll !== prevState.syncScroll) await setSyncScroll(state.syncScroll);
     if (state.fontSize !== prevState.fontSize) await setFontSize(state.fontSize);
     if (state.fontFamily !== prevState.fontFamily) await setFontFamily(state.fontFamily);
+    if (state.theme !== prevState.theme) await saveTheme(state.theme);
   } catch (err) {
     console.debug('[usePersistStore] sync error:', err);
   }

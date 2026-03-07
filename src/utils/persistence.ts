@@ -154,6 +154,18 @@ export async function setSyncScroll(value: boolean): Promise<void> {
   await store.set('syncScroll', value);
 }
 
+export type Theme = 'dark-blue' | 'dark-oled' | 'light-cool' | 'light-warm';
+
+export async function getTheme(): Promise<Theme | null> {
+  const store = await getStore();
+  return (await store.get<Theme>('theme')) ?? null;
+}
+
+export async function saveTheme(value: Theme): Promise<void> {
+  const store = await getStore();
+  await store.set('theme', value);
+}
+
 export async function getFontSize(): Promise<number | null> {
   const store = await getStore();
   return (await store.get<number>('fontSize')) ?? null;

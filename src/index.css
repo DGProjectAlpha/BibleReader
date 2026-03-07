@@ -3,32 +3,80 @@
 /* Tailwind v4: enable class-based dark mode (toggles via .dark on <html>) */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Windows 11 Mica — simulated wallpaper gradient ─────────────────────── */
-/* Light mode: pale blue-lavender wash, similar to Win11 default wallpaper tint */
-body {
-  background: linear-gradient(135deg,
+/* ─── Theme CSS variables ─────────────────────────────────────────────────── */
+/*
+  Applied via data-theme attribute on <html> by setTheme() in bibleStore.ts.
+  Four variants:
+    light-cool  — pale blue-lavender (Win11 Mica default, original)
+    light-warm  — warm cream/amber wash
+    dark-blue   — deep navy-indigo (original dark)
+    dark-oled   — pure black for OLED panels
+*/
+
+:root,
+[data-theme="light-cool"] {
+  --bg-gradient: linear-gradient(135deg,
     #dde8fe 0%,
     #e9dafe 30%,
     #d4e4fb 65%,
     #e2eeff 100%
   );
-  min-height: 100vh;
+  --bg-solid: #dde8fe;
+  --scrollbar-thumb: rgba(100, 116, 160, 0.45);
+  --scrollbar-thumb-hover: rgba(100, 116, 160, 0.70);
 }
 
-/* Dark mode: deep navy-indigo, matches Win11 dark Mica */
-.dark body {
-  background: linear-gradient(135deg,
+[data-theme="light-warm"] {
+  --bg-gradient: linear-gradient(135deg,
+    #fdf6e3 0%,
+    #fef3d0 30%,
+    #fdf0d8 65%,
+    #fef8ec 100%
+  );
+  --bg-solid: #fdf6e3;
+  --scrollbar-thumb: rgba(160, 130, 80, 0.45);
+  --scrollbar-thumb-hover: rgba(160, 130, 80, 0.70);
+}
+
+[data-theme="dark-blue"] {
+  --bg-gradient: linear-gradient(135deg,
     #0b1220 0%,
     #12102a 30%,
     #09162a 65%,
     #0e1222 100%
   );
+  --bg-solid: #0b1220;
+  --scrollbar-thumb: rgba(128, 128, 180, 0.50);
+  --scrollbar-thumb-hover: rgba(128, 128, 180, 0.75);
+}
+
+[data-theme="dark-oled"] {
+  --bg-gradient: #000000;
+  --bg-solid: #000000;
+  --scrollbar-thumb: rgba(80, 80, 80, 0.50);
+  --scrollbar-thumb-hover: rgba(120, 120, 120, 0.75);
+}
+
+/* ─── Windows 11 Mica — background consumes theme variables ──────────────── */
+body {
+  background: var(--bg-gradient);
+  min-height: 100vh;
+}
+
+/* Fallback for .dark class without explicit data-theme (preserves legacy behavior) */
+.dark body {
+  background: var(--bg-gradient, linear-gradient(135deg,
+    #0b1220 0%,
+    #12102a 30%,
+    #09162a 65%,
+    #0e1222 100%
+  ));
 }
 
 /* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(128, 128, 128, 0.50) transparent;
+  scrollbar-color: var(--scrollbar-thumb, rgba(128, 128, 128, 0.50)) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -41,10 +89,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.45);
+  background: var(--scrollbar-thumb, rgba(128, 128, 128, 0.45));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.70);
+  background: var(--scrollbar-thumb-hover, rgba(128, 128, 128, 0.70));
 }

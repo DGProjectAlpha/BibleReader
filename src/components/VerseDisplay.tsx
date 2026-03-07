@@ -203,7 +203,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
               title="Close pane"
-              className="ml-1 px-2 py-1 rounded text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none"
+              className="ml-1 px-2 py-1 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none"
             >
               ×
             </button>
@@ -215,7 +215,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       <div className="flex-1 overflow-y-auto p-6">
         {/* Loading state */}
         {isLoading && (
-          <div className="text-gray-400 dark:text-gray-500 italic">Loading...</div>
+          <div className="text-gray-500 dark:text-gray-400 italic">Loading...</div>
         )}
 
         {/* Error state */}
@@ -247,7 +247,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       className={`p-0.5 rounded transition-colors
                         ${bookmarked
                           ? 'text-blue-500 dark:text-blue-400'
-                          : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-blue-400'}
+                          : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-blue-400'}
                       `}
                     >
                       <Bookmark size={13} fill={bookmarked ? 'currentColor' : 'none'} strokeWidth={2} />
@@ -264,7 +264,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                         className={`p-0.5 rounded transition-colors
                           ${highlight
                             ? 'text-amber-500 dark:text-amber-400'
-                            : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-amber-400'}
+                            : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-amber-400'}
                         `}
                       >
                         <Highlighter size={13} strokeWidth={2} />
@@ -318,7 +318,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       className={`p-0.5 rounded transition-colors
                         ${note
                           ? 'text-emerald-500 dark:text-emerald-400'
-                          : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-emerald-400'}
+                          : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-emerald-400'}
                       `}
                     >
                       <NotebookPen size={13} strokeWidth={2} />
@@ -371,7 +371,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
 
         {/* Empty state */}
         {!isLoading && !loadError && verses.length === 0 && (
-          <div className="text-gray-400 dark:text-gray-500 italic">
+          <div className="text-gray-500 dark:text-gray-400 italic">
             Select a book and chapter above to start reading.
           </div>
         )}

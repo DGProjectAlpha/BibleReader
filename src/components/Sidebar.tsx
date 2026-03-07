@@ -4,6 +4,7 @@ import { BookmarkPanel } from './BookmarkPanel';
 import { NotesPanel } from './NotesPanel';
 import { ManageTranslationsPanel } from './ManageTranslationsPanel';
 import { Moon, Sun, Bookmark, FileText, ChevronLeft, ChevronRight, Upload, Languages } from 'lucide-react';
+import { SettingsPanel } from './SettingsPanel';
 
 type SidebarTab = 'bookmarks' | 'notes' | 'translations';
 
@@ -39,7 +40,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
           <ChevronRight size={16} />
         </button>
         <span
-          className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 tracking-widest cursor-pointer select-none"
+          className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 tracking-widest cursor-pointer select-none"
           style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
           onClick={() => setCollapsed(false)}
           title="Expand panel"
@@ -66,6 +67,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
               <Upload size={16} />
             </button>
           )}
+          <SettingsPanel />
           <button
             onClick={toggleDarkMode}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
@@ -75,7 +77,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
           </button>
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
             aria-label="Collapse panel"
             title="Collapse panel"
           >

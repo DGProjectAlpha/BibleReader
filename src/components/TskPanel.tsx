@@ -33,12 +33,12 @@ export function TskPanel() {
         <button
           onClick={() => setCollapsed(false)}
           title="Expand cross-references panel"
-          className="text-sm text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none mb-3"
+          className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none mb-3"
         >
           ‹
         </button>
         <span
-          className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400 select-none"
+          className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-300 select-none"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
         >
           TSK Refs
@@ -58,7 +58,7 @@ export function TskPanel() {
           {tskVerse && (
             <button
               onClick={() => setTskVerse(null)}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
               title="Clear"
             >
               ✕
@@ -67,7 +67,7 @@ export function TskPanel() {
           <button
             onClick={() => setCollapsed(true)}
             title="Collapse cross-references panel"
-            className="text-sm text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
+            className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
           >
             ›
           </button>
@@ -77,22 +77,22 @@ export function TskPanel() {
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {!tskVerse ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4 text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center h-full text-center px-4 text-gray-500 dark:text-gray-400">
             <span className="text-3xl mb-2">🔗</span>
             <p className="text-xs leading-relaxed">
               Click a verse number in the text to view TSK cross-references.
             </p>
           </div>
         ) : refs.length === 0 ? (
-          <div className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500">
+          <div className="px-3 py-4 text-xs text-gray-500 dark:text-gray-400">
             No cross-references found for {tskVerse.book} {tskVerse.chapter}:{tskVerse.verse}.
           </div>
         ) : (
           <div>
-            <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-black/[0.10] dark:border-white/[0.10]">
+            <div className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 border-b border-black/[0.10] dark:border-white/[0.12]">
               {tskVerse.book} {tskVerse.chapter}:{tskVerse.verse} — {refs.length} reference{refs.length !== 1 ? 's' : ''}
             </div>
-            <div className="divide-y divide-black/[0.08] dark:divide-white/[0.08]">
+            <div className="divide-y divide-black/[0.10] dark:divide-white/[0.10]">
               {refs.map((ref, i) => (
                 <button
                   key={i}
