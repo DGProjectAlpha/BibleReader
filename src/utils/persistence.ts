@@ -153,3 +153,23 @@ export async function setSyncScroll(value: boolean): Promise<void> {
   const store = await getStore();
   await store.set('syncScroll', value);
 }
+
+export async function getFontSize(): Promise<number | null> {
+  const store = await getStore();
+  return (await store.get<number>('fontSize')) ?? null;
+}
+
+export async function setFontSize(value: number): Promise<void> {
+  const store = await getStore();
+  await store.set('fontSize', value);
+}
+
+export async function getFontFamily(): Promise<string | null> {
+  const store = await getStore();
+  return (await store.get<string>('fontFamily')) ?? null;
+}
+
+export async function setFontFamily(value: string): Promise<void> {
+  const store = await getStore();
+  await store.set('fontFamily', value);
+}

@@ -17,6 +17,8 @@ import {
   getBookmarks,
   getDarkMode,
   getSyncScroll,
+  getFontSize,
+  getFontFamily,
   setNote,
   deleteNote,
   setHighlight,
@@ -25,6 +27,8 @@ import {
   removeBookmark,
   setDarkMode,
   setSyncScroll,
+  setFontSize,
+  setFontFamily,
   verseKey,
 } from '../utils/persistence';
 
@@ -33,12 +37,14 @@ export function usePersistStore() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
           getDarkMode(),
           getSyncScroll(),
+          getFontSize(),
+          getFontFamily(),
         ]);
 
         // Record<verseKey, text>  →  Note[]
@@ -84,6 +90,8 @@ export function usePersistStore() {
           bookmarks: bookmarks.length > 0 ? bookmarks : state.bookmarks,
           darkMode: darkMode !== null ? darkMode : state.darkMode,
           syncScroll: syncScroll !== null ? syncScroll : state.syncScroll,
+          fontSize: fontSize !== null ? fontSize : state.fontSize,
+          fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
         }));
       } catch (err) {
         // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.
@@ -174,6 +182,8 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
     // Preferences
     if (state.darkMode !== prevState.darkMode) await setDarkMode(state.darkMode);
     if (state.syncScroll !== prevState.syncScroll) await setSyncScroll(state.syncScroll);
+    if (state.fontSize !== prevState.fontSize) await setFontSize(state.fontSize);
+    if (state.fontFamily !== prevState.fontFamily) await setFontFamily(state.fontFamily);
   } catch (err) {
     console.debug('[usePersistStore] sync error:', err);
   }

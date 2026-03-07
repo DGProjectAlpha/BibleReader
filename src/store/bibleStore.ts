@@ -48,6 +48,8 @@ export interface Pane {
   selectedBook: string;
   selectedChapter: number;
   selectedTranslation: Translation;
+  scrollToVerse: number | null; // verse number (1-indexed) to scroll to; each pane clears its own
+  synced: boolean; // when true, this pane follows navigation from other synced panes
 }
 
 interface BibleStore {
@@ -58,11 +60,12 @@ interface BibleStore {
 
   // Pane management
   addPane: () => void;
-  addPaneWithRef: (book: string, chapter: number, translation: Translation) => void;
+  addPaneWithRef: (book: string, chapter: number, translation: Translation, scrollToVerse?: number | null) => void;
   removePane: (id: string) => void;
   setActivePaneIndex: (index: number) => void;
-  updatePane: (id: string, updates: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter' | 'selectedTranslation'>>) => void;
-  navigateAllPanes: (book: string, chapter: number) => void;
+  updatePane: (id: string, updates: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter' | 'selectedTranslation' | 'scrollToVerse'>>) => void;
+  navigateAllPanes: (book: string, chapter: number, scrollToVerse?: number | null) => void;
+  togglePaneSync: (id: string) => void;
 
   // Convenience setters that target the active pane
   setSelectedBook: (book: string) => void;
@@ -96,6 +99,12 @@ interface BibleStore {
   removeBookmark: (key: VerseKey) => void;
   isBookmarked: (key: VerseKey) => boolean;
 
+  // Font preferences
+  fontSize: number;
+  fontFamily: string;
+  setFontSize: (size: number) => void;
+  setFontFamily: (family: string) => void;
+
   // Search state
   searchQuery: string;
   searchScope: SearchScope;
@@ -103,21 +112,23 @@ interface BibleStore {
   searchScopeChapter: number;
   searchResults: SearchResult[];
   searchOpen: boolean;
-  scrollToVerse: number | null; // verse number (1-indexed) to scroll to after navigation
   setSearchQuery: (query: string) => void;
   setSearchScope: (scope: SearchScope) => void;
   setSearchScopeBook: (book: string) => void;
   setSearchScopeChapter: (chapter: number) => void;
   setSearchResults: (results: SearchResult[]) => void;
   setSearchOpen: (open: boolean) => void;
-  setScrollToVerse: (verse: number | null) => void;
 }
+
+export const MAX_PANES = 4;
 
 const DEFAULT_PANE = (): Pane => ({
   id: crypto.randomUUID(),
   selectedBook: 'Genesis',
   selectedChapter: 1,
   selectedTranslation: 'KJV',
+  scrollToVerse: null,
+  synced: false,
 });
 
 export const useBibleStore = create<BibleStore>((set, get) => ({
@@ -125,20 +136,28 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   activePaneIndex: 0,
   syncScroll: false,
   darkMode: false,
+  fontSize: 16,
+  fontFamily: 'sans',
 
   addPane: () =>
-    set((state) => ({
-      panes: [...state.panes, DEFAULT_PANE()],
-      activePaneIndex: state.panes.length,
-    })),
-
-  addPaneWithRef: (book, chapter, translation) =>
     set((state) => {
+      if (state.panes.length >= MAX_PANES) return state;
+      return {
+        panes: [...state.panes, DEFAULT_PANE()],
+        activePaneIndex: state.panes.length,
+      };
+    }),
+
+  addPaneWithRef: (book, chapter, translation, scrollToVerse = null) =>
+    set((state) => {
+      if (state.panes.length >= MAX_PANES) return state;
       const newPane: Pane = {
         id: crypto.randomUUID(),
         selectedBook: book,
         selectedChapter: chapter,
         selectedTranslation: translation,
+        scrollToVerse: scrollToVerse ?? null,
+        synced: false,
       };
       return {
         panes: [...state.panes, newPane],
@@ -156,25 +175,39 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   setActivePaneIndex: (index) => set({ activePaneIndex: index }),
 
-  navigateAllPanes: (book, chapter) =>
+  navigateAllPanes: (book, chapter, scrollToVerse) =>
     set((state) => ({
-      panes: state.panes.map((p) => ({ ...p, selectedBook: book, selectedChapter: chapter })),
+      panes: state.panes.map((p) => ({
+        ...p,
+        selectedBook: book,
+        selectedChapter: chapter,
+        ...(scrollToVerse !== undefined ? { scrollToVerse } : {}),
+      })),
+    })),
+
+  togglePaneSync: (id) =>
+    set((state) => ({
+      panes: state.panes.map((p) =>
+        p.id === id ? { ...p, synced: !p.synced } : p
+      ),
     })),
 
   updatePane: (id, updates) =>
     set((state) => {
-      const { syncScroll } = state;
-      // When synced, propagate book/chapter changes to all panes
-      const syncFields: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter'>> = {};
-      if (syncScroll) {
+      const sourcePane = state.panes.find((p) => p.id === id);
+      // Only propagate navigation to other panes when the source pane is synced
+      const syncFields: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter' | 'scrollToVerse'>> = {};
+      if (sourcePane?.synced) {
         if (updates.selectedBook !== undefined) syncFields.selectedBook = updates.selectedBook;
         if (updates.selectedChapter !== undefined) syncFields.selectedChapter = updates.selectedChapter;
+        if (updates.scrollToVerse !== undefined) syncFields.scrollToVerse = updates.scrollToVerse;
       }
       const hasSyncFields = Object.keys(syncFields).length > 0;
       return {
         panes: state.panes.map((p) => {
           if (p.id === id) return { ...p, ...updates };
-          if (hasSyncFields) return { ...p, ...syncFields };
+          // Propagate only to OTHER synced panes
+          if (hasSyncFields && p.synced) return { ...p, ...syncFields };
           return p;
         }),
       };
@@ -183,20 +216,24 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   // Convenience setters — operate on whichever pane is active
   setSelectedBook: (book) =>
     set((state) => {
-      const { syncScroll } = state;
+      const activePane = state.panes[state.activePaneIndex];
       const panes = state.panes.map((p, i) => {
-        if (syncScroll) return { ...p, selectedBook: book, selectedChapter: 1 };
-        return i === state.activePaneIndex ? { ...p, selectedBook: book, selectedChapter: 1 } : p;
+        if (i === state.activePaneIndex) return { ...p, selectedBook: book, selectedChapter: 1 };
+        // Propagate to other synced panes only if the active pane is also synced
+        if (activePane?.synced && p.synced) return { ...p, selectedBook: book, selectedChapter: 1 };
+        return p;
       });
       return { panes };
     }),
 
   setSelectedChapter: (chapter) =>
     set((state) => {
-      const { syncScroll } = state;
+      const activePane = state.panes[state.activePaneIndex];
       const panes = state.panes.map((p, i) => {
-        if (syncScroll) return { ...p, selectedChapter: chapter };
-        return i === state.activePaneIndex ? { ...p, selectedChapter: chapter } : p;
+        if (i === state.activePaneIndex) return { ...p, selectedChapter: chapter };
+        // Propagate to other synced panes only if the active pane is also synced
+        if (activePane?.synced && p.synced) return { ...p, selectedChapter: chapter };
+        return p;
       });
       return { panes };
     }),
@@ -211,6 +248,8 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
+  setFontSize: (size) => set({ fontSize: size }),
+  setFontFamily: (family) => set({ fontFamily: family }),
 
   // Notes
   notes: [],
@@ -315,14 +354,12 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   searchScopeChapter: 1,
   searchResults: [],
   searchOpen: false,
-  scrollToVerse: null,
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchScope: (scope) => set({ searchScope: scope }),
   setSearchScopeBook: (book) => set({ searchScopeBook: book }),
   setSearchScopeChapter: (chapter) => set({ searchScopeChapter: chapter }),
   setSearchResults: (results) => set({ searchResults: results }),
   setSearchOpen: (open) => set({ searchOpen: open }),
-  setScrollToVerse: (verse) => set({ scrollToVerse: verse }),
 }));
 
 // Selector helpers

@@ -4,7 +4,9 @@ import { VerseDisplay } from './components/VerseDisplay';
 import { StrongsPanel } from './components/StrongsPanel';
 import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
-import { useBibleStore } from './store/bibleStore';
+import { FontControls } from './components/FontControls';
+import { FONT_FAMILIES } from './components/FontControls';
+import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
 
 export function App() {
@@ -12,6 +14,8 @@ export function App() {
   usePersistStore();
 
   const darkMode = useBibleStore((s) => s.darkMode);
+  const fontSize = useBibleStore((s) => s.fontSize);
+  const fontFamily = useBibleStore((s) => s.fontFamily);
   const panes = useBibleStore((s) => s.panes);
   const activePaneIndex = useBibleStore((s) => s.activePaneIndex);
   const addPane = useBibleStore((s) => s.addPane);
@@ -28,6 +32,13 @@ export function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Sync font prefs to CSS custom properties on <html>
+  useEffect(() => {
+    const css = FONT_FAMILIES.find((f) => f.id === fontFamily)?.css ?? FONT_FAMILIES[0].css;
+    document.documentElement.style.setProperty('--bible-font-size', `${fontSize}px`);
+    document.documentElement.style.setProperty('--bible-font-family', css);
+  }, [fontSize, fontFamily]);
 
   // Ctrl+F / Cmd+F opens search
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
@@ -58,6 +69,9 @@ export function App() {
             <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <SearchBar />
               <span className="text-xs text-gray-400 dark:text-gray-600 ml-1">Ctrl+F</span>
+              <div className="ml-auto">
+                <FontControls />
+              </div>
             </div>
           ) : (
             <SearchBar />
@@ -80,14 +94,16 @@ export function App() {
           />
         ))}
 
-        {/* Add pane button */}
-        <button
-          onClick={addPane}
-          title="Add pane"
-          className="shrink-0 w-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-2xl border-l border-gray-200 dark:border-gray-700"
-        >
-          +
-        </button>
+        {/* Add pane button — hidden at max panes */}
+        {panes.length < MAX_PANES && (
+          <button
+            onClick={addPane}
+            title="Add pane"
+            className="shrink-0 w-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-2xl border-l border-gray-200 dark:border-gray-700"
+          >
+            +
+          </button>
+        )}
       </div>
       </div>
 

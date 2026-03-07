@@ -317,7 +317,10 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                   </div>
 
                   {/* Verse text */}
-                  <p className={`text-base flex-1 px-1 rounded transition-colors ${highlight ? HIGHLIGHT_BG[highlight.color] : ''}`}>
+                  <p
+                    className={`flex-1 px-1 rounded transition-colors ${highlight ? HIGHLIGHT_BG[highlight.color] : ''}`}
+                    style={{ fontSize: 'var(--bible-font-size)', fontFamily: 'var(--bible-font-family)' }}
+                  >
                     <span className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-2 select-none">
                       {idx + 1}
                     </span>
