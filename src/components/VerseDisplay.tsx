@@ -335,10 +335,10 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                           title={tok.strongs.join(' ')}
                           className="cursor-pointer rounded px-px hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors"
                         >
-                          {tok.word}
+                          {tok.word}{' '}
                         </span>
                       ) : (
-                        <span key={j}>{tok.word}</span>
+                        <span key={j}>{tok.word}{' '}</span>
                       )
                     ))}
                   </p>
