@@ -331,7 +331,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       tok.strongs.length > 0 ? (
                         <span
                           key={j}
-                          onClick={(e) => { e.stopPropagation(); setStrongsNum(tok.strongs[0]); }}
+                          onClick={(e) => { e.stopPropagation(); setStrongsNum(tok.strongs[0], tok.word); }}
                           title={tok.strongs.join(' ')}
                           className="cursor-pointer rounded px-px hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors"
                         >

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Translation, WordToken, TaggedVerse } from '../data/bibleLoader';
 import { searchByKjvWord, lookup } from '../data/strongs';
-import type { StrongsEntry } from '../data/strongs';
+import type { StrongsEntry, StrongsSearchResult } from '../data/strongs';
 
 // Re-export verse data types so components only need one import point
 export type { WordToken, TaggedVerse };
@@ -80,11 +80,15 @@ interface BibleStore {
 
   // Strong's concordance state
   strongsWord: string | null;
+  // Structured lookup: exact = best/tagged match, similar = remaining fuzzy matches
+  strongsLookup: StrongsSearchResult | null;
+  // Flat list for backwards compat — derived from strongsLookup (exact first, then similar)
   strongsResults: StrongsResult[];
   setStrongsWord: (word: string | null) => void;
   // Exact Strong's number lookup (set when user clicks a tagged word)
+  // Pass optional fallbackWord to also populate similar entries via fuzzy search
   selectedStrongsNum: string | null;
-  setStrongsNum: (num: string | null) => void;
+  setStrongsNum: (num: string | null, fallbackWord?: string) => void;
 
   // TSK cross-reference panel state
   tskVerse: VerseKey | null;
@@ -348,26 +352,40 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
     ),
 
   strongsWord: null,
+  strongsLookup: null,
   strongsResults: [],
   setStrongsWord: (word) => {
     if (!word) {
-      set({ strongsWord: null, strongsResults: [] });
+      set({ strongsWord: null, strongsLookup: null, strongsResults: [] });
       return;
     }
-    const results = searchByKjvWord(word);
-    set({ strongsWord: word, strongsResults: results });
+    const result = searchByKjvWord(word);
+    // Flat list: exact first, then similar (for backwards compat with StrongsPanel)
+    const flat: StrongsResult[] = [
+      ...(result.exact ? [result.exact] : []),
+      ...result.similar,
+    ];
+    set({ strongsWord: word, strongsLookup: result, strongsResults: flat });
   },
 
   selectedStrongsNum: null,
-  setStrongsNum: (num) => {
+  setStrongsNum: (num, fallbackWord) => {
     if (!num) {
-      set({ selectedStrongsNum: null, strongsResults: [] });
+      set({ selectedStrongsNum: null, strongsLookup: null, strongsResults: [] });
       return;
     }
-    // Exact lookup by Strong's number — no fuzzy matching needed
     const entry = lookup(num);
-    const results: StrongsResult[] = entry ? [{ num, entry }] : [];
-    set({ selectedStrongsNum: num, strongsResults: results });
+    if (!entry) {
+      set({ selectedStrongsNum: num, strongsLookup: { exact: null, similar: [] }, strongsResults: [] });
+      return;
+    }
+    // Build similar list: fuzzy search on the word text, minus the exact entry
+    const similar = fallbackWord
+      ? searchByKjvWord(fallbackWord).similar.filter((r) => r.num !== num)
+      : [];
+    const structured: StrongsSearchResult = { exact: { num, entry }, similar };
+    const flat: StrongsResult[] = [{ num, entry }, ...similar];
+    set({ selectedStrongsNum: num, strongsLookup: structured, strongsResults: flat });
   },
 
   tskVerse: null,

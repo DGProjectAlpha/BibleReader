@@ -94,23 +94,59 @@ function buildReverseIndex(): Map<string, string[]> {
   return index;
 }
 
+export interface StrongsSearchResult {
+  exact: { num: string; entry: StrongsEntry } | null;
+  similar: Array<{ num: string; entry: StrongsEntry }>;
+}
+
+/**
+ * Score how well an entry matches the clicked word.
+ * Higher = better match.
+ * 3: word is the first token in kjv_def (primary definition)
+ * 2: word appears as an exact whole-word match in kjv_def
+ * 1: word appears somewhere in the definition text (fallback)
+ */
+function scoreEntry(entry: StrongsEntry, normalized: string): number {
+  const kjv = (entry.kjv_def ?? '').toLowerCase().replace(/[^a-z\s]/g, ' ');
+  const tokens = kjv.split(/\s+/).filter(Boolean);
+  if (tokens[0] === normalized) return 3;
+  if (tokens.includes(normalized)) return 2;
+  return 1;
+}
+
 /**
  * Reverse-lookup Strong's entries by an English word.
- * Searches kjv_def and strongs_def of all entries.
- * Returns up to `limit` results (default 10).
+ * Returns an object with:
+ *   exact  — the single best-matching entry (highest score), or null
+ *   similar — all remaining matches, up to `limit - 1`
  */
 export function searchByKjvWord(
   word: string,
   limit = 10
-): Array<{ num: string; entry: StrongsEntry }> {
+): StrongsSearchResult {
   if (!_reverseIndex) _reverseIndex = buildReverseIndex();
 
   const normalized = word.toLowerCase().replace(/[^a-z]/g, '');
-  if (!normalized) return [];
+  if (!normalized) return { exact: null, similar: [] };
 
   const nums = _reverseIndex.get(normalized) ?? [];
-  return nums.slice(0, limit).map((num) => ({
+  const candidates = nums.slice(0, limit).map((num) => ({
     num,
     entry: lookup(num) as StrongsEntry,
   }));
+
+  if (candidates.length === 0) return { exact: null, similar: [] };
+
+  // Find the best-scoring candidate
+  let bestIdx = 0;
+  let bestScore = scoreEntry(candidates[0].entry, normalized);
+  for (let i = 1; i < candidates.length; i++) {
+    const s = scoreEntry(candidates[i].entry, normalized);
+    if (s > bestScore) { bestScore = s; bestIdx = i; }
+  }
+
+  const exact = candidates[bestIdx];
+  const similar = candidates.filter((_, i) => i !== bestIdx);
+
+  return { exact, similar };
 }
