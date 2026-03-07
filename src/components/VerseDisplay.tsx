@@ -119,13 +119,13 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       onClick={onActivate}
       className={`flex flex-col flex-1 min-w-0 border-r last:border-r-0 transition-colors
         ${isActive
-          ? 'border-blue-500 dark:border-blue-400'
-          : 'border-gray-200 dark:border-gray-700'}
-        bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}
+          ? 'border-blue-400/60 dark:border-blue-500/50'
+          : 'border-black/[0.06] dark:border-white/[0.06]'}
+        bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl text-gray-900 dark:text-gray-100`}
     >
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b
-        border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm gap-2">
+        border-black/[0.06] dark:border-white/[0.06] bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg shadow-[0_1px_8px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_8px_rgba(0,0,0,0.2)] gap-2">
 
         {/* Per-pane book + chapter navigation */}
         <div className="flex items-center gap-2 min-w-0">
@@ -265,8 +265,8 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       {pickerOpen && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute left-full top-0 ml-1 z-50 flex items-center gap-1 p-1.5 rounded-lg shadow-lg border
-                            bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600"
+                          className="absolute left-full top-0 ml-1 z-50 flex items-center gap-1 p-1.5 rounded-lg shadow-lg border border-black/[0.08] dark:border-white/[0.10]
+                            bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl"
                         >
                           {HIGHLIGHT_COLORS.map(({ color, bg, label }) => (
                             <button

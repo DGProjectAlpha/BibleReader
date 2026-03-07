@@ -53,7 +53,7 @@ function EntryDetail({ result, onClose }: EntryDetailProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
         <button
           onClick={onClose}
           className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
@@ -155,7 +155,7 @@ export function StrongsPanel() {
 
   if (selectedResult) {
     return (
-      <div className="w-64 shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col h-full text-sm">
+      <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
         <EntryDetail result={selectedResult} onClose={handleClose} />
       </div>
     );
@@ -164,7 +164,7 @@ export function StrongsPanel() {
   return (
     <div className="w-64 shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col h-full text-sm">
       {/* Panel header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Strong's
         </span>
@@ -193,7 +193,7 @@ export function StrongsPanel() {
             No Strong's entries found for &ldquo;{strongsWord}&rdquo;.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
             <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
               Results for &ldquo;{strongsWord}&rdquo;
             </div>
@@ -204,7 +204,7 @@ export function StrongsPanel() {
                 <button
                   key={result.num}
                   onClick={() => setSelectedResult(result)}
-                  className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-start gap-2"
+                  className="w-full text-left px-3 py-2.5 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors flex items-start gap-2"
                 >
                   {/* Strong's number badge */}
                   <span className="shrink-0 text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 mt-0.5">

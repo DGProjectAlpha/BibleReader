@@ -57,7 +57,7 @@ export function App() {
   }, [handleGlobalKeyDown]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
       {/* Main column: header bar + search overlay + multi-pane reading area */}
@@ -66,7 +66,7 @@ export function App() {
         <div className="shrink-0">
           {/* When search is closed, render a minimal header strip with the search button */}
           {!searchOpen ? (
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
               <SearchBar />
               <span className="text-xs text-gray-400 dark:text-gray-600 ml-1">Ctrl+F</span>
               <div className="ml-auto">
@@ -99,7 +99,7 @@ export function App() {
           <button
             onClick={addPane}
             title="Add pane"
-            className="shrink-0 w-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-2xl border-l border-gray-200 dark:border-gray-700"
+            className="shrink-0 w-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors text-2xl border-l border-black/[0.06] dark:border-white/[0.06]"
           >
             +
           </button>

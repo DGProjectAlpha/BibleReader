@@ -20,9 +20,9 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="flex flex-col h-full w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full w-64 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.06]">
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
         <button
           onClick={toggleDarkMode}
@@ -34,7 +34,7 @@ export function Sidebar() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="flex border-b border-black/[0.06] dark:border-white/[0.06] shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}

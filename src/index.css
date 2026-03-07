@@ -2,3 +2,49 @@
 
 /* Tailwind v4: enable class-based dark mode (toggles via .dark on <html>) */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Windows 11 Mica — simulated wallpaper gradient ─────────────────────── */
+/* Light mode: pale blue-lavender wash, similar to Win11 default wallpaper tint */
+body {
+  background: linear-gradient(135deg,
+    #dde8fe 0%,
+    #e9dafe 30%,
+    #d4e4fb 65%,
+    #e2eeff 100%
+  );
+  min-height: 100vh;
+}
+
+/* Dark mode: deep navy-indigo, matches Win11 dark Mica */
+.dark body {
+  background: linear-gradient(135deg,
+    #0b1220 0%,
+    #12102a 30%,
+    #09162a 65%,
+    #0e1222 100%
+  );
+}
+
+/* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.55);
+}
