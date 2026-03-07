@@ -1,0 +1,503 @@
+import { useState } from 'react';
+import { X, FolderOpen, CheckCircle, XCircle, Loader, Globe, AlertTriangle } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
+import { validateBibleJson, previewFromApiBible, fetchFromApiBible } from '../utils/bibleImport';
+import type { ValidationResult } from '../utils/bibleImport';
+import { ErrorBoundary } from './ErrorBoundary';
+
+/** Defer a synchronous callback behind one event-loop tick so React can paint loading states first. */
+function defer<T>(fn: () => T): Promise<T> {
+  return new Promise((resolve, reject) =>
+    setTimeout(() => { try { resolve(fn()); } catch (e) { reject(e); } }, 0)
+  );
+}
+
+const LARGE_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+interface ImportModalProps {
+  onClose: () => void;
+  onImport: (result: ValidationResult, meta: { abbreviation: string; fullName: string; language: string; fileName: string }) => void;
+}
+
+type FilePhase = 'idle' | 'loading' | 'valid' | 'invalid';
+type ApiPhase = 'idle' | 'previewing' | 'preview-ok' | 'preview-err' | 'importing' | 'import-done' | 'import-err';
+
+// ── shared metadata form ──────────────────────────────────────────────────────
+function MetaForm({
+  abbreviation, setAbbreviation,
+  fullName, setFullName,
+  language, setLanguage,
+}: {
+  abbreviation: string; setAbbreviation: (v: string) => void;
+  fullName: string; setFullName: (v: string) => void;
+  language: string; setLanguage: (v: string) => void;
+}) {
+  const inputCls = `px-3 py-1.5 rounded-lg border text-sm
+    bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500
+    text-gray-800 dark:text-gray-100
+    focus:outline-none focus:ring-2 focus:ring-blue-500`;
+  const labelCls = 'text-xs font-medium text-gray-600 dark:text-gray-400';
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-gray-200 dark:border-gray-600 pt-4">
+      <div className="flex flex-col gap-1">
+        <label className={labelCls}>Abbreviation <span className="text-gray-400">(e.g. NASB)</span></label>
+        <input type="text" value={abbreviation}
+          onChange={(e) => setAbbreviation(e.target.value.toUpperCase().slice(0, 12))}
+          placeholder="NASB" className={inputCls} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className={labelCls}>Full Name</label>
+        <input type="text" value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="New American Standard Bible" className={inputCls} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className={labelCls}>Language <span className="text-gray-400">(BCP-47, e.g. en, es, ru)</span></label>
+        <input type="text" value={language}
+          onChange={(e) => setLanguage(e.target.value.slice(0, 10))}
+          placeholder="en" className={`${inputCls} w-32`} />
+      </div>
+    </div>
+  );
+}
+
+export function ImportModal({ onClose, onImport }: ImportModalProps) {
+  const [tab, setTab] = useState<'file' | 'api'>('file');
+
+  // ── File tab state ────────────────────────────────────────────────────────
+  const [filePhase, setFilePhase] = useState<FilePhase>('idle');
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
+  const [fileResult, setFileResult] = useState<ValidationResult | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [fileAbbr, setFileAbbr] = useState('');
+  const [fileFullName, setFileFullName] = useState('');
+  const [fileLang, setFileLang] = useState('en');
+  const [fileLarge, setFileLarge] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<string>('');
+
+  // ── api.bible tab state ───────────────────────────────────────────────────
+  const [apiKey, setApiKey] = useState('');
+  const [bibleId, setBibleId] = useState('');
+  const [apiPhase, setApiPhase] = useState<ApiPhase>('idle');
+  const [apiError, setApiError] = useState('');
+  const [previewVerses, setPreviewVerses] = useState<string[]>([]);
+  const [progressLog, setProgressLog] = useState<string[]>([]);
+  const [apiAbbr, setApiAbbr] = useState('');
+  const [apiFullName, setApiFullName] = useState('');
+  const [apiLang, setApiLang] = useState('en');
+
+  // ── File tab handlers ─────────────────────────────────────────────────────
+  async function handlePickFile() {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'JSON Bible', extensions: ['json'] }],
+    });
+    if (!selected || typeof selected !== 'string') return;
+
+    setFilePhase('loading');
+    setFileErrors([]);
+    setFileResult(null);
+    setFileLarge(false);
+    setLoadingStep('Reading file…');
+
+    try {
+      const raw = await readTextFile(selected);
+      const name = selected.split(/[\\/]/).pop() ?? selected;
+      setFileName(name);
+
+      // Flag large files (>5 MB of text) so the UI can warn the user
+      if (raw.length > LARGE_FILE_BYTES) {
+        setFileLarge(true);
+      }
+
+      // Defer heavy sync work so the loading spinner is visible before we block
+      setLoadingStep('Parsing JSON…');
+      let parsed: unknown;
+      try {
+        parsed = await defer(() => JSON.parse(raw));
+      } catch (e) {
+        setFilePhase('invalid');
+        setFileErrors([`File is not valid JSON: ${e instanceof Error ? e.message : String(e)}`]);
+        setLoadingStep('');
+        return;
+      }
+
+      setLoadingStep('Validating schema…');
+      const result = await defer(() => validateBibleJson(parsed));
+      setLoadingStep('');
+      setFileLarge(false);
+
+      if (result.valid) {
+        setFileResult(result);
+        setFilePhase('valid');
+        const stem = name.replace(/\.json$/i, '').toUpperCase().slice(0, 8);
+        setFileAbbr(stem);
+      } else {
+        setFilePhase('invalid');
+        setFileErrors(result.errors);
+      }
+    } catch (e) {
+      setFilePhase('invalid');
+      setLoadingStep('');
+      setFileLarge(false);
+      setFileErrors([`Failed to read file: ${e instanceof Error ? e.message : String(e)}`]);
+    }
+  }
+
+  function handleFileImport() {
+    if (!fileResult) return;
+    const trimAbbr = fileAbbr.trim();
+    const trimFull = fileFullName.trim();
+    const trimLang = fileLang.trim();
+    if (!trimAbbr || !trimFull || !trimLang) return;
+    onImport(fileResult, { abbreviation: trimAbbr, fullName: trimFull, language: trimLang, fileName });
+  }
+
+  const canFileImport =
+    filePhase === 'valid' &&
+    fileAbbr.trim().length > 0 &&
+    fileFullName.trim().length > 0 &&
+    fileLang.trim().length > 0;
+
+  // ── api.bible tab handlers ────────────────────────────────────────────────
+  async function handlePreview() {
+    const key = apiKey.trim();
+    const id = bibleId.trim();
+    if (!key || !id) return;
+
+    setApiPhase('previewing');
+    setApiError('');
+    setPreviewVerses([]);
+
+    const { verses, error } = await previewFromApiBible(key, id);
+    if (error) {
+      setApiPhase('preview-err');
+      setApiError(error);
+    } else {
+      setPreviewVerses(verses);
+      setApiPhase('preview-ok');
+    }
+  }
+
+  async function handleApiImport() {
+    const key = apiKey.trim();
+    const id = bibleId.trim();
+    const trimAbbr = apiAbbr.trim();
+    const trimFull = apiFullName.trim();
+    const trimLang = apiLang.trim();
+    if (!key || !id || !trimAbbr || !trimFull || !trimLang) return;
+
+    setApiPhase('importing');
+    setProgressLog([]);
+    setApiError('');
+
+    const result = await fetchFromApiBible(key, id, (msg) => {
+      setProgressLog((prev) => [...prev.slice(-49), msg]); // keep last 50 lines
+    });
+
+    if (result.valid) {
+      setApiPhase('import-done');
+      onImport(result, {
+        abbreviation: trimAbbr,
+        fullName: trimFull,
+        language: trimLang,
+        fileName: `${trimAbbr.toLowerCase()}-apibible.json`,
+      });
+    } else {
+      setApiPhase('import-err');
+      setApiError(result.errors.join('\n'));
+    }
+  }
+
+  const canApiImport =
+    apiPhase === 'preview-ok' &&
+    apiAbbr.trim().length > 0 &&
+    apiFullName.trim().length > 0 &&
+    apiLang.trim().length > 0;
+
+  const apiImporting = apiPhase === 'importing';
+
+  // ── Shared footer action ──────────────────────────────────────────────────
+  function handlePrimaryAction() {
+    if (tab === 'file') handleFileImport();
+    else handleApiImport();
+  }
+
+  const primaryDisabled =
+    tab === 'file' ? !canFileImport : (!canApiImport || apiImporting);
+
+  const primaryLabel =
+    tab === 'file'
+      ? 'Import Translation'
+      : apiImporting
+        ? 'Importing…'
+        : 'Import Full Bible';
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  const tabCls = (active: boolean) =>
+    `px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+      active
+        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+    }`;
+
+  const inputCls = `px-3 py-1.5 rounded-lg border text-sm
+    bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500
+    text-gray-800 dark:text-gray-100
+    focus:outline-none focus:ring-2 focus:ring-blue-500`;
+
+  return (
+    <ErrorBoundary label="Import dialog">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-lg mx-4 rounded-xl shadow-2xl border
+        bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600
+        flex flex-col overflow-hidden max-h-[90vh]"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-600 shrink-0">
+          <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+            Import Bible Translation
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-600 shrink-0 px-2">
+          <button className={tabCls(tab === 'file')} onClick={() => setTab('file')}>
+            <span className="flex items-center gap-1.5"><FolderOpen size={13} /> Local File</span>
+          </button>
+          <button className={tabCls(tab === 'api')} onClick={() => setTab('api')}>
+            <span className="flex items-center gap-1.5"><Globe size={13} /> api.bible</span>
+          </button>
+        </div>
+
+        {/* Body — scrollable */}
+        <div className="p-5 flex flex-col gap-4 overflow-y-auto">
+
+          {/* ── LOCAL FILE TAB ── */}
+          {tab === 'file' && (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Select a JSON file in the BibleReader format (book → chapter → verse array).
+              </p>
+              <button
+                onClick={handlePickFile}
+                disabled={filePhase === 'loading'}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors
+                  bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+                  text-white border-transparent self-start"
+              >
+                {filePhase === 'loading'
+                  ? <Loader size={14} className="animate-spin" />
+                  : <FolderOpen size={14} />}
+                {filePhase === 'loading' ? (loadingStep || 'Loading…') : 'Choose File…'}
+              </button>
+
+              {/* Large file warning — shown while loading a big file */}
+              {filePhase === 'loading' && fileLarge && (
+                <div className="flex items-center gap-2 p-2 rounded-lg
+                  bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700"
+                >
+                  <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Large file — this may take a moment, the UI will respond shortly.
+                  </p>
+                </div>
+              )}
+
+              {filePhase === 'valid' && (
+                <div className="flex items-start gap-2 p-3 rounded-lg
+                  bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
+                >
+                  <CheckCircle size={16} className="text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                  <div className="text-sm text-green-800 dark:text-green-300">
+                    <span className="font-medium">{fileName}</span> — schema valid. Fill in the details below.
+                  </div>
+                </div>
+              )}
+
+              {filePhase === 'invalid' && fileErrors.length > 0 && (
+                <div className="flex flex-col gap-2 p-3 rounded-lg
+                  bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                >
+                  <div className="flex items-center gap-2">
+                    <XCircle size={16} className="text-red-600 dark:text-red-400 shrink-0" />
+                    <span className="text-sm font-medium text-red-800 dark:text-red-300">
+                      Validation failed — {fileErrors.length} error{fileErrors.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <ul className="list-disc list-inside text-xs text-red-700 dark:text-red-300 space-y-1 max-h-36 overflow-y-auto">
+                    {fileErrors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {filePhase === 'valid' && (
+                <MetaForm
+                  abbreviation={fileAbbr} setAbbreviation={setFileAbbr}
+                  fullName={fileFullName} setFullName={setFileFullName}
+                  language={fileLang} setLanguage={setFileLang}
+                />
+              )}
+            </>
+          )}
+
+          {/* ── API.BIBLE TAB ── */}
+          {tab === 'api' && (
+            <>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Fetch a translation directly from{' '}
+                <span className="font-medium text-blue-600 dark:text-blue-400">api.bible</span>.
+                You'll need a free API key and a Bible ID from their catalogue.
+              </p>
+
+              {/* Credentials */}
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Paste your api.bible key here"
+                    className={inputCls}
+                    disabled={apiImporting}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Bible ID{' '}
+                    <span className="text-gray-400 font-normal">(e.g. de4e12af7f28f599-02 for KJV)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={bibleId}
+                    onChange={(e) => setBibleId(e.target.value.trim())}
+                    placeholder="de4e12af7f28f599-02"
+                    className={inputCls}
+                    disabled={apiImporting}
+                  />
+                </div>
+
+                <button
+                  onClick={handlePreview}
+                  disabled={!apiKey.trim() || !bibleId.trim() || apiPhase === 'previewing' || apiImporting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors self-start
+                    bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white"
+                >
+                  {apiPhase === 'previewing'
+                    ? <Loader size={14} className="animate-spin" />
+                    : <Globe size={14} />}
+                  {apiPhase === 'previewing' ? 'Fetching preview…' : 'Preview Genesis 1'}
+                </button>
+              </div>
+
+              {/* Preview error */}
+              {apiPhase === 'preview-err' && (
+                <div className="flex items-start gap-2 p-3 rounded-lg
+                  bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                >
+                  <XCircle size={16} className="text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-300 break-all">{apiError}</p>
+                </div>
+              )}
+
+              {/* Preview success */}
+              {(apiPhase === 'preview-ok' || apiPhase === 'importing' || apiPhase === 'import-done') && previewVerses.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={14} className="text-green-600 dark:text-green-400 shrink-0" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                      Connection OK — Genesis 1 preview (first 5 verses):
+                    </span>
+                  </div>
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-600
+                    bg-gray-50 dark:bg-gray-900/40 p-3 text-xs text-gray-700 dark:text-gray-300
+                    space-y-1 max-h-36 overflow-y-auto"
+                  >
+                    {previewVerses.slice(0, 5).map((v, i) => (
+                      <p key={i}><span className="font-medium text-gray-400 mr-1">{i + 1}</span>{v}</p>
+                    ))}
+                    {previewVerses.length > 5 && (
+                      <p className="text-gray-400 italic">…{previewVerses.length - 5} more verses</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata form — shown once preview succeeds */}
+              {(apiPhase === 'preview-ok' || apiPhase === 'importing' || apiPhase === 'import-done') && (
+                <MetaForm
+                  abbreviation={apiAbbr} setAbbreviation={setApiAbbr}
+                  fullName={apiFullName} setFullName={setApiFullName}
+                  language={apiLang} setLanguage={setApiLang}
+                />
+              )}
+
+              {/* Import progress log */}
+              {(apiPhase === 'importing' || apiPhase === 'import-done' || apiPhase === 'import-err') && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-600
+                    bg-gray-50 dark:bg-gray-900/40 p-3 text-xs text-gray-600 dark:text-gray-400
+                    space-y-0.5 max-h-36 overflow-y-auto font-mono"
+                  >
+                    {progressLog.length === 0
+                      ? <span className="text-gray-400">Starting…</span>
+                      : progressLog.map((line, i) => <p key={i}>{line}</p>)
+                    }
+                  </div>
+                </div>
+              )}
+
+              {/* Import error */}
+              {apiPhase === 'import-err' && (
+                <div className="flex items-start gap-2 p-3 rounded-lg
+                  bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700"
+                >
+                  <XCircle size={16} className="text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap">{apiError}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-600 shrink-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors
+              bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200
+              border-gray-300 dark:border-gray-500
+              hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handlePrimaryAction}
+            disabled={primaryDisabled}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+              bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white"
+          >
+            {apiImporting && tab === 'api' && <Loader size={14} className="animate-spin" />}
+            {primaryLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+    </ErrorBoundary>
+  );
+}
