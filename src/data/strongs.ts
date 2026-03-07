@@ -4,8 +4,9 @@
  * Data sourced from strongs-hebrew.json and strongs-greek.json.
  */
 
-import hebrewData from './strongs-hebrew.json';
-import greekData from './strongs-greek.json';
+// ?url imports: Vite serves these as static assets, not bundled JSON.
+import hebrewUrl from './strongs-hebrew.json?url';
+import greekUrl from './strongs-greek.json?url';
 
 export interface StrongsEntry {
   lemma: string;
@@ -19,8 +20,23 @@ export interface StrongsEntry {
 
 type StrongsMap = Record<string, StrongsEntry>;
 
-const hebrew = hebrewData as unknown as StrongsMap;
-const greek = greekData as unknown as StrongsMap;
+let hebrew: StrongsMap = {};
+let greek: StrongsMap = {};
+
+/**
+ * Fetch and cache Strong's Hebrew and Greek data.
+ * Must be awaited before calling lookup() or searchByKjvWord().
+ */
+export async function initStrongs(): Promise<void> {
+  const [hebrewRes, greekRes] = await Promise.all([
+    fetch(hebrewUrl as string),
+    fetch(greekUrl as string),
+  ]);
+  hebrew = (await hebrewRes.json()) as StrongsMap;
+  greek = (await greekRes.json()) as StrongsMap;
+  // Reset reverse index so it gets rebuilt from the newly loaded data
+  _reverseIndex = null;
+}
 
 /**
  * Look up a Strong's number.

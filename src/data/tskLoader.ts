@@ -1,9 +1,18 @@
 // TSK (Treasury of Scripture Knowledge) cross-reference loader
 // Data format: { "Gen.1.1": ["Ps.96.5", ...], ... }
 
-import tskData from './tskCrossRefs.json';
+// ?url import: Vite copies the 7MB file as a static asset instead of bundling it.
+import tskUrl from './tskCrossRefs.json?url';
 
-const TSK = tskData as Record<string, string[]>;
+let TSK: Record<string, string[]> = {};
+
+/**
+ * Fetch and cache TSK data. Must be awaited before calling getTSKRefs().
+ */
+export async function initTsk(): Promise<void> {
+  const res = await fetch(tskUrl as string);
+  TSK = (await res.json()) as Record<string, string[]>;
+}
 
 // Map from canonical app book names → TSK abbreviations
 const BOOK_TO_TSK: Record<string, string> = {

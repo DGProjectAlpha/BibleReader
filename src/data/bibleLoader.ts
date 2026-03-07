@@ -23,6 +23,14 @@ const loaders: Record<Translation, typeof kjv> = {
 };
 
 /**
+ * Initialize all bible translations. Call this once at app startup and await it
+ * before rendering the React tree so all sync loader functions work immediately.
+ */
+export async function initBibleData(): Promise<void> {
+  await Promise.all([kjv.initKjv(), asv.initAsv()]);
+}
+
+/**
  * Get all word-tagged verses for a specific book + chapter.
  */
 export function getChapter(
@@ -59,7 +67,7 @@ export function getBook(
  * Returns the full Bible data array for a translation.
  */
 export function getBible(translation: Translation): BibleBook[] {
-  return loaders[translation].default as BibleBook[];
+  return loaders[translation].getData() as BibleBook[];
 }
 
 /**

@@ -1,4 +1,6 @@
-import asvData from './asv.json';
+// ?url import: Vite copies the file as a static asset and returns its URL.
+// This prevents Vite from parsing/bundling the 25MB JSON during build.
+import asvUrl from './asv.json?url';
 
 /** A single word with its Strong's number(s). */
 export interface WordToken {
@@ -14,21 +16,33 @@ export interface BibleBook {
   chapters: TaggedVerse[][];
 }
 
-const asv = asvData as unknown as BibleBook[];
+let _data: BibleBook[] = [];
+
+/**
+ * Fetch and cache ASV data. Must be awaited before calling any other export.
+ */
+export async function initAsv(): Promise<void> {
+  const res = await fetch(asvUrl as string);
+  _data = (await res.json()) as BibleBook[];
+}
+
+/** Returns the raw bible array (empty until initAsv resolves). */
+export function getData(): BibleBook[] {
+  return _data;
+}
 
 /**
  * Returns all word-tagged verses for a given book and chapter (1-indexed).
  * Returns [] if not found.
  */
 export function getChapter(bookName: string, chapter: number): TaggedVerse[] {
-  const book = asv.find((b) => b.name === bookName);
+  const book = _data.find((b) => b.name === bookName);
   if (!book) return [];
   return book.chapters[chapter - 1] ?? [];
 }
 
 /**
  * Returns plain text verses (word tokens joined) for a given book and chapter.
- * Backward-compatible with consumers that expect string[].
  */
 export function getChapterText(bookName: string, chapter: number): string[] {
   return getChapter(bookName, chapter).map((verse) =>
@@ -40,8 +54,6 @@ export function getChapterText(bookName: string, chapter: number): string[] {
  * Returns all chapter arrays for a book (word-tagged).
  */
 export function getBook(bookName: string): TaggedVerse[][] {
-  const book = asv.find((b) => b.name === bookName);
+  const book = _data.find((b) => b.name === bookName);
   return book ? book.chapters : [];
 }
-
-export default asv;
