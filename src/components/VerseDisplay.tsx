@@ -45,6 +45,9 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const getHighlightForVerse = useBibleStore((s) => s.getHighlightForVerse);
   const getNoteForVerse = useBibleStore((s) => s.getNoteForVerse);
 
+  const scrollToVerse = useBibleStore((s) => s.scrollToVerse);
+  const setScrollToVerse = useBibleStore((s) => s.setScrollToVerse);
+
   const [verses, setVerses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -94,6 +97,17 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       setIsLoading(false);
     }
   }, [selectedBook, selectedChapter, selectedTranslation]);
+
+  // Auto-scroll to target verse after chapter loads
+  useEffect(() => {
+    if (!scrollToVerse || isLoading || verses.length === 0) return;
+    // Only scroll if the active pane matches this pane
+    const el = document.getElementById(`verse-${paneId}-${scrollToVerse}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setScrollToVerse(null);
+    }
+  }, [scrollToVerse, isLoading, verses, paneId, setScrollToVerse]);
 
   const setSelectedTranslation = (t: Translation) =>
     updatePane(id, { selectedTranslation: t });
@@ -167,7 +181,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
               const pickerOpen = openPickerIdx === idx;
               const noteOpen = openNoteIdx === idx;
               return (
-                <div key={idx} className="group flex items-start gap-1">
+                <div key={idx} id={`verse-${paneId}-${idx + 1}`} className="group flex items-start gap-1">
                   {/* Action buttons column */}
                   <div className="mt-0.5 shrink-0 flex flex-col gap-0.5">
                     {/* Bookmark button */}

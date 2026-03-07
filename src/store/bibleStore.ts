@@ -102,12 +102,14 @@ interface BibleStore {
   searchScopeChapter: number;
   searchResults: SearchResult[];
   searchOpen: boolean;
+  scrollToVerse: number | null; // verse number (1-indexed) to scroll to after navigation
   setSearchQuery: (query: string) => void;
   setSearchScope: (scope: SearchScope) => void;
   setSearchScopeBook: (book: string) => void;
   setSearchScopeChapter: (chapter: number) => void;
   setSearchResults: (results: SearchResult[]) => void;
   setSearchOpen: (open: boolean) => void;
+  setScrollToVerse: (verse: number | null) => void;
 }
 
 const DEFAULT_PANE = (): Pane => ({
@@ -307,12 +309,14 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   searchScopeChapter: 1,
   searchResults: [],
   searchOpen: false,
+  scrollToVerse: null,
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchScope: (scope) => set({ searchScope: scope }),
   setSearchScopeBook: (book) => set({ searchScopeBook: book }),
   setSearchScopeChapter: (chapter) => set({ searchScopeChapter: chapter }),
   setSearchResults: (results) => set({ searchResults: results }),
   setSearchOpen: (open) => set({ searchOpen: open }),
+  setScrollToVerse: (verse) => set({ scrollToVerse: verse }),
 }));
 
 // Selector helpers

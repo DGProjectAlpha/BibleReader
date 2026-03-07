@@ -96,6 +96,7 @@ export function SearchResults() {
   const searchQuery = useBibleStore((s) => s.searchQuery);
   const searchOpen = useBibleStore((s) => s.searchOpen);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
+  const setScrollToVerse = useBibleStore((s) => s.setScrollToVerse);
   const activePane = useBibleStore(selectActivePane);
   const updatePane = useBibleStore((s) => s.updatePane);
 
@@ -107,6 +108,7 @@ export function SearchResults() {
       selectedBook: result.book,
       selectedChapter: result.chapter,
     });
+    setScrollToVerse(result.verse);
     setSearchOpen(false);
   };
 
