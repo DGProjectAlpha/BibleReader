@@ -148,11 +148,27 @@ export function StrongsPanel() {
   const strongsWord = useBibleStore((s) => s.strongsWord);
   const strongsResults = useBibleStore((s) => s.strongsResults);
   const setStrongsWord = useBibleStore((s) => s.setStrongsWord);
+  const selectedStrongsNum = useBibleStore((s) => s.selectedStrongsNum);
+  const setStrongsNum = useBibleStore((s) => s.setStrongsNum);
   const [selectedResult, setSelectedResult] = useState<StrongsResult | null>(null);
   const [collapsed, setCollapsed] = useState(false);
 
+  // When a tagged word sets selectedStrongsNum, jump straight to detail view.
+  // strongsResults will have exactly one entry (exact lookup).
+  const hasSelection = !!strongsWord || !!selectedStrongsNum;
+
+  // If we have a num-based selection and results but no detail open yet, auto-open it.
+  if (selectedStrongsNum && strongsResults.length === 1 && selectedResult?.num !== strongsResults[0].num) {
+    setSelectedResult(strongsResults[0]);
+  }
+
   // Reset detail view when word changes
-  const handleClose = () => setSelectedResult(null);
+  const handleClose = () => {
+    setSelectedResult(null);
+    // Clear whichever selection mode is active
+    if (selectedStrongsNum) setStrongsNum(null);
+    if (strongsWord) setStrongsWord(null);
+  };
 
   // Collapsed: narrow vertical strip with toggle button
   if (collapsed) {
@@ -203,9 +219,9 @@ export function StrongsPanel() {
           Strong's
         </span>
         <div className="flex items-center gap-2">
-          {strongsWord && (
+          {hasSelection && (
             <button
-              onClick={() => { setStrongsWord(null); setSelectedResult(null); }}
+              onClick={() => { setStrongsWord(null); setStrongsNum(null); setSelectedResult(null); }}
               className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               title="Clear"
             >
@@ -224,7 +240,7 @@ export function StrongsPanel() {
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        {!strongsWord ? (
+        {!hasSelection ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 text-gray-400 dark:text-gray-500">
             <span className="text-3xl mb-2">📖</span>
             <p className="text-xs leading-relaxed">
@@ -233,13 +249,15 @@ export function StrongsPanel() {
           </div>
         ) : strongsResults.length === 0 ? (
           <div className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500">
-            No Strong's entries found for &ldquo;{strongsWord}&rdquo;.
+            No Strong&rsquo;s entries found for &ldquo;{selectedStrongsNum ?? strongsWord}&rdquo;.
           </div>
         ) : (
           <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
-            <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
-              Results for &ldquo;{strongsWord}&rdquo;
-            </div>
+            {strongsWord && (
+              <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">
+                Results for &ldquo;{strongsWord}&rdquo;
+              </div>
+            )}
             {strongsResults.map((result) => {
               const translit = getTranslit(result.entry);
               const total = totalUsageCount(result.entry.kjv_def ?? '');
