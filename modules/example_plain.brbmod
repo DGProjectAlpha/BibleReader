@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "name": "Example Plain Translation",
+    "abbreviation": "EXP",
+    "language": "en",
+    "format": "plain",
+    "version": 1,
+    "copyright": "Public domain",
+    "notes": "Minimal example showing the plain format. Replace data with real verses."
+  },
+  "data": {
+    "Genesis": {
+      "1": [
+        "In the beginning God created the heaven and the earth.",
+        "And the earth was without form, and void; and darkness was upon the face of the deep."
+      ]
+    },
+    "John": {
+      "3": [
+        "There was a man of the Pharisees, named Nicodemus, a ruler of the Jews.",
+        "The same came to Jesus by night, and said unto him, Rabbi, we know that thou art a teacher come from God."
+      ]
+    }
+  }
+}

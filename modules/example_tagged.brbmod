@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "name": "Example Tagged Translation",
+    "abbreviation": "EXT",
+    "language": "en",
+    "format": "tagged",
+    "version": 1,
+    "copyright": "Public domain",
+    "notes": "Minimal example showing the tagged format. Replace data with real tagged verses."
+  },
+  "data": [
+    {
+      "name": "Genesis",
+      "chapters": [
+        [
+          [
+            { "word": "In",        "strongs": ["H7225"] },
+            { "word": "the",       "strongs": [] },
+            { "word": "beginning", "strongs": ["H7225"] },
+            { "word": "God",       "strongs": ["H430"] },
+            { "word": "created",   "strongs": ["H1254"] },
+            { "word": "the",       "strongs": [] },
+            { "word": "heaven",    "strongs": ["H8064"] },
+            { "word": "and",       "strongs": [] },
+            { "word": "the",       "strongs": [] },
+            { "word": "earth.",    "strongs": ["H776"] }
+          ],
+          [
+            { "word": "And",       "strongs": [] },
+            { "word": "the",       "strongs": [] },
+            { "word": "earth",     "strongs": ["H776"] },
+            { "word": "was",       "strongs": ["H1961"] },
+            { "word": "without",   "strongs": [] },
+            { "word": "form,",     "strongs": ["H8414"] },
+            { "word": "and",       "strongs": [] },
+            { "word": "void;",     "strongs": ["H922"] }
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "John",
+      "chapters": [
+        [],
+        [],
+        [
+          [
+            { "word": "There",    "strongs": [] },
+            { "word": "was",      "strongs": ["G2258"] },
+            { "word": "a",        "strongs": [] },
+            { "word": "man",      "strongs": ["G444"] },
+            { "word": "of",       "strongs": [] },
+            { "word": "the",      "strongs": [] },
+            { "word": "Pharisees,","strongs": ["G5330"] },
+            { "word": "named",    "strongs": ["G3686"] },
+            { "word": "Nicodemus,","strongs": ["G3530"] }
+          ]
+        ]
+      ]
+    }
+  ]
+}
