@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { VerseDisplay } from './components/VerseDisplay';
 import { StrongsPanel } from './components/StrongsPanel';
+import { TskPanel } from './components/TskPanel';
 import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
 import { FontControls } from './components/FontControls';
@@ -109,6 +110,9 @@ export function App() {
 
       {/* Strong's concordance panel — always visible; shows empty-state prompt until a word is clicked */}
       <StrongsPanel />
+
+      {/* TSK cross-reference panel — always visible; shows empty-state prompt until a verse number is clicked */}
+      <TskPanel />
     </div>
   );
 }
