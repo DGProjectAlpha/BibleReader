@@ -60,7 +60,7 @@ export async function deleteNote(key: string): Promise<void> {
 // Highlights
 // ---------------------------------------------------------------------------
 
-export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'orange';
+export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
 
 export async function getHighlights(): Promise<Record<string, HighlightColor>> {
   const store = await getStore();

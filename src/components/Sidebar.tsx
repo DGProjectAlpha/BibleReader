@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import { useBibleStore, selectActivePane } from '../store/bibleStore';
 import { books } from '../data/books';
-import { Moon, Sun } from 'lucide-react';
+import { BookmarkPanel } from './BookmarkPanel';
+import { NotesPanel } from './NotesPanel';
+import { Moon, Sun, BookOpen, Bookmark, FileText } from 'lucide-react';
+
+type SidebarTab = 'nav' | 'bookmarks' | 'notes';
 
 export function Sidebar() {
+  const [activeTab, setActiveTab] = useState<SidebarTab>('nav');
+
   const activePane = useBibleStore(selectActivePane);
   const selectedBook = activePane.selectedBook;
   const selectedChapter = activePane.selectedChapter;
@@ -10,6 +17,14 @@ export function Sidebar() {
   const setSelectedBook = useBibleStore((s) => s.setSelectedBook);
   const setSelectedChapter = useBibleStore((s) => s.setSelectedChapter);
   const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
+  const bookmarkCount = useBibleStore((s) => s.bookmarks.length);
+  const noteCount = useBibleStore((s) => s.notes.length);
+
+  const tabs: { id: SidebarTab; icon: React.ReactNode; label: string; badge?: number }[] = [
+    { id: 'nav',       icon: <BookOpen size={15} />,  label: 'Navigate' },
+    { id: 'bookmarks', icon: <Bookmark size={15} />,  label: 'Bookmarks', badge: bookmarkCount },
+    { id: 'notes',     icon: <FileText size={15} />,  label: 'Notes',     badge: noteCount },
+  ];
 
   return (
     <div className="flex flex-col h-full w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -25,45 +40,79 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Book list */}
-      <div className="flex-1 overflow-y-auto">
-        {books.map(book => (
-          <div key={book.name}>
-            {/* Book button */}
-            <button
-              onClick={() => {
-                setSelectedBook(book.name);
-                setSelectedChapter(1);
-              }}
-              className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors
-                ${selectedBook === book.name
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-            >
-              {book.name}
-            </button>
-
-            {/* Chapter grid — only shown for selected book */}
-            {selectedBook === book.name && (
-              <div className="px-3 pb-2 grid grid-cols-5 gap-1">
-                {Array.from({ length: book.chapters }, (_, i) => i + 1).map(ch => (
-                  <button
-                    key={ch}
-                    onClick={() => setSelectedChapter(ch)}
-                    className={`text-xs py-1 rounded transition-colors
-                      ${selectedChapter === ch
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
-                      }`}
-                  >
-                    {ch}
-                  </button>
-                ))}
-              </div>
+      {/* Tab bar */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors relative
+              ${activeTab === tab.id
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            title={tab.label}
+          >
+            <span className="relative">
+              {tab.icon}
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full bg-blue-500 text-white text-[9px] flex items-center justify-center leading-none">
+                  {tab.badge > 99 ? '99+' : tab.badge}
+                </span>
+              )}
+            </span>
+            <span>{tab.label}</span>
+            {activeTab === tab.id && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t" />
             )}
-          </div>
+          </button>
         ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === 'nav' && (
+          <>
+            {books.map(book => (
+              <div key={book.name}>
+                <button
+                  onClick={() => {
+                    setSelectedBook(book.name);
+                    setSelectedChapter(1);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors
+                    ${selectedBook === book.name
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                >
+                  {book.name}
+                </button>
+
+                {selectedBook === book.name && (
+                  <div className="px-3 pb-2 grid grid-cols-5 gap-1">
+                    {Array.from({ length: book.chapters }, (_, i) => i + 1).map(ch => (
+                      <button
+                        key={ch}
+                        onClick={() => setSelectedChapter(ch)}
+                        className={`text-xs py-1 rounded transition-colors
+                          ${selectedChapter === ch
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                          }`}
+                      >
+                        {ch}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+
+        {activeTab === 'bookmarks' && <BookmarkPanel fullHeight />}
+        {activeTab === 'notes' && <NotesPanel fullHeight />}
       </div>
     </div>
   );

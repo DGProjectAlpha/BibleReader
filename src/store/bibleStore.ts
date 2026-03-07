@@ -5,6 +5,32 @@ import type { StrongsEntry } from '../data/strongs';
 
 export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
 
+export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
+
+export interface VerseKey {
+  book: string;
+  chapter: number;
+  verse: number; // 1-indexed
+}
+
+export interface Note extends VerseKey {
+  id: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Highlight extends VerseKey {
+  id: string;
+  color: HighlightColor;
+}
+
+export interface Bookmark extends VerseKey {
+  id: string;
+  label?: string;
+  createdAt: number;
+}
+
 export interface SearchResult {
   book: string;
   chapter: number;
@@ -49,6 +75,25 @@ interface BibleStore {
   strongsWord: string | null;
   strongsResults: StrongsResult[];
   setStrongsWord: (word: string | null) => void;
+
+  // Notes state
+  notes: Note[];
+  addNote: (key: VerseKey, text: string) => void;
+  updateNote: (id: string, text: string) => void;
+  deleteNote: (id: string) => void;
+  getNoteForVerse: (key: VerseKey) => Note | undefined;
+
+  // Highlights state
+  highlights: Highlight[];
+  addHighlight: (key: VerseKey, color: HighlightColor) => void;
+  removeHighlight: (key: VerseKey) => void;
+  getHighlightForVerse: (key: VerseKey) => Highlight | undefined;
+
+  // Bookmarks state
+  bookmarks: Bookmark[];
+  addBookmark: (key: VerseKey, label?: string) => void;
+  removeBookmark: (key: VerseKey) => void;
+  isBookmarked: (key: VerseKey) => boolean;
 
   // Search state
   searchQuery: string;
@@ -158,6 +203,92 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
+
+  // Notes
+  notes: [],
+  addNote: (key, text) =>
+    set((state) => {
+      const existing = state.notes.find(
+        (n) => n.book === key.book && n.chapter === key.chapter && n.verse === key.verse
+      );
+      if (existing) {
+        // Update in place if note already exists for this verse
+        return {
+          notes: state.notes.map((n) =>
+            n.id === existing.id ? { ...n, text, updatedAt: Date.now() } : n
+          ),
+        };
+      }
+      const note: Note = {
+        id: crypto.randomUUID(),
+        ...key,
+        text,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      return { notes: [...state.notes, note] };
+    }),
+  updateNote: (id, text) =>
+    set((state) => ({
+      notes: state.notes.map((n) =>
+        n.id === id ? { ...n, text, updatedAt: Date.now() } : n
+      ),
+    })),
+  deleteNote: (id) =>
+    set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
+  getNoteForVerse: (key) =>
+    get().notes.find(
+      (n) => n.book === key.book && n.chapter === key.chapter && n.verse === key.verse
+    ),
+
+  // Highlights
+  highlights: [],
+  addHighlight: (key, color) =>
+    set((state) => {
+      // Replace existing highlight for same verse if any
+      const filtered = state.highlights.filter(
+        (h) => !(h.book === key.book && h.chapter === key.chapter && h.verse === key.verse)
+      );
+      const highlight: Highlight = { id: crypto.randomUUID(), ...key, color };
+      return { highlights: [...filtered, highlight] };
+    }),
+  removeHighlight: (key) =>
+    set((state) => ({
+      highlights: state.highlights.filter(
+        (h) => !(h.book === key.book && h.chapter === key.chapter && h.verse === key.verse)
+      ),
+    })),
+  getHighlightForVerse: (key) =>
+    get().highlights.find(
+      (h) => h.book === key.book && h.chapter === key.chapter && h.verse === key.verse
+    ),
+
+  // Bookmarks
+  bookmarks: [],
+  addBookmark: (key, label) =>
+    set((state) => {
+      const exists = state.bookmarks.some(
+        (b) => b.book === key.book && b.chapter === key.chapter && b.verse === key.verse
+      );
+      if (exists) return state;
+      const bookmark: Bookmark = {
+        id: crypto.randomUUID(),
+        ...key,
+        label,
+        createdAt: Date.now(),
+      };
+      return { bookmarks: [...state.bookmarks, bookmark] };
+    }),
+  removeBookmark: (key) =>
+    set((state) => ({
+      bookmarks: state.bookmarks.filter(
+        (b) => !(b.book === key.book && b.chapter === key.chapter && b.verse === key.verse)
+      ),
+    })),
+  isBookmarked: (key) =>
+    get().bookmarks.some(
+      (b) => b.book === key.book && b.chapter === key.chapter && b.verse === key.verse
+    ),
 
   strongsWord: null,
   strongsResults: [],
