@@ -47,8 +47,8 @@ function EntryDetail({ result, onClose }: EntryDetailProps) {
   const { num, entry } = result;
   const translit = getTranslit(entry);
   const lang = isHebrew(num) ? 'Hebrew' : 'Greek';
-  const usageItems = parseUsage(entry.kjv_def);
-  const total = totalUsageCount(entry.kjv_def);
+  const usageItems = parseUsage(entry.kjv_def ?? '');
+  const total = totalUsageCount(entry.kjv_def ?? '');
 
   return (
     <div className="flex flex-col h-full">
@@ -199,7 +199,7 @@ export function StrongsPanel() {
             </div>
             {strongsResults.map((result) => {
               const translit = getTranslit(result.entry);
-              const total = totalUsageCount(result.entry.kjv_def);
+              const total = totalUsageCount(result.entry.kjv_def ?? '');
               return (
                 <button
                   key={result.num}
