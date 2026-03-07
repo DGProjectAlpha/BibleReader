@@ -5,8 +5,12 @@ import { StrongsPanel } from './components/StrongsPanel';
 import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
 import { useBibleStore } from './store/bibleStore';
+import { usePersistStore } from './hooks/usePersistStore';
 
 export function App() {
+  // Load persisted state on mount; sync changes back to disk
+  usePersistStore();
+
   const darkMode = useBibleStore((s) => s.darkMode);
   const panes = useBibleStore((s) => s.panes);
   const activePaneIndex = useBibleStore((s) => s.activePaneIndex);

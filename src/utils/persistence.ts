@@ -99,13 +99,15 @@ export async function getBookmarks(): Promise<BookmarkEntry[]> {
   return (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
 }
 
-export async function addBookmark(entry: Omit<BookmarkEntry, 'id' | 'createdAt'>): Promise<BookmarkEntry> {
+export async function addBookmark(
+  entry: Omit<BookmarkEntry, 'id' | 'createdAt'> & { id?: string; createdAt?: number }
+): Promise<BookmarkEntry> {
   const store = await getStore();
   const bookmarks = (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
   const newEntry: BookmarkEntry = {
     ...entry,
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
+    id: entry.id ?? crypto.randomUUID(),
+    createdAt: entry.createdAt ?? Date.now(),
   };
   bookmarks.push(newEntry);
   await store.set('bookmarks', bookmarks);
@@ -126,4 +128,28 @@ export async function updateBookmarkLabel(id: string, label: string): Promise<vo
     bookmarks[idx] = { ...bookmarks[idx], label };
     await store.set('bookmarks', bookmarks);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Preferences (darkMode, syncScroll)
+// ---------------------------------------------------------------------------
+
+export async function getDarkMode(): Promise<boolean | null> {
+  const store = await getStore();
+  return (await store.get<boolean>('darkMode')) ?? null;
+}
+
+export async function setDarkMode(value: boolean): Promise<void> {
+  const store = await getStore();
+  await store.set('darkMode', value);
+}
+
+export async function getSyncScroll(): Promise<boolean | null> {
+  const store = await getStore();
+  return (await store.get<boolean>('syncScroll')) ?? null;
+}
+
+export async function setSyncScroll(value: boolean): Promise<void> {
+  const store = await getStore();
+  await store.set('syncScroll', value);
 }
