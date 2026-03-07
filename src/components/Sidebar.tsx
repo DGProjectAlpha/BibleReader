@@ -1,27 +1,20 @@
 import { useState } from 'react';
-import { useBibleStore, selectActivePane } from '../store/bibleStore';
-import { books } from '../data/books';
+import { useBibleStore } from '../store/bibleStore';
 import { BookmarkPanel } from './BookmarkPanel';
 import { NotesPanel } from './NotesPanel';
-import { Moon, Sun, BookOpen, Bookmark, FileText } from 'lucide-react';
+import { Moon, Sun, Bookmark, FileText } from 'lucide-react';
 
-type SidebarTab = 'nav' | 'bookmarks' | 'notes';
+type SidebarTab = 'bookmarks' | 'notes';
 
 export function Sidebar() {
-  const [activeTab, setActiveTab] = useState<SidebarTab>('nav');
+  const [activeTab, setActiveTab] = useState<SidebarTab>('bookmarks');
 
-  const activePane = useBibleStore(selectActivePane);
-  const selectedBook = activePane.selectedBook;
-  const selectedChapter = activePane.selectedChapter;
   const darkMode = useBibleStore((s) => s.darkMode);
-  const setSelectedBook = useBibleStore((s) => s.setSelectedBook);
-  const setSelectedChapter = useBibleStore((s) => s.setSelectedChapter);
   const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
   const bookmarkCount = useBibleStore((s) => s.bookmarks.length);
   const noteCount = useBibleStore((s) => s.notes.length);
 
   const tabs: { id: SidebarTab; icon: React.ReactNode; label: string; badge?: number }[] = [
-    { id: 'nav',       icon: <BookOpen size={15} />,  label: 'Navigate' },
     { id: 'bookmarks', icon: <Bookmark size={15} />,  label: 'Bookmarks', badge: bookmarkCount },
     { id: 'notes',     icon: <FileText size={15} />,  label: 'Notes',     badge: noteCount },
   ];
@@ -71,48 +64,6 @@ export function Sidebar() {
 
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'nav' && (
-          <div className="p-3 flex flex-col gap-3">
-            {/* Book dropdown */}
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
-                Book
-              </label>
-              <select
-                value={selectedBook}
-                onChange={(e) => {
-                  setSelectedBook(e.target.value);
-                  setSelectedChapter(1);
-                }}
-                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {books.map(book => (
-                  <option key={book.name} value={book.name}>{book.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Chapter dropdown */}
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
-                Chapter
-              </label>
-              <select
-                value={selectedChapter}
-                onChange={(e) => setSelectedChapter(Number(e.target.value))}
-                className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {Array.from(
-                  { length: books.find(b => b.name === selectedBook)?.chapters ?? 1 },
-                  (_, i) => i + 1
-                ).map(ch => (
-                  <option key={ch} value={ch}>Chapter {ch}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'bookmarks' && <BookmarkPanel fullHeight />}
         {activeTab === 'notes' && <NotesPanel fullHeight />}
       </div>
