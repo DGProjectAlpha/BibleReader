@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useBibleStore } from '../store/bibleStore';
 import { BookmarkPanel } from './BookmarkPanel';
 import { NotesPanel } from './NotesPanel';
-import { Moon, Sun, Bookmark, FileText } from 'lucide-react';
+import { Moon, Sun, Bookmark, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type SidebarTab = 'bookmarks' | 'notes';
 
 export function Sidebar() {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bookmarks');
+  const [collapsed, setCollapsed] = useState(false);
 
   const darkMode = useBibleStore((s) => s.darkMode);
   const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
@@ -19,18 +20,51 @@ export function Sidebar() {
     { id: 'notes',     icon: <FileText size={15} />,  label: 'Notes',     badge: noteCount },
   ];
 
+  // Collapsed: show a narrow strip with vertical label + expand button
+  if (collapsed) {
+    return (
+      <div className="flex flex-col h-full w-9 shrink-0 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)] items-center py-2 gap-2">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+          title="Expand panel"
+        >
+          <ChevronRight size={16} />
+        </button>
+        <span
+          className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 tracking-widest cursor-pointer select-none"
+          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
+          onClick={() => setCollapsed(false)}
+          title="Expand panel"
+        >
+          {activeTab === 'bookmarks' ? 'BOOKMARKS' : 'NOTES'}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-full w-64 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
+    <div className="flex flex-col h-full w-64 shrink-0 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.06]">
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
-        <button
-          onClick={toggleDarkMode}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
-          aria-label="Toggle dark mode"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleDarkMode}
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+            aria-label="Collapse panel"
+            title="Collapse panel"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Tab bar */}
