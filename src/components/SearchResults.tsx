@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import { ArrowLeftRight } from 'lucide-react';
 import { useBibleStore, selectActivePane, MAX_PANES } from '../store/bibleStore';
 import type { SearchResult } from '../store/bibleStore';
 import { getChapter } from '../data/bibleLoader';
@@ -101,9 +102,10 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
         {multiPane && (
           <button
             onClick={onSyncAll}
-            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-sm transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md ring-1 ring-indigo-500/50 transition-colors"
           >
-            Sync all panes to here
+            <ArrowLeftRight size={12} strokeWidth={2.5} />
+            Sync all panes
           </button>
         )}
         {canAddPane && (
