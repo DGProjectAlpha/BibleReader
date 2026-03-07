@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Settings } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { Theme } from '../store/bibleStore';
@@ -26,11 +26,19 @@ export function SettingsPanel() {
   const setTheme = useBibleStore((s) => s.setTheme);
 
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const panelRef  = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  const updatePos = useCallback(() => {
+    if (!buttonRef.current) return;
+    const r = buttonRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 6, left: r.left });
+  }, []);
+
   useEffect(() => {
     if (!open) return;
+    updatePos();
     const handler = (e: MouseEvent) => {
       if (
         panelRef.current  && !panelRef.current.contains(e.target as Node) &&
@@ -41,7 +49,7 @@ export function SettingsPanel() {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [open, updatePos]);
 
   // When the user picks a theme variant we preserve their current light/dark mode
   // and only swap the variant within that mode.
@@ -74,7 +82,8 @@ export function SettingsPanel() {
       {open && (
         <div
           ref={panelRef}
-          className="absolute left-0 top-full mt-1.5 z-50 w-56 rounded-lg shadow-xl border p-3 space-y-3
+          style={{ top: pos.top, left: pos.left }}
+          className="fixed z-[9999] w-56 rounded-lg shadow-xl border p-3 space-y-3
             bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600"
         >
           {/* Active mode variants */}
