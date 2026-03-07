@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
-import { getChapter, TRANSLATIONS } from '../data/bibleLoader';
+import { getChapter, BUILTIN_TRANSLATIONS } from '../data/bibleLoader';
 import type { Translation, TaggedVerse } from '../data/bibleLoader';
 import { NoteEditor } from './NoteEditor';
 import { books } from '../data/books';
@@ -46,6 +46,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const getNoteForVerse = useBibleStore((s) => s.getNoteForVerse);
 
   const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
+  const customTranslations = useBibleStore((s) => s.customTranslations);
 
   const [verses, setVerses] = useState<TaggedVerse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,9 +166,20 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
             onClick={(e) => e.stopPropagation()}
             className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
-            {TRANSLATIONS.map((t: Translation) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+            <optgroup label="Built-in">
+              {BUILTIN_TRANSLATIONS.map((t: Translation) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </optgroup>
+            {customTranslations.length > 0 && (
+              <optgroup label="Imported">
+                {customTranslations.map((ct) => (
+                  <option key={ct.id} value={ct.abbreviation}>
+                    {ct.abbreviation}{ct.fullName ? ` — ${ct.fullName}` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
 
           {canRemove && (

@@ -34,6 +34,17 @@ export interface Bookmark extends VerseKey {
   createdAt: number;
 }
 
+// Metadata for a user-imported bible translation.
+// The actual verse data is stored separately (as a JSON file in the Tauri app data dir).
+export interface CustomTranslationMeta {
+  id: string;           // unique, e.g. crypto.randomUUID()
+  abbreviation: string; // short label shown in pane header, e.g. "NASB"
+  fullName: string;     // e.g. "New American Standard Bible"
+  language: string;     // BCP-47 language tag, e.g. "en", "es", "ru"
+  fileName: string;     // name of the JSON file stored in app data dir
+  importedAt: number;   // Date.now()
+}
+
 export interface SearchResult {
   book: string;
   chapter: number;
@@ -118,6 +129,11 @@ interface BibleStore {
   fontFamily: string;
   setFontSize: (size: number) => void;
   setFontFamily: (family: string) => void;
+
+  // Custom (user-imported) translations
+  customTranslations: CustomTranslationMeta[];
+  addCustomTranslation: (meta: CustomTranslationMeta) => void;
+  removeCustomTranslation: (id: string) => void;
 
   // Search state
   searchQuery: string;
@@ -390,6 +406,17 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   tskVerse: null,
   setTskVerse: (key) => set({ tskVerse: key }),
+
+  // Custom translations
+  customTranslations: [],
+  addCustomTranslation: (meta) =>
+    set((state) => ({
+      customTranslations: [...state.customTranslations, meta],
+    })),
+  removeCustomTranslation: (id) =>
+    set((state) => ({
+      customTranslations: state.customTranslations.filter((t) => t.id !== id),
+    })),
 
   searchQuery: '',
   searchScope: 'bible',

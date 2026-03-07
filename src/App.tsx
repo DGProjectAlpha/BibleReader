@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { VerseDisplay } from './components/VerseDisplay';
 import { StrongsPanel } from './components/StrongsPanel';
@@ -7,12 +7,61 @@ import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
 import { FontControls } from './components/FontControls';
 import { FONT_FAMILIES } from './components/FontControls';
+import { ImportModal } from './components/ImportModal';
 import { useBibleStore, MAX_PANES } from './store/bibleStore';
+import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
+import { registerCustomTranslation } from './data/bibleLoader';
+import type { BibleData } from './data/bibleLoader';
+import type { ValidationResult } from './utils/bibleImport';
+import { saveCustomBibleData, saveCustomTranslation } from './utils/persistence';
 
 export function App() {
   // Load persisted state on mount; sync changes back to disk
   usePersistStore();
+
+  const [importOpen, setImportOpen] = useState(false);
+  const addCustomTranslation = useBibleStore((s) => s.addCustomTranslation);
+
+  /**
+   * Called by ImportModal when the user confirms an import.
+   * 1. Builds CustomTranslationMeta with a fresh UUID.
+   * 2. Saves the bible verse data to the Tauri store.
+   * 3. Saves metadata to the Tauri store.
+   * 4. Registers the translation in bibleLoader so panes can load it immediately.
+   * 5. Pushes metadata into the Zustand store (updates the UI translation list).
+   */
+  const handleImport = useCallback(async (
+    result: ValidationResult,
+    userMeta: { abbreviation: string; fullName: string; language: string; fileName: string }
+  ) => {
+    const id = crypto.randomUUID();
+    const meta: CustomTranslationMeta = {
+      id,
+      abbreviation: userMeta.abbreviation,
+      fullName: userMeta.fullName,
+      language: userMeta.language,
+      fileName: userMeta.fileName,
+      importedAt: Date.now(),
+    };
+
+    try {
+      // Persist verse data and metadata to Tauri store
+      await saveCustomBibleData(id, result.data);
+      await saveCustomTranslation(meta);
+    } catch (err) {
+      // Running outside Tauri (browser dev) — persistence unavailable; still register in memory
+      console.debug('[handleImport] persistence unavailable:', err);
+    }
+
+    // Register in bibleLoader so panes can use it this session
+    registerCustomTranslation(meta.abbreviation, result.data as BibleData);
+
+    // Update Zustand — triggers UI update (translation picker in pane headers)
+    addCustomTranslation(meta);
+
+    setImportOpen(false);
+  }, [addCustomTranslation]);
 
   const darkMode = useBibleStore((s) => s.darkMode);
   const fontSize = useBibleStore((s) => s.fontSize);
@@ -59,7 +108,14 @@ export function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar onOpenImport={() => setImportOpen(true)} />
+
+      {importOpen && (
+        <ImportModal
+          onClose={() => setImportOpen(false)}
+          onImport={handleImport}
+        />
+      )}
 
       {/* Main column: header bar + search overlay + multi-pane reading area */}
       <div className="relative flex flex-col flex-1 overflow-hidden">

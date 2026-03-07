@@ -19,6 +19,8 @@ import {
   getSyncScroll,
   getFontSize,
   getFontFamily,
+  getCustomTranslations,
+  getCustomBibleData,
   setNote,
   deleteNote,
   setHighlight,
@@ -31,13 +33,15 @@ import {
   setFontFamily,
   verseKey,
 } from '../utils/persistence';
+import { registerCustomTranslation } from '../data/bibleLoader';
+import type { BibleData } from '../data/bibleLoader';
 
 export function usePersistStore() {
   // ── Load persisted state on mount ──────────────────────────────────────────
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, customTranslationsMeta] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
@@ -45,6 +49,7 @@ export function usePersistStore() {
           getSyncScroll(),
           getFontSize(),
           getFontFamily(),
+          getCustomTranslations(),
         ]);
 
         // Record<verseKey, text>  →  Note[]
@@ -83,6 +88,23 @@ export function usePersistStore() {
           createdAt: b.createdAt,
         }));
 
+        // Re-register any previously imported custom translations in bibleLoader
+        // so they are available in panes immediately on startup.
+        if (customTranslationsMeta.length > 0) {
+          await Promise.all(
+            customTranslationsMeta.map(async (meta) => {
+              try {
+                const data = await getCustomBibleData(meta.id);
+                if (data) {
+                  registerCustomTranslation(meta.abbreviation, data as BibleData);
+                }
+              } catch {
+                // Ignore missing data for a single translation
+              }
+            })
+          );
+        }
+
         // Hydrate store — only override if there's actually data to restore
         useBibleStore.setState((state) => ({
           notes: notes.length > 0 ? notes : state.notes,
@@ -92,6 +114,7 @@ export function usePersistStore() {
           syncScroll: syncScroll !== null ? syncScroll : state.syncScroll,
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
+          customTranslations: customTranslationsMeta.length > 0 ? customTranslationsMeta : state.customTranslations,
         }));
       } catch (err) {
         // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.

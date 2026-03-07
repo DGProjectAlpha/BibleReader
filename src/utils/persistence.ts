@@ -173,3 +173,54 @@ export async function setFontFamily(value: string): Promise<void> {
   const store = await getStore();
   await store.set('fontFamily', value);
 }
+
+// ---------------------------------------------------------------------------
+// Custom translations metadata
+// ---------------------------------------------------------------------------
+
+export interface CustomTranslationMeta {
+  id: string;
+  abbreviation: string;
+  fullName: string;
+  language: string;
+  fileName: string;
+  importedAt: number;
+}
+
+export async function getCustomTranslations(): Promise<CustomTranslationMeta[]> {
+  const store = await getStore();
+  return (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
+}
+
+export async function saveCustomTranslation(meta: CustomTranslationMeta): Promise<void> {
+  const store = await getStore();
+  const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
+  const filtered = existing.filter((t) => t.id !== meta.id);
+  await store.set('customTranslations', [...filtered, meta]);
+}
+
+export async function deleteCustomTranslation(id: string): Promise<void> {
+  const store = await getStore();
+  const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
+  await store.set('customTranslations', existing.filter((t) => t.id !== id));
+}
+
+// ---------------------------------------------------------------------------
+// Custom translation bible data (verse content)
+// Stored per-translation under key "custom_bible_<id>" to keep files small.
+// ---------------------------------------------------------------------------
+
+export async function saveCustomBibleData(id: string, data: unknown): Promise<void> {
+  const store = await getStore();
+  await store.set(`custom_bible_${id}`, data);
+}
+
+export async function getCustomBibleData(id: string): Promise<unknown> {
+  const store = await getStore();
+  return store.get(`custom_bible_${id}`);
+}
+
+export async function deleteCustomBibleData(id: string): Promise<void> {
+  const store = await getStore();
+  await store.delete(`custom_bible_${id}`);
+}
