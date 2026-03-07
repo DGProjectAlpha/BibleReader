@@ -52,8 +52,6 @@ export function SettingsPanel() {
     setTheme(t);
   }
 
-  const activeThemes  = darkMode ? DARK_THEMES  : LIGHT_THEMES;
-  const inactiveThemes = darkMode ? LIGHT_THEMES : DARK_THEMES;
   const activeLabel   = darkMode ? 'Dark mode'  : 'Light mode';
   const inactiveLabel = darkMode ? 'Light mode' : 'Dark mode';
 
