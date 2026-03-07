@@ -149,34 +149,77 @@ export function StrongsPanel() {
   const strongsResults = useBibleStore((s) => s.strongsResults);
   const setStrongsWord = useBibleStore((s) => s.setStrongsWord);
   const [selectedResult, setSelectedResult] = useState<StrongsResult | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   // Reset detail view when word changes
   const handleClose = () => setSelectedResult(null);
 
+  // Collapsed: narrow vertical strip with toggle button
+  if (collapsed) {
+    return (
+      <div className="w-9 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center h-full">
+        <button
+          onClick={() => setCollapsed(false)}
+          title="Expand Strong's panel"
+          className="w-full flex items-center justify-center py-3 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors border-b border-black/[0.06] dark:border-white/[0.06]"
+        >
+          ‹
+        </button>
+        <div className="flex-1 flex items-center justify-center">
+          <span
+            className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 select-none"
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+          >
+            Strong's
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (selectedResult) {
     return (
       <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
+        {/* Collapse button row */}
+        <div className="flex items-center justify-end px-2 pt-1">
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Collapse Strong's panel"
+            className="text-xs text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 px-1 py-0.5 transition-colors"
+          >
+            ›
+          </button>
+        </div>
         <EntryDetail result={selectedResult} onClose={handleClose} />
       </div>
     );
   }
 
   return (
-    <div className="w-64 shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col h-full text-sm">
+    <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
       {/* Panel header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Strong's
         </span>
-        {strongsWord && (
+        <div className="flex items-center gap-2">
+          {strongsWord && (
+            <button
+              onClick={() => { setStrongsWord(null); setSelectedResult(null); }}
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              title="Clear"
+            >
+              ✕
+            </button>
+          )}
           <button
-            onClick={() => { setStrongsWord(null); setSelectedResult(null); }}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            title="Clear"
+            onClick={() => setCollapsed(true)}
+            title="Collapse Strong's panel"
+            className="text-sm text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
           >
-            ✕
+            ›
           </button>
-        )}
+        </div>
       </div>
 
       {/* Body */}
