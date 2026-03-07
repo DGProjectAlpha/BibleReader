@@ -134,19 +134,16 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           </h2>
 
           <div className="flex items-center gap-2 shrink-0 ml-3">
-            {TRANSLATIONS.map((t: Translation) => (
-              <button
-                key={t}
-                onClick={(e) => { e.stopPropagation(); setSelectedTranslation(t); }}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  selectedTranslation === t
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+            <select
+              value={selectedTranslation}
+              onChange={(e) => { e.stopPropagation(); setSelectedTranslation(e.target.value as Translation); }}
+              onClick={(e) => e.stopPropagation()}
+              className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              {TRANSLATIONS.map((t: Translation) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
 
             {canRemove && (
               <button
