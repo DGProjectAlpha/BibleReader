@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBibleStore } from '../store/bibleStore';
 import { getTranslit, isHebrew } from '../data/strongs';
 import type { StrongsResult } from '../store/bibleStore';
@@ -153,14 +153,23 @@ export function StrongsPanel() {
   const [selectedResult, setSelectedResult] = useState<StrongsResult | null>(null);
   const [collapsed, setCollapsed] = useState(false);
 
-  // When a tagged word sets selectedStrongsNum, jump straight to detail view.
-  // strongsResults will have exactly one entry (exact lookup).
-  const hasSelection = !!strongsWord || !!selectedStrongsNum;
+  // Unified gate value: exact num takes priority, falls back to fuzzy word.
+  const activeSelection = selectedStrongsNum ?? strongsWord;
+  const hasSelection = !!activeSelection;
 
-  // If we have a num-based selection and results but no detail open yet, auto-open it.
-  if (selectedStrongsNum && strongsResults.length === 1 && selectedResult?.num !== strongsResults[0].num) {
-    setSelectedResult(strongsResults[0]);
-  }
+  // When a num-based click arrives with exactly one result, auto-open the detail view.
+  useEffect(() => {
+    if (selectedStrongsNum && strongsResults.length === 1) {
+      setSelectedResult(strongsResults[0]);
+    }
+  }, [selectedStrongsNum, strongsResults]);
+
+  // Reset detail view when the selection clears.
+  useEffect(() => {
+    if (!activeSelection) {
+      setSelectedResult(null);
+    }
+  }, [activeSelection]);
 
   // Reset detail view when word changes
   const handleClose = () => {
@@ -249,7 +258,7 @@ export function StrongsPanel() {
           </div>
         ) : strongsResults.length === 0 ? (
           <div className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500">
-            No Strong&rsquo;s entries found for &ldquo;{selectedStrongsNum ?? strongsWord}&rdquo;.
+            No Strong&rsquo;s entries found for &ldquo;{activeSelection}&rdquo;.
           </div>
         ) : (
           <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
