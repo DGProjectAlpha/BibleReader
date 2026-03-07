@@ -1,6 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { VerseDisplay } from './components/VerseDisplay';
+import { StrongsPanel } from './components/StrongsPanel';
+import { SearchBar } from './components/SearchBar';
+import { SearchResults } from './components/SearchResults';
 import { useBibleStore } from './store/bibleStore';
 
 export function App() {
@@ -10,6 +13,8 @@ export function App() {
   const addPane = useBibleStore((s) => s.addPane);
   const removePane = useBibleStore((s) => s.removePane);
   const setActivePaneIndex = useBibleStore((s) => s.setActivePaneIndex);
+  const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
+  const searchOpen = useBibleStore((s) => s.searchOpen);
 
   // Sync dark mode to <html> class for Tailwind's dark: variant
   useEffect(() => {
@@ -20,9 +25,43 @@ export function App() {
     }
   }, [darkMode]);
 
+  // Ctrl+F / Cmd+F opens search
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      setSearchOpen(true);
+    }
+    if (e.key === 'Escape' && searchOpen) {
+      setSearchOpen(false);
+    }
+  }, [searchOpen, setSearchOpen]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
       <Sidebar />
+
+      {/* Main column: header bar + search overlay + multi-pane reading area */}
+      <div className="relative flex flex-col flex-1 overflow-hidden">
+        {/* Top header bar — always visible, contains the search button/bar */}
+        <div className="shrink-0">
+          {/* When search is closed, render a minimal header strip with the search button */}
+          {!searchOpen ? (
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <SearchBar />
+              <span className="text-xs text-gray-400 dark:text-gray-600 ml-1">Ctrl+F</span>
+            </div>
+          ) : (
+            <SearchBar />
+          )}
+        </div>
+
+        {/* Search results — renders between header and panes when open */}
+        <SearchResults />
 
       {/* Multi-pane reading area */}
       <div className="flex flex-1 overflow-hidden">
@@ -46,6 +85,10 @@ export function App() {
           +
         </button>
       </div>
+      </div>
+
+      {/* Strong's concordance panel — always visible; shows empty-state prompt until a word is clicked */}
+      <StrongsPanel />
     </div>
   );
 }

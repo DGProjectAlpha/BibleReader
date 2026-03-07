@@ -17,6 +17,7 @@ interface VerseDisplayProps {
 export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove }: VerseDisplayProps) {
   const pane = useBibleStore((s) => s.panes.find((p) => p.id === paneId));
   const updatePane = useBibleStore((s) => s.updatePane);
+  const setStrongsWord = useBibleStore((s) => s.setStrongsWord);
 
   const [verses, setVerses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,6 +125,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                   text={verseText}
                   onRefHover={(ref, anchor) => setHoveredRef({ ref, anchor })}
                   onRefLeave={() => setHoveredRef(null)}
+                  onWordClick={(word) => setStrongsWord(word)}
                 />
               </p>
             ))}
@@ -141,7 +143,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
         )}
 
         {/* Empty state */}
-        {!isLoading && !loadError && verses.length === 0 && !selectedBook && (
+        {!isLoading && !loadError && verses.length === 0 && (
           <div className="text-gray-400 dark:text-gray-500 italic">
             Select a book and chapter from the sidebar to start reading.
           </div>

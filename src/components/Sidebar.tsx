@@ -1,9 +1,15 @@
-import { useBibleStore } from '../store/bibleStore';
+import { useBibleStore, selectActivePane } from '../store/bibleStore';
 import { books } from '../data/books';
 import { Moon, Sun } from 'lucide-react';
 
 export function Sidebar() {
-  const { selectedBook, selectedChapter, darkMode, setSelectedBook, setSelectedChapter, toggleDarkMode } = useBibleStore();
+  const activePane = useBibleStore(selectActivePane);
+  const selectedBook = activePane.selectedBook;
+  const selectedChapter = activePane.selectedChapter;
+  const darkMode = useBibleStore((s) => s.darkMode);
+  const setSelectedBook = useBibleStore((s) => s.setSelectedBook);
+  const setSelectedChapter = useBibleStore((s) => s.setSelectedChapter);
+  const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
 
   return (
     <div className="flex flex-col h-full w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">

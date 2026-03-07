@@ -1,5 +1,21 @@
 import { create } from 'zustand';
 import type { Translation } from '../data/bibleLoader';
+import { searchByKjvWord } from '../data/strongs';
+import type { StrongsEntry } from '../data/strongs';
+
+export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
+
+export interface SearchResult {
+  book: string;
+  chapter: number;
+  verse: number; // 1-indexed
+  text: string;
+}
+
+export interface StrongsResult {
+  num: string;
+  entry: StrongsEntry;
+}
 
 export interface Pane {
   id: string;
@@ -28,6 +44,25 @@ interface BibleStore {
 
   toggleDarkMode: () => void;
   toggleSyncScroll: () => void;
+
+  // Strong's concordance state
+  strongsWord: string | null;
+  strongsResults: StrongsResult[];
+  setStrongsWord: (word: string | null) => void;
+
+  // Search state
+  searchQuery: string;
+  searchScope: SearchScope;
+  searchScopeBook: string;
+  searchScopeChapter: number;
+  searchResults: SearchResult[];
+  searchOpen: boolean;
+  setSearchQuery: (query: string) => void;
+  setSearchScope: (scope: SearchScope) => void;
+  setSearchScopeBook: (book: string) => void;
+  setSearchScopeChapter: (chapter: number) => void;
+  setSearchResults: (results: SearchResult[]) => void;
+  setSearchOpen: (open: boolean) => void;
 }
 
 const DEFAULT_PANE = (): Pane => ({
@@ -123,6 +158,30 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
+
+  strongsWord: null,
+  strongsResults: [],
+  setStrongsWord: (word) => {
+    if (!word) {
+      set({ strongsWord: null, strongsResults: [] });
+      return;
+    }
+    const results = searchByKjvWord(word);
+    set({ strongsWord: word, strongsResults: results });
+  },
+
+  searchQuery: '',
+  searchScope: 'bible',
+  searchScopeBook: 'Genesis',
+  searchScopeChapter: 1,
+  searchResults: [],
+  searchOpen: false,
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSearchScope: (scope) => set({ searchScope: scope }),
+  setSearchScopeBook: (book) => set({ searchScopeBook: book }),
+  setSearchScopeChapter: (chapter) => set({ searchScopeChapter: chapter }),
+  setSearchResults: (results) => set({ searchResults: results }),
+  setSearchOpen: (open) => set({ searchOpen: open }),
 }));
 
 // Selector helpers
