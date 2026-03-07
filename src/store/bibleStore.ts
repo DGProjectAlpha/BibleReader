@@ -62,6 +62,7 @@ interface BibleStore {
   removePane: (id: string) => void;
   setActivePaneIndex: (index: number) => void;
   updatePane: (id: string, updates: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter' | 'selectedTranslation'>>) => void;
+  navigateAllPanes: (book: string, chapter: number) => void;
 
   // Convenience setters that target the active pane
   setSelectedBook: (book: string) => void;
@@ -154,6 +155,11 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
     }),
 
   setActivePaneIndex: (index) => set({ activePaneIndex: index }),
+
+  navigateAllPanes: (book, chapter) =>
+    set((state) => ({
+      panes: state.panes.map((p) => ({ ...p, selectedBook: book, selectedChapter: chapter })),
+    })),
 
   updatePane: (id, updates) =>
     set((state) => {
