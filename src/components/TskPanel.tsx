@@ -29,7 +29,7 @@ export function TskPanel() {
   // Collapsed strip
   if (collapsed) {
     return (
-      <div className="w-9 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center justify-start pt-2 h-full">
+      <div className="w-9 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center justify-start pt-2 h-full">
         <button
           onClick={() => setCollapsed(false)}
           title="Expand cross-references panel"
@@ -38,7 +38,7 @@ export function TskPanel() {
           ‹
         </button>
         <span
-          className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 select-none"
+          className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400 select-none"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
         >
           TSK Refs
@@ -48,10 +48,10 @@ export function TskPanel() {
   }
 
   return (
-    <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
+    <div className="w-64 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10]">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
           Cross-References
         </span>
         <div className="flex items-center gap-2">
@@ -89,10 +89,10 @@ export function TskPanel() {
           </div>
         ) : (
           <div>
-            <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-black/[0.10] dark:border-white/[0.10]">
               {tskVerse.book} {tskVerse.chapter}:{tskVerse.verse} — {refs.length} reference{refs.length !== 1 ? 's' : ''}
             </div>
-            <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+            <div className="divide-y divide-black/[0.08] dark:divide-white/[0.08]">
               {refs.map((ref, i) => (
                 <button
                   key={i}

@@ -30,7 +30,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
   // Collapsed: show a narrow strip with vertical label + expand button
   if (collapsed) {
     return (
-      <div className="flex flex-col h-full w-9 shrink-0 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)] items-center py-2 gap-2">
+      <div className="flex flex-col h-full w-9 shrink-0 border-r border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)] items-center py-2 gap-2">
         <button
           onClick={() => setCollapsed(false)}
           className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
@@ -39,7 +39,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
           <ChevronRight size={16} />
         </button>
         <span
-          className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 tracking-widest cursor-pointer select-none"
+          className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 tracking-widest cursor-pointer select-none"
           style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
           onClick={() => setCollapsed(false)}
           title="Expand panel"
@@ -51,9 +51,9 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
   }
 
   return (
-    <div className="flex flex-col h-full w-64 shrink-0 border-r border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
+    <div className="flex flex-col h-full w-64 shrink-0 border-r border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.06]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.10] dark:border-white/[0.10]">
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
         <div className="flex items-center gap-1">
           {onOpenImport && (
@@ -85,7 +85,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-black/[0.06] dark:border-white/[0.06] shrink-0">
+      <div className="flex border-b border-black/[0.10] dark:border-white/[0.10] shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -93,7 +93,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
             className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors relative
               ${activeTab === tab.id
                 ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
             title={tab.label}
           >

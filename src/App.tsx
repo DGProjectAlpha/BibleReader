@@ -123,9 +123,9 @@ export function App() {
         <div className="relative z-10 shrink-0">
           {/* When search is closed, render a minimal header strip with the search button */}
           {!searchOpen ? (
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
               <SearchBar />
-              <span className="text-xs text-gray-400 dark:text-gray-600 ml-1">Ctrl+F</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">Ctrl+F</span>
               <div className="ml-auto">
                 <FontControls />
               </div>
@@ -156,7 +156,7 @@ export function App() {
           <button
             onClick={addPane}
             title="Add pane"
-            className="shrink-0 w-10 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors text-2xl border-l border-black/[0.06] dark:border-white/[0.06]"
+            className="shrink-0 w-10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors text-2xl border-l border-black/[0.10] dark:border-white/[0.10]"
           >
             +
           </button>

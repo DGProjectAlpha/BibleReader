@@ -94,14 +94,14 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10]">
         <button
           onClick={onClose}
           className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
         >
           ← Back
         </button>
-        <span className="text-xs text-gray-400 dark:text-gray-500">{lang}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{lang}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
@@ -130,7 +130,7 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
 
         {/* Definition */}
         <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
             Definition
           </h4>
           <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -141,7 +141,7 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
         {/* Derivation */}
         {entry.derivation && (
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
               Derivation
             </h4>
             <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -152,10 +152,10 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
 
         {/* KJV Usage */}
         <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
             KJV Usage
             {total !== null && (
-              <span className="ml-2 normal-case font-normal text-gray-400 dark:text-gray-500">
+              <span className="ml-2 normal-case font-normal text-gray-500 dark:text-gray-400">
                 ({total} occurrence{total !== 1 ? 's' : ''})
               </span>
             )}
@@ -182,10 +182,10 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
         </div>
 
         {/* Verses using this word */}
-        <div className="border-t border-black/[0.06] dark:border-white/[0.06] pt-3">
+        <div className="border-t border-black/[0.10] dark:border-white/[0.10] pt-3">
           <button
             onClick={handleToggleVerses}
-            className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
           >
             <span>Verses using this word</span>
             <span className="normal-case font-normal tracking-normal select-none">
@@ -338,7 +338,7 @@ function InlineDetail({ result, onViewFull }: InlineDetailProps) {
       {/* Definition */}
       {entry.strongs_def && (
         <div>
-          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-0.5">
+          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">
             Definition
           </h5>
           <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -350,7 +350,7 @@ function InlineDetail({ result, onViewFull }: InlineDetailProps) {
       {/* Derivation */}
       {entry.derivation && (
         <div>
-          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-0.5">
+          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">
             Derivation
           </h5>
           <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -362,7 +362,7 @@ function InlineDetail({ result, onViewFull }: InlineDetailProps) {
       {/* KJV Usage pills */}
       {usageItems.length > 0 && (
         <div>
-          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
+          <h5 className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
             KJV Usage
             {total !== null && (
               <span className="ml-1.5 normal-case font-normal">({total}×)</span>
@@ -436,7 +436,7 @@ export function StrongsPanel() {
   // Collapsed: narrow vertical strip with toggle button
   if (collapsed) {
     return (
-      <div className="w-9 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center h-full">
+      <div className="w-9 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center h-full">
         <button
           onClick={() => setCollapsed(false)}
           title="Expand Strong's panel"
@@ -446,7 +446,7 @@ export function StrongsPanel() {
         </button>
         <div className="flex-1 flex items-center justify-center">
           <span
-            className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 select-none"
+            className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400 select-none"
             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
           >
             Strong's
@@ -458,7 +458,7 @@ export function StrongsPanel() {
 
   if (effectiveResult) {
     return (
-      <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
+      <div className="w-64 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
         {/* Collapse button row */}
         <div className="flex items-center justify-end px-2 pt-1">
           <button
@@ -475,10 +475,10 @@ export function StrongsPanel() {
   }
 
   return (
-    <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
+    <div className="w-64 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
       {/* Panel header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.06] dark:border-white/[0.06]">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10]">
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
           Strong's
         </span>
         <div className="flex items-center gap-2">
@@ -538,7 +538,7 @@ export function StrongsPanel() {
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                     Similar
                   </span>
-                  <div className="flex-1 h-px bg-black/[0.07] dark:bg-white/[0.07]" />
+                  <div className="flex-1 h-px bg-black/[0.12] dark:bg-white/[0.12]" />
                 </div>
                 <div>
                   {strongsLookup.similar.map((result) => {

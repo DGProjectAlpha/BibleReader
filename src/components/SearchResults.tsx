@@ -52,7 +52,7 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
   const nextVerse = getContextVerse(result.book, result.chapter, verseIndex + 1, translation);
 
   return (
-    <div className="border-b border-gray-100 dark:border-gray-800 group">
+    <div className="border-b border-gray-200 dark:border-gray-700 group">
       {/* Main clickable area */}
       <button
         onClick={onClick}
@@ -70,8 +70,8 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
 
         {/* Previous verse context */}
         {prevVerse && (
-          <p className="text-xs text-gray-400 dark:text-gray-600 mb-1 leading-relaxed">
-            <span className="font-medium text-gray-300 dark:text-gray-700 mr-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 leading-relaxed">
+            <span className="font-medium text-gray-400 dark:text-gray-500 mr-1">
               {result.verse - 1}
             </span>
             {prevVerse}
@@ -88,8 +88,8 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
 
         {/* Next verse context */}
         {nextVerse && (
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1 leading-relaxed">
-            <span className="font-medium text-gray-300 dark:text-gray-700 mr-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+            <span className="font-medium text-gray-400 dark:text-gray-500 mr-1">
               {result.verse + 1}
             </span>
             {nextVerse}
@@ -200,10 +200,10 @@ export function SearchResults() {
       style={{ height: panelHeight }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-850 shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850 shrink-0">
         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
           {label} for <span className="text-blue-600 dark:text-blue-400 font-semibold">"{searchQuery}"</span>
-          <span className="ml-2 text-gray-400 dark:text-gray-600">— click any result to navigate</span>
+          <span className="ml-2 text-gray-400 dark:text-gray-500">— click any result to navigate</span>
         </span>
         <button
           onClick={() => setSearchOpen(false)}

@@ -118,12 +118,12 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       className={`flex flex-col flex-1 min-w-0 border-r last:border-r-0 transition-colors
         ${isActive
           ? 'border-blue-400/60 dark:border-blue-500/50'
-          : 'border-black/[0.06] dark:border-white/[0.06]'}
+          : 'border-black/[0.10] dark:border-white/[0.10]'}
         bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl text-gray-900 dark:text-gray-100`}
     >
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b
-        border-black/[0.06] dark:border-white/[0.06] bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg shadow-[0_1px_8px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_8px_rgba(0,0,0,0.2)] gap-2">
+        border-black/[0.10] dark:border-white/[0.10] bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg shadow-[0_1px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_8px_rgba(0,0,0,0.25)] gap-2">
 
         {/* Per-pane book + chapter navigation */}
         <div className="flex items-center gap-2 min-w-0">
@@ -247,7 +247,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       className={`p-0.5 rounded transition-colors
                         ${bookmarked
                           ? 'text-blue-500 dark:text-blue-400'
-                          : 'text-transparent group-hover:text-gray-300 dark:group-hover:text-gray-600 hover:!text-blue-400'}
+                          : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-blue-400'}
                       `}
                     >
                       <Bookmark size={13} fill={bookmarked ? 'currentColor' : 'none'} strokeWidth={2} />
@@ -264,7 +264,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                         className={`p-0.5 rounded transition-colors
                           ${highlight
                             ? 'text-amber-500 dark:text-amber-400'
-                            : 'text-transparent group-hover:text-gray-300 dark:group-hover:text-gray-600 hover:!text-amber-400'}
+                            : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-amber-400'}
                         `}
                       >
                         <Highlighter size={13} strokeWidth={2} />
@@ -274,7 +274,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       {pickerOpen && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute left-full top-0 ml-1 z-50 flex items-center gap-1 p-1.5 rounded-lg shadow-lg border border-black/[0.08] dark:border-white/[0.10]
+                          className="absolute left-full top-0 ml-1 z-50 flex items-center gap-1 p-1.5 rounded-lg shadow-lg border border-black/[0.14] dark:border-white/[0.15]
                             bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl"
                         >
                           {HIGHLIGHT_COLORS.map(({ color, bg, label }) => (
@@ -318,7 +318,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                       className={`p-0.5 rounded transition-colors
                         ${note
                           ? 'text-emerald-500 dark:text-emerald-400'
-                          : 'text-transparent group-hover:text-gray-300 dark:group-hover:text-gray-600 hover:!text-emerald-400'}
+                          : 'text-transparent group-hover:text-gray-400 dark:group-hover:text-gray-500 hover:!text-emerald-400'}
                       `}
                     >
                       <NotebookPen size={13} strokeWidth={2} />

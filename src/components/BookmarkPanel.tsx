@@ -25,7 +25,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
   const listContent = (
     <>
       {sorted.length === 0 ? (
-        <p className="px-4 py-3 text-xs text-gray-400 dark:text-gray-600 italic">
+        <p className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 italic">
           No bookmarks yet. Click the ribbon icon on any verse to add one.
         </p>
       ) : (
@@ -83,7 +83,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
       >
         <Bookmark size={13} />
         <span className="flex-1 text-left">Bookmarks</span>
-        <span className="text-gray-400 dark:text-gray-600 font-normal normal-case tracking-normal">
+        <span className="text-gray-500 dark:text-gray-400 font-normal normal-case tracking-normal">
           {sorted.length}
         </span>
         {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}

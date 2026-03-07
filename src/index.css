@@ -28,7 +28,7 @@ body {
 /* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.50) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -41,10 +41,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
+  background: rgba(128, 128, 128, 0.45);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.55);
+  background: rgba(128, 128, 128, 0.70);
 }

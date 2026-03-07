@@ -106,7 +106,7 @@ export function SearchBar() {
       <button
         onClick={() => setSearchOpen(true)}
         title="Search Bible (Ctrl+F)"
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
       >
         <Search size={14} />
         <span>Search</span>
@@ -115,7 +115,7 @@ export function SearchBar() {
   }
 
   return (
-    <div className="flex flex-col bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-600">
       {/* Search input row */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Search size={16} className="text-gray-400 shrink-0" />

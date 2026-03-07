@@ -25,7 +25,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
   const listContent = (
     <>
       {sorted.length === 0 ? (
-        <p className="px-4 py-3 text-xs text-gray-400 dark:text-gray-600 italic">
+        <p className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 italic">
           No notes yet. Click the note icon on any verse to add one.
         </p>
       ) : (
@@ -76,7 +76,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
       >
         <FileText size={13} />
         <span className="flex-1 text-left">Notes</span>
-        <span className="text-gray-400 dark:text-gray-600 font-normal normal-case tracking-normal">
+        <span className="text-gray-500 dark:text-gray-400 font-normal normal-case tracking-normal">
           {sorted.length}
         </span>
         {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
