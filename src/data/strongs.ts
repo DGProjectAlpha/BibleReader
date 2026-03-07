@@ -12,8 +12,8 @@ export interface StrongsEntry {
   xlit?: string;      // transliteration (Hebrew)
   translit?: string;  // transliteration (Greek)
   pron?: string;      // pronunciation
-  derivation: string;
-  strongs_def: string;
+  derivation?: string;
+  strongs_def?: string;
   kjv_def: string;
 }
 
@@ -65,10 +65,10 @@ let _reverseIndex: Map<string, string[]> | null = null;
 function buildReverseIndex(): Map<string, string[]> {
   const index = new Map<string, string[]>();
 
-  const addEntries = (map: StrongsMap, prefix: string) => {
+  const addEntries = (map: StrongsMap) => {
     for (const [num, entry] of Object.entries(map)) {
       // Parse words from kjv_def and strongs_def; deduplicate per entry
-      const text = `${entry.kjv_def} ${entry.strongs_def}`;
+      const text = `${entry.kjv_def} ${entry.strongs_def ?? ''}`;
       const uniqueKeys = new Set(
         text
           .toLowerCase()
@@ -89,8 +89,8 @@ function buildReverseIndex(): Map<string, string[]> {
     }
   };
 
-  addEntries(hebrew as StrongsMap, 'H');
-  addEntries(greek as StrongsMap, 'G');
+  addEntries(hebrew as StrongsMap);
+  addEntries(greek as StrongsMap);
   return index;
 }
 

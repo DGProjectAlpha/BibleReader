@@ -23,7 +23,7 @@ let _store: Store | null = null;
 
 async function getStore(): Promise<Store> {
   if (!_store) {
-    _store = await load(STORE_FILE, { autoSave: true });
+    _store = await load(STORE_FILE, { autoSave: true, defaults: {} });
   }
   return _store;
 }
