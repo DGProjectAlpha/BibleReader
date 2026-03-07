@@ -55,7 +55,8 @@ export function searchBible(query: string, options: SearchOptions): SearchResult
       const chapterNum = chapterOffset + ci + 1; // 1-indexed
 
       for (let vi = 0; vi < chapterVerses.length; vi++) {
-        const text = chapterVerses[vi];
+        const tagged = chapterVerses[vi];
+        const text = tagged.map((t) => t.word).join(' ');
         if (text.toLowerCase().includes(needle)) {
           results.push({
             book: bookName,
