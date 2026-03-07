@@ -9,12 +9,11 @@ import * as asv from './asvLoader';
 
 export type Translation = 'KJV' | 'ASV';
 
-/** A single verse — plain text string. */
-export type Verse = string;
+export type { WordToken, TaggedVerse } from './kjvLoader';
 
 export interface BibleBook {
   name: string;
-  chapters: string[][];
+  chapters: import('./kjvLoader').TaggedVerse[][];
 }
 
 // Map translation keys to their loaded data modules
@@ -24,23 +23,35 @@ const loaders: Record<Translation, typeof kjv> = {
 };
 
 /**
- * Get all verses for a specific book + chapter.
- * @param translation - 'KJV' or 'ASV'
- * @param bookName    - Full book name, e.g. 'Genesis'
- * @param chapter     - 1-indexed chapter number
- * @returns Array of verse strings, or [] if not found
+ * Get all word-tagged verses for a specific book + chapter.
  */
-export function getChapter(translation: Translation, bookName: string, chapter: number): string[] {
+export function getChapter(
+  translation: Translation,
+  bookName: string,
+  chapter: number
+): import('./kjvLoader').TaggedVerse[] {
   return loaders[translation].getChapter(bookName, chapter);
 }
 
 /**
- * Get all chapters for a book (array of verse arrays).
- * @param translation - 'KJV' or 'ASV'
- * @param bookName    - Full book name, e.g. 'Genesis'
- * @returns Array of chapters, each being an array of verse strings
+ * Get plain text verses for a specific book + chapter.
+ * Use this for search, display fallback, or components not yet updated for word tokens.
  */
-export function getBook(translation: Translation, bookName: string): string[][] {
+export function getChapterText(
+  translation: Translation,
+  bookName: string,
+  chapter: number
+): string[] {
+  return loaders[translation].getChapterText(bookName, chapter);
+}
+
+/**
+ * Get all chapters for a book (word-tagged).
+ */
+export function getBook(
+  translation: Translation,
+  bookName: string
+): import('./kjvLoader').TaggedVerse[][] {
   return loaders[translation].getBook(bookName);
 }
 
@@ -53,7 +64,6 @@ export function getBible(translation: Translation): BibleBook[] {
 
 /**
  * Returns total chapter count for a book in a given translation.
- * Useful for dynamic chapter navigation without depending on books.ts.
  */
 export function getChapterCount(translation: Translation, bookName: string): number {
   return loaders[translation].getBook(bookName).length;

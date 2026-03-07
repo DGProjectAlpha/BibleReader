@@ -1,28 +1,45 @@
 import kjvData from './kjv.json';
 
+/** A single word with its Strong's number(s). */
+export interface WordToken {
+  word: string;
+  strongs: string[];
+}
+
+/** A verse is an array of word tokens. */
+export type TaggedVerse = WordToken[];
+
 export interface BibleBook {
   name: string;
-  chapters: string[][];
+  chapters: TaggedVerse[][];
 }
 
-// kjv.json is typed as an array of {name, chapters}
-const kjv = kjvData as BibleBook[];
+const kjv = kjvData as unknown as BibleBook[];
 
 /**
- * Returns all verses for a given book and chapter (1-indexed).
+ * Returns all word-tagged verses for a given book and chapter (1-indexed).
  * Returns [] if not found.
  */
-export function getChapter(bookName: string, chapter: number): string[] {
+export function getChapter(bookName: string, chapter: number): TaggedVerse[] {
   const book = kjv.find((b) => b.name === bookName);
   if (!book) return [];
-  const ch = book.chapters[chapter - 1];
-  return ch ?? [];
+  return book.chapters[chapter - 1] ?? [];
 }
 
 /**
- * Returns all chapter arrays for a book.
+ * Returns plain text verses (word tokens joined) for a given book and chapter.
+ * Backward-compatible with consumers that expect string[].
  */
-export function getBook(bookName: string): string[][] {
+export function getChapterText(bookName: string, chapter: number): string[] {
+  return getChapter(bookName, chapter).map((verse) =>
+    verse.map((t) => t.word).join(' ')
+  );
+}
+
+/**
+ * Returns all chapter arrays for a book (word-tagged).
+ */
+export function getBook(bookName: string): TaggedVerse[][] {
   const book = kjv.find((b) => b.name === bookName);
   return book ? book.chapters : [];
 }

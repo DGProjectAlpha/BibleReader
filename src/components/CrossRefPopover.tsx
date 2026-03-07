@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { getChapter } from '../data/bibleLoader';
+import { getChapterText } from '../data/bibleLoader';
 import type { Translation } from '../data/bibleLoader';
 import type { RefSegment } from '../utils/crossRefs';
 import { useBibleStore } from '../store/bibleStore';
@@ -44,7 +44,7 @@ export function CrossRefPopover({ refSeg, anchor, translation, onClose }: CrossR
     setError(false);
 
     try {
-      const verses = getChapter(translation, refSeg.book, refSeg.chapter);
+      const verses = getChapterText(translation, refSeg.book, refSeg.chapter);
       const verse = verses[refSeg.verse - 1]; // verse is 1-indexed
       if (verse) {
         setVerseText(verse);

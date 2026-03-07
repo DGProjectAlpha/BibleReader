@@ -3,10 +3,7 @@ import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off } from 'lucide-r
 import { useBibleStore } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
 import { getChapter, TRANSLATIONS } from '../data/bibleLoader';
-import type { Translation } from '../data/bibleLoader';
-import { VerseText } from './VerseText';
-import { CrossRefPopover } from './CrossRefPopover';
-import type { RefSegment } from '../utils/crossRefs';
+import type { Translation, TaggedVerse } from '../data/bibleLoader';
 import { NoteEditor } from './NoteEditor';
 import { books } from '../data/books';
 
@@ -38,7 +35,8 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const pane = useBibleStore((s) => s.panes.find((p) => p.id === paneId));
   const updatePane = useBibleStore((s) => s.updatePane);
   const togglePaneSync = useBibleStore((s) => s.togglePaneSync);
-  const setStrongsWord = useBibleStore((s) => s.setStrongsWord);
+  const setStrongsNum = useBibleStore((s) => s.setStrongsNum);
+  const setTskVerse = useBibleStore((s) => s.setTskVerse);
   const addBookmark = useBibleStore((s) => s.addBookmark);
   const removeBookmark = useBibleStore((s) => s.removeBookmark);
   const isBookmarked = useBibleStore((s) => s.isBookmarked);
@@ -49,10 +47,9 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
 
   const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
 
-  const [verses, setVerses] = useState<string[]>([]);
+  const [verses, setVerses] = useState<TaggedVerse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [hoveredRef, setHoveredRef] = useState<{ ref: RefSegment; anchor: HTMLElement } | null>(null);
   // Index (0-based) of the verse whose highlight picker is open, or null
   const [openPickerIdx, setOpenPickerIdx] = useState<number | null>(null);
   // Index (0-based) of the verse whose note editor is open, or null
@@ -321,22 +318,36 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                     className={`flex-1 px-1 rounded transition-colors ${highlight ? HIGHLIGHT_BG[highlight.color] : ''}`}
                     style={{ fontSize: 'var(--bible-font-size)', fontFamily: 'var(--bible-font-family)' }}
                   >
-                    <span className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-2 select-none">
+                    {/* Verse number — click to view TSK cross-references */}
+                    <span
+                      className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-1.5 select-none cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                      title="View cross-references for this verse"
+                      onClick={(e) => { e.stopPropagation(); setTskVerse(verseKey); }}
+                    >
                       {idx + 1}
                     </span>
-                    <VerseText
-                      text={verseText}
-                      onRefHover={(ref, anchor) => setHoveredRef({ ref, anchor })}
-                      onRefLeave={() => setHoveredRef(null)}
-                      onWordClick={(word) => setStrongsWord(word)}
-                    />
+                    {/* Word tokens — each word carrying its Strong's number(s) */}
+                    {verseText.map((tok, j) => (
+                      tok.strongs.length > 0 ? (
+                        <span
+                          key={j}
+                          onClick={(e) => { e.stopPropagation(); setStrongsNum(tok.strongs[0]); }}
+                          title={tok.strongs.join(' ')}
+                          className="cursor-pointer rounded px-px hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors"
+                        >
+                          {tok.word}
+                        </span>
+                      ) : (
+                        <span key={j}>{tok.word}</span>
+                      )
+                    ))}
                   </p>
 
                   {/* Note editor modal */}
                   {noteOpen && (
                     <NoteEditor
                       verseKey={verseKey}
-                      verseText={verseText}
+                      verseText={verseText.map((t) => t.word).join(' ')}
                       onClose={() => setOpenNoteIdx(null)}
                     />
                   )}
@@ -344,16 +355,6 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
               );
             })}
           </div>
-        )}
-
-        {/* Cross-reference popover */}
-        {hoveredRef && (
-          <CrossRefPopover
-            refSeg={hoveredRef.ref}
-            anchor={hoveredRef.anchor}
-            translation={selectedTranslation}
-            onClose={() => setHoveredRef(null)}
-          />
         )}
 
         {/* Empty state */}

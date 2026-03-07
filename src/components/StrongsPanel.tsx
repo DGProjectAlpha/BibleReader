@@ -157,19 +157,18 @@ export function StrongsPanel() {
   const activeSelection = selectedStrongsNum ?? strongsWord;
   const hasSelection = !!activeSelection;
 
-  // When a num-based click arrives with exactly one result, auto-open the detail view.
-  useEffect(() => {
-    if (selectedStrongsNum && strongsResults.length === 1) {
-      setSelectedResult(strongsResults[0]);
-    }
-  }, [selectedStrongsNum, strongsResults]);
-
   // Reset detail view when the selection clears.
   useEffect(() => {
     if (!activeSelection) {
       setSelectedResult(null);
     }
   }, [activeSelection]);
+
+  // Derive the active entry synchronously: explicit user selection, or auto-select
+  // when a Strong's number click yields exactly one result (skip the list view).
+  const effectiveResult =
+    selectedResult ??
+    (selectedStrongsNum && strongsResults.length === 1 ? strongsResults[0] : null);
 
   // Reset detail view when word changes
   const handleClose = () => {
@@ -202,7 +201,7 @@ export function StrongsPanel() {
     );
   }
 
-  if (selectedResult) {
+  if (effectiveResult) {
     return (
       <div className="w-64 shrink-0 border-l border-black/[0.07] dark:border-white/[0.07] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
         {/* Collapse button row */}
@@ -215,7 +214,7 @@ export function StrongsPanel() {
             ›
           </button>
         </div>
-        <EntryDetail result={selectedResult} onClose={handleClose} />
+        <EntryDetail result={effectiveResult} onClose={handleClose} />
       </div>
     );
   }

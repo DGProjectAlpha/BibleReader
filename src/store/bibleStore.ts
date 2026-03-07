@@ -1,7 +1,10 @@
 import { create } from 'zustand';
-import type { Translation } from '../data/bibleLoader';
-import { searchByKjvWord } from '../data/strongs';
+import type { Translation, WordToken, TaggedVerse } from '../data/bibleLoader';
+import { searchByKjvWord, lookup } from '../data/strongs';
 import type { StrongsEntry } from '../data/strongs';
+
+// Re-export verse data types so components only need one import point
+export type { WordToken, TaggedVerse };
 
 export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
 
@@ -79,6 +82,13 @@ interface BibleStore {
   strongsWord: string | null;
   strongsResults: StrongsResult[];
   setStrongsWord: (word: string | null) => void;
+  // Exact Strong's number lookup (set when user clicks a tagged word)
+  selectedStrongsNum: string | null;
+  setStrongsNum: (num: string | null) => void;
+
+  // TSK cross-reference panel state
+  tskVerse: VerseKey | null;
+  setTskVerse: (key: VerseKey | null) => void;
 
   // Notes state
   notes: Note[];
@@ -347,6 +357,21 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
     const results = searchByKjvWord(word);
     set({ strongsWord: word, strongsResults: results });
   },
+
+  selectedStrongsNum: null,
+  setStrongsNum: (num) => {
+    if (!num) {
+      set({ selectedStrongsNum: null, strongsResults: [] });
+      return;
+    }
+    // Exact lookup by Strong's number — no fuzzy matching needed
+    const entry = lookup(num);
+    const results: StrongsResult[] = entry ? [{ num, entry }] : [];
+    set({ selectedStrongsNum: num, strongsResults: results });
+  },
+
+  tskVerse: null,
+  setTskVerse: (key) => set({ tskVerse: key }),
 
   searchQuery: '',
   searchScope: 'bible',
