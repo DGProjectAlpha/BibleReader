@@ -91,7 +91,6 @@ interface BibleStore {
 
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  toggleDarkMode: () => void;
   toggleSyncScroll: () => void;
 
   // Strong's concordance state
@@ -305,16 +304,6 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       theme,
       darkMode: theme === 'dark-blue' || theme === 'dark-oled',
     }),
-  toggleDarkMode: () =>
-    set((state) => {
-      const next = !state.darkMode;
-      // When toggling, preserve the current variant within that mode
-      const nextTheme: Theme =
-        next
-          ? state.theme === 'dark-oled' ? 'dark-oled' : 'dark-blue'
-          : state.theme === 'light-warm' ? 'light-warm' : 'light-cool';
-      return { darkMode: next, theme: nextTheme };
-    }),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
   setFontSize: (size) => set({ fontSize: size }),
   setFontFamily: (family) => set({ fontFamily: family }),
@@ -458,6 +447,9 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       } else if (data != null) {
         const bookCount = Object.keys(data).length;
         console.log(`[bibleStore] addCustomTranslation: registering plain "${meta.abbreviation}" — ${bookCount} books`);
+        // INSTRUMENTATION: log full shape of data before passing to registerCustomTranslation
+        console.log(`[bibleStore] data typeof: ${typeof data}`);
+        console.log(`[bibleStore] data top-level keys (first 5):`, Object.keys(data).slice(0, 5));
         if (bookCount === 0) {
           console.warn(`[bibleStore] addCustomTranslation: "${meta.abbreviation}" has 0 books — verse display will be empty`);
         }

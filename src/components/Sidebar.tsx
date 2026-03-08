@@ -3,7 +3,7 @@ import { useBibleStore } from '../store/bibleStore';
 import { BookmarkPanel } from './BookmarkPanel';
 import { NotesPanel } from './NotesPanel';
 import { ManageTranslationsPanel } from './ManageTranslationsPanel';
-import { Moon, Sun, Bookmark, FileText, ChevronLeft, ChevronRight, Upload, Languages } from 'lucide-react';
+import { Bookmark, FileText, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 
 type SidebarTab = 'bookmarks' | 'notes' | 'translations';
@@ -16,8 +16,6 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bookmarks');
   const [collapsed, setCollapsed] = useState(false);
 
-  const darkMode = useBibleStore((s) => s.darkMode);
-  const toggleDarkMode = useBibleStore((s) => s.toggleDarkMode);
   const bookmarkCount = useBibleStore((s) => s.bookmarks.length);
   const noteCount = useBibleStore((s) => s.notes.length);
   const translationCount = useBibleStore((s) => s.customTranslations.length);
@@ -57,24 +55,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.10] dark:border-white/[0.10]">
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
         <div className="flex items-center gap-1">
-          {onOpenImport && (
-            <button
-              onClick={onOpenImport}
-              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
-              aria-label="Import Bible translation"
-              title="Import Bible translation"
-            >
-              <Upload size={16} />
-            </button>
-          )}
-          <SettingsPanel />
-          <button
-            onClick={toggleDarkMode}
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <SettingsPanel onOpenImport={onOpenImport} />
           <button
             onClick={() => setCollapsed(true)}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
