@@ -452,6 +452,18 @@ export function registerTaggedTranslation(
   // BibleBookTagged and BibleBook are structurally identical, but normalise book names
   // in case the tagged module uses variant names (e.g. from api.bible).
   const books: BibleBook[] = data.map((bookEntry) => {
+    // If the module embeds a pre-resolved English canonical name (e.g. RST brbmod adds
+    // nameEn: "Genesis" via the build script), use it directly to skip alias lookup entirely.
+    const nameEn = (bookEntry as Record<string, unknown>)['nameEn'];
+    if (typeof nameEn === 'string') {
+      const directMatch = canonicalBooks.find((b) => b.name === nameEn);
+      if (directMatch) {
+        if (directMatch.name !== bookEntry.name) {
+          console.log(`[bibleLoader] tagged book "${bookEntry.name}" resolved via nameEn → "${directMatch.name}"`);
+        }
+        return { name: directMatch.name, chapters: bookEntry.chapters };
+      }
+    }
     const canonicalName = normalizeBookName(bookEntry.name, warnings);
     if (canonicalName !== bookEntry.name) {
       console.log(`[bibleLoader] normalised tagged book name: "${bookEntry.name}" → "${canonicalName}"`);
