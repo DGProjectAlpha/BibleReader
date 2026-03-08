@@ -104,6 +104,7 @@ export function usePersistStore() {
             language: mod.meta.language,
             fileName: `${mod.meta.abbreviation}.brbmod`,
             importedAt: 0,
+            ...(mod.meta.bookNames && Object.keys(mod.meta.bookNames).length > 0 ? { bookNames: mod.meta.bookNames } : {}),
           };
           if (isBrbModTagged(mod)) {
             addCustomTranslation(meta, null, mod.data);

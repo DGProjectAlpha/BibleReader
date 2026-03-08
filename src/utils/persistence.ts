@@ -219,6 +219,8 @@ export interface CustomTranslationMeta {
   language: string;
   fileName: string;
   importedAt: number;
+  /** Localized book names keyed by canonical English name, e.g. { "Genesis": "Бытие" } */
+  bookNames?: Record<string, string>;
 }
 
 export async function getCustomTranslations(): Promise<CustomTranslationMeta[]> {

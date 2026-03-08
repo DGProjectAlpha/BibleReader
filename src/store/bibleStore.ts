@@ -46,6 +46,8 @@ export interface CustomTranslationMeta {
   language: string;     // BCP-47 language tag, e.g. "en", "es", "ru"
   fileName: string;     // name of the JSON file stored in app data dir
   importedAt: number;   // Date.now()
+  /** Localized book names keyed by canonical English name, e.g. { "Genesis": "Бытие" } */
+  bookNames?: Record<string, string>;
 }
 
 export interface SearchResult {

@@ -12,6 +12,7 @@ import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
 import type { BibleData } from './data/bibleLoader';
+import { extractBookNames } from './data/bibleLoader';
 import type { ValidationResult } from './utils/bibleImport';
 import type { BibleDataTagged } from './types/brbmod';
 import { saveCustomBibleData, saveCustomTranslation } from './utils/persistence';
@@ -42,17 +43,24 @@ export function App() {
       taggedData?: BibleDataTagged;
     }
   ) => {
+    // Determine the payload to persist: tagged modules supply pre-parsed tagged data;
+    // plain modules and raw JSON imports use the validated string verse data.
+    const isTagged = userMeta.moduleFormat === 'tagged' && userMeta.taggedData != null;
+
+    // For plain imports, extract a canonical→original book name map so that
+    // non-English book keys (e.g. "Бытие" for Genesis) are preserved as display names.
+    const bookNames: Record<string, string> | undefined = !isTagged && Object.keys(result.data).length > 0
+      ? extractBookNames(result.data)
+      : undefined;
+
     const meta: CustomTranslationMeta = {
       abbreviation: userMeta.abbreviation,
       fullName: userMeta.fullName,
       language: userMeta.language,
       fileName: userMeta.fileName,
       importedAt: Date.now(),
+      ...(bookNames && Object.keys(bookNames).length > 0 ? { bookNames } : {}),
     };
-
-    // Determine the payload to persist: tagged modules supply pre-parsed tagged data;
-    // plain modules and raw JSON imports use the validated string verse data.
-    const isTagged = userMeta.moduleFormat === 'tagged' && userMeta.taggedData != null;
     // INVARIANT: result.data must NOT be read when isTagged is true — ImportModal passes a
     // placeholder empty object there. The payload always comes from userMeta.taggedData instead.
     if (isTagged && Object.keys(result.data).length > 0) {
@@ -70,6 +78,7 @@ export function App() {
         language: meta.language,
         format: isTagged ? 'tagged' : 'plain',
         version: 1,
+        ...(meta.bookNames && Object.keys(meta.bookNames).length > 0 ? { bookNames: meta.bookNames } : {}),
       },
       data: biblePayload,
     };
@@ -82,6 +91,8 @@ export function App() {
       dataKeys: isTagged
         ? `tagged array length=${Array.isArray(biblePayload) ? (biblePayload as unknown[]).length : 'N/A'}`
         : `plain keys=${Object.keys(biblePayload as object ?? {}).slice(0, 5).join(', ')}...`,
+      bookNamesCount: meta.bookNames ? Object.keys(meta.bookNames).length : 0,
+      bookNamesSample: meta.bookNames ? Object.entries(meta.bookNames).slice(0, 3).map(([k, v]) => `${k}→${v}`).join(', ') : 'none',
     });
 
     try {

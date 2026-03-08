@@ -51,6 +51,14 @@ export interface BrbModMeta {
 
   /** Optional: notes about the source, encoding, or tagging methodology */
   notes?: string;
+
+  /**
+   * Optional: localized book names keyed by canonical English name.
+   * e.g. { "Genesis": "Бытие", "Exodus": "Исход", ... }
+   * When present, the UI uses these names in navigation dropdowns instead of
+   * the canonical English names.
+   */
+  bookNames?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
