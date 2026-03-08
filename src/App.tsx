@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useLayoutEffect, useCallback, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { VerseDisplay } from './components/VerseDisplay';
 import { StrongsPanel } from './components/StrongsPanel';
@@ -108,8 +108,12 @@ export function App() {
   const searchOpen = useBibleStore((s) => s.searchOpen);
 
   // Sync dark mode to <html> class for Tailwind's dark: variant
-  // and data-theme attribute for CSS variable theming
-  useEffect(() => {
+  // and data-theme attribute for CSS variable theming.
+  // useLayoutEffect fires synchronously before paint so the .dark class and
+  // data-theme are both set before the browser renders — prevents a frame where
+  // CSS-variable-driven backgrounds (data-theme) go dark while Tailwind dark:
+  // text/border classes are still in light mode (they need .dark on <html>).
+  useLayoutEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {

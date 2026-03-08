@@ -226,12 +226,32 @@ body {
 [data-theme] .bg-gray-50  { background-color: var(--panel-bg-secondary) !important; }
 [data-theme] .bg-gray-100 { background-color: var(--panel-bg-secondary) !important; }
 
-/* Primary text for warm theme — light themes only, since dark handles via .dark class */
-/* We only override for light-warm to give text a warm tint */
-[data-theme="light-warm"] .text-gray-800 { color: var(--panel-text) !important; }
+/* Text color overrides — use CSS variables so dark text follows theme without
+   waiting for the .dark Tailwind class. Light-warm gets a warm tint; dark themes
+   get proper light text regardless of whether .dark has been applied yet. */
+[data-theme="light-warm"] .text-gray-800,
+[data-theme="light-warm"] .text-gray-900 { color: var(--panel-text) !important; }
 [data-theme="light-warm"] .text-gray-700 { color: var(--panel-text) !important; }
 [data-theme="light-warm"] .text-gray-600 { color: var(--panel-text-muted) !important; }
 [data-theme="light-warm"] .text-gray-500 { color: var(--panel-text-muted) !important; }
+
+[data-theme="dark-blue"] .text-gray-900,
+[data-theme="dark-blue"] .text-gray-800,
+[data-theme="dark-blue"] .text-gray-700 { color: var(--panel-text) !important; }
+[data-theme="dark-blue"] .text-gray-600,
+[data-theme="dark-blue"] .text-gray-500 { color: var(--panel-text-muted) !important; }
+[data-theme="dark-blue"] .text-gray-400 { color: var(--panel-text-faint) !important; }
+
+[data-theme="dark-oled"] .text-gray-900,
+[data-theme="dark-oled"] .text-gray-800,
+[data-theme="dark-oled"] .text-gray-700 { color: var(--panel-text) !important; }
+[data-theme="dark-oled"] .text-gray-600,
+[data-theme="dark-oled"] .text-gray-500 { color: var(--panel-text-muted) !important; }
+[data-theme="dark-oled"] .text-gray-400 { color: var(--panel-text-faint) !important; }
+
+/* Dark theme — bg-gray-700 used in dropdown/form inputs in dark mode */
+[data-theme="dark-blue"] .bg-gray-700,
+[data-theme="dark-oled"] .bg-gray-700 { background-color: var(--input-bg) !important; }
 
 /* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
 * {
