@@ -109,16 +109,25 @@ export function usePersistStore() {
           };
         });
 
-        // Derive a consistent theme when only darkMode was saved (no theme key yet).
-        // Without this, darkMode=true + theme=light-cool (default) causes a mismatch
-        // where the .dark Tailwind class is applied but CSS vars still show light colors.
+        // Derive a consistent theme+darkMode pair from persisted values.
+        // Two cases can cause a mismatch (both result in wrong CSS vars):
+        //   1. theme key was never saved (pre-theme-persistence builds) — derive from darkMode
+        //   2. theme and darkMode were both saved but disagree — trust darkMode, reset theme
         const resolvedDarkMode = darkMode !== null ? darkMode : null;
-        const resolvedTheme =
+        let resolvedTheme: import('../store/bibleStore').Theme | null =
           theme !== null
             ? theme
             : resolvedDarkMode !== null
               ? (resolvedDarkMode ? 'dark-blue' : 'light-cool')
               : null;
+
+        // Validate consistency: if the stored theme's dark/light doesn't match darkMode, correct it.
+        if (resolvedDarkMode !== null && resolvedTheme !== null) {
+          const themeIsDark = resolvedTheme === 'dark-blue' || resolvedTheme === 'dark-oled';
+          if (themeIsDark !== resolvedDarkMode) {
+            resolvedTheme = resolvedDarkMode ? 'dark-blue' : 'light-cool';
+          }
+        }
 
         // Hydrate store — only override if there's actually data to restore
         useBibleStore.setState((state) => ({
