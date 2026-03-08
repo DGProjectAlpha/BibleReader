@@ -78,24 +78,30 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   useEffect(() => {
     if (!pane || !selectedBook || !selectedChapter) return;
 
+    console.log(`[VerseDisplay] loading: translation=${selectedTranslation} book="${selectedBook}" chapter=${selectedChapter}`);
     setIsLoading(true);
     setLoadError(null);
 
     try {
       const loaded = getChapter(selectedTranslation, selectedBook, selectedChapter);
+      console.log(`[VerseDisplay] getChapter result: ${loaded?.length ?? 0} verses`);
       if (!loaded || loaded.length === 0) {
+        console.warn(`[VerseDisplay] no data — translation="${selectedTranslation}" book="${selectedBook}" ch=${selectedChapter}`);
         setLoadError(`No data found for ${selectedBook} ${selectedChapter} (${selectedTranslation})`);
         setVerses([]);
       } else {
         setVerses(loaded);
       }
     } catch (err) {
+      console.error('[VerseDisplay] getChapter threw:', err);
       setLoadError(err instanceof Error ? err.message : 'Failed to load chapter');
       setVerses([]);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedBook, selectedChapter, selectedTranslation]);
+  // customTranslations included so the effect re-runs when a newly imported
+  // translation becomes available (handles the async startup registration case)
+  }, [selectedBook, selectedChapter, selectedTranslation, customTranslations]);
 
   // Auto-scroll to target verse after chapter loads; each pane clears its own scroll target
   useEffect(() => {

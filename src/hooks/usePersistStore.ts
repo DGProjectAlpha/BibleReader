@@ -96,7 +96,7 @@ export function usePersistStore() {
         // registerCustomTranslation is called but the store action is bypassed.
         console.log(`[usePersistStore] registering ${scannedMods.length} module(s) from disk`);
         const { addCustomTranslation } = useBibleStore.getState();
-        const customTranslationsMeta: CustomTranslationMeta[] = scannedMods.map((mod) => {
+        scannedMods.forEach((mod) => {
           console.log(`[usePersistStore] registering "${mod.meta.abbreviation}" format=${mod.meta.format}`);
           const meta: CustomTranslationMeta = {
             id: mod.meta.abbreviation,
@@ -113,7 +113,6 @@ export function usePersistStore() {
           } else {
             console.warn(`[usePersistStore] unknown format for "${mod.meta.abbreviation}" — skipped`);
           }
-          return meta;
         });
 
         // Derive a consistent theme+darkMode pair from persisted values.

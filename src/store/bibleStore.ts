@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Translation, WordToken, TaggedVerse, BibleData } from '../data/bibleLoader';
-import { registerCustomTranslation, registerTaggedTranslation } from '../data/bibleLoader';
+import { registerCustomTranslation, registerTaggedTranslation, unregisterCustomTranslation } from '../data/bibleLoader';
 import { searchByKjvWord, lookup } from '../data/strongs';
 import type { StrongsEntry, StrongsSearchResult } from '../data/strongs';
 import type { BibleDataTagged } from '../types/brbmod';
@@ -470,10 +470,17 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       return { customTranslations: [...filtered, meta] };
     });
   },
-  removeCustomTranslation: (id) =>
+  removeCustomTranslation: (id) => {
+    // Unregister from bibleLoader so panes fall back to KJV instead of using stale data
+    const removing = useBibleStore.getState().customTranslations.find((t) => t.id === id);
+    if (removing) {
+      console.log(`[bibleStore] removeCustomTranslation: unregistering "${removing.abbreviation}"`);
+      unregisterCustomTranslation(removing.abbreviation);
+    }
     set((state) => ({
       customTranslations: state.customTranslations.filter((t) => t.id !== id),
-    })),
+    }));
+  },
 
   searchQuery: '',
   searchScope: 'bible',
