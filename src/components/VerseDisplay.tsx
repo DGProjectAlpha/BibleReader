@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
-import { getChapter, BUILTIN_TRANSLATIONS } from '../data/bibleLoader';
+import { getChapter, BUILTIN_TRANSLATIONS, getBuiltinBookNames } from '../data/bibleLoader';
 import type { Translation, TaggedVerse } from '../data/bibleLoader';
 import { NoteEditor } from './NoteEditor';
 import { books } from '../data/books';
@@ -74,6 +74,16 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const selectedChapter = pane?.selectedChapter ?? 0;
   const selectedTranslation = pane?.selectedTranslation ?? 'KJV';
   const id = pane?.id ?? paneId;
+
+  // Localized book names for the current translation, if available.
+  // Custom translations carry bookNames on their meta object.
+  // Built-in non-English translations (e.g. SYN) use the static map from bibleLoader.
+  const translationBookNames =
+    customTranslations.find((ct) => ct.abbreviation === selectedTranslation)?.bookNames ??
+    getBuiltinBookNames(selectedTranslation);
+
+  const getBookDisplayName = (englishName: string) =>
+    translationBookNames?.[englishName] ?? englishName;
 
   // Load verses whenever book, chapter, or translation changes.
   // modulesReady gates the effect: custom translations registered by usePersistStore
@@ -149,7 +159,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
             className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[140px] truncate"
           >
             {books.map((b) => (
-              <option key={b.name} value={b.name}>{b.name}</option>
+              <option key={b.name} value={b.name}>{getBookDisplayName(b.name)}</option>
             ))}
           </select>
 

@@ -343,6 +343,28 @@ function normalizeBookName(name: string, warnings?: string[]): string {
 }
 
 /**
+ * Given a plain BibleData object (as imported from JSON), return a map of
+ * canonical English book name → original imported key for every entry where
+ * the two differ (i.e. the imported key was a non-English or variant name).
+ *
+ * Example input keys: ["Бытие", "Исход", ...]
+ * Example output:     { "Genesis": "Бытие", "Exodus": "Исход", ... }
+ *
+ * Books whose imported key already matches the canonical name are excluded
+ * from the map since there is nothing to localise.
+ */
+export function extractBookNames(data: BibleData): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const originalKey of Object.keys(data)) {
+    const canonical = normalizeBookName(originalKey);
+    if (canonical !== originalKey) {
+      result[canonical] = originalKey;
+    }
+  }
+  return result;
+}
+
+/**
  * Register a custom (user-imported) translation so it can be used in panes.
  * Converts plain string verses into TaggedVerse format (each word as a token
  * with no Strong's numbers, since custom bibles are untagged).
@@ -587,3 +609,91 @@ export function getChapterCount(translation: Translation, bookName: string): num
 }
 
 export const TRANSLATIONS: Translation[] = ['KJV', 'ASV', 'SYN'];
+
+/**
+ * Canonical Russian book names for the SYN (Russian Synodal) translation.
+ * Keyed by canonical English name → Russian display name.
+ */
+const RST_BOOK_NAMES: Record<string, string> = {
+  // Old Testament
+  'Genesis': 'Бытие',
+  'Exodus': 'Исход',
+  'Leviticus': 'Левит',
+  'Numbers': 'Числа',
+  'Deuteronomy': 'Второзаконие',
+  'Joshua': 'Иисус Навин',
+  'Judges': 'Судьи',
+  'Ruth': 'Руфь',
+  '1 Samuel': '1 Царств',
+  '2 Samuel': '2 Царств',
+  '1 Kings': '3 Царств',
+  '2 Kings': '4 Царств',
+  '1 Chronicles': '1 Паралипоменон',
+  '2 Chronicles': '2 Паралипоменон',
+  'Ezra': 'Ездра',
+  'Nehemiah': 'Неемия',
+  'Esther': 'Есфирь',
+  'Job': 'Иов',
+  'Psalms': 'Псалтирь',
+  'Proverbs': 'Притчи',
+  'Ecclesiastes': 'Екклесиаст',
+  'Song of Solomon': 'Песня Песней',
+  'Isaiah': 'Исаия',
+  'Jeremiah': 'Иеремия',
+  'Lamentations': 'Плач Иеремии',
+  'Ezekiel': 'Иезекиль',
+  'Daniel': 'Даниил',
+  'Hosea': 'Осия',
+  'Joel': 'Иоиль',
+  'Amos': 'Амос',
+  'Obadiah': 'Авдий',
+  'Jonah': 'Иона',
+  'Micah': 'Михей',
+  'Nahum': 'Наум',
+  'Habakkuk': 'Аввакум',
+  'Zephaniah': 'Софония',
+  'Haggai': 'Аггей',
+  'Zechariah': 'Захария',
+  'Malachi': 'Малахия',
+  // New Testament
+  'Matthew': 'Матфей',
+  'Mark': 'Марк',
+  'Luke': 'Лука',
+  'John': 'Иоанн',
+  'Acts': 'Деяния',
+  'Romans': 'Римлянам',
+  '1 Corinthians': '1 Коринфянам',
+  '2 Corinthians': '2 Коринфянам',
+  'Galatians': 'Галатам',
+  'Ephesians': 'Ефесянам',
+  'Philippians': 'Филиппийцам',
+  'Colossians': 'Колоссянам',
+  '1 Thessalonians': '1 Фессалоникийцам',
+  '2 Thessalonians': '2 Фессалоникийцам',
+  '1 Timothy': '1 Тимофею',
+  '2 Timothy': '2 Тимофею',
+  'Titus': 'Титу',
+  'Philemon': 'Филимону',
+  'Hebrews': 'Евреям',
+  'James': 'Иакова',
+  '1 Peter': '1 Петра',
+  '2 Peter': '2 Петра',
+  '1 John': '1 Иоанна',
+  '2 John': '2 Иоанна',
+  '3 John': '3 Иоанна',
+  'Jude': 'Иуды',
+  'Revelation': 'Откровение',
+};
+
+/** Book name maps for built-in translations that are not English. */
+const BUILTIN_BOOK_NAMES: Record<string, Record<string, string>> = {
+  SYN: RST_BOOK_NAMES,
+};
+
+/**
+ * Returns localized book names for a built-in translation, or null if the
+ * translation uses English names (KJV, ASV) or is not recognized.
+ */
+export function getBuiltinBookNames(translation: Translation): Record<string, string> | null {
+  return BUILTIN_BOOK_NAMES[translation] ?? null;
+}
