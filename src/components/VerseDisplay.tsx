@@ -6,13 +6,15 @@ import { getChapter, BUILTIN_TRANSLATIONS, getBuiltinBookNames } from '../data/b
 import type { Translation, TaggedVerse } from '../data/bibleLoader';
 import { NoteEditor } from './NoteEditor';
 import { books } from '../data/books';
+import { useTranslation } from '../i18n/useTranslation';
+import type { TranslationKey } from '../i18n/translations';
 
-const HIGHLIGHT_COLORS: { color: HighlightColor; bg: string; label: string }[] = [
-  { color: 'yellow', bg: 'bg-yellow-300', label: 'Yellow' },
-  { color: 'green',  bg: 'bg-green-300',  label: 'Green'  },
-  { color: 'blue',   bg: 'bg-blue-300',   label: 'Blue'   },
-  { color: 'pink',   bg: 'bg-pink-300',   label: 'Pink'   },
-  { color: 'purple', bg: 'bg-purple-300', label: 'Purple' },
+const HIGHLIGHT_COLORS: { color: HighlightColor; bg: string; labelKey: TranslationKey }[] = [
+  { color: 'yellow', bg: 'bg-yellow-300', labelKey: 'colorYellow' },
+  { color: 'green',  bg: 'bg-green-300',  labelKey: 'colorGreen'  },
+  { color: 'blue',   bg: 'bg-blue-300',   labelKey: 'colorBlue'   },
+  { color: 'pink',   bg: 'bg-pink-300',   labelKey: 'colorPink'   },
+  { color: 'purple', bg: 'bg-purple-300', labelKey: 'colorPurple' },
 ];
 
 const HIGHLIGHT_BG: Record<HighlightColor, string> = {
@@ -32,6 +34,7 @@ interface VerseDisplayProps {
 }
 
 export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove }: VerseDisplayProps) {
+  const { t } = useTranslation();
   const pane = useBibleStore((s) => s.panes.find((p) => p.id === paneId));
   const updatePane = useBibleStore((s) => s.updatePane);
   const togglePaneSync = useBibleStore((s) => s.togglePaneSync);
@@ -188,13 +191,13 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
             onClick={(e) => e.stopPropagation()}
             className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
-            <optgroup label="Built-in">
-              {BUILTIN_TRANSLATIONS.map((t: Translation) => (
-                <option key={t} value={t}>{t}</option>
+            <optgroup label={t('builtIn')}>
+              {BUILTIN_TRANSLATIONS.map((tr: Translation) => (
+                <option key={tr} value={tr}>{tr}</option>
               ))}
             </optgroup>
             {customTranslations.length > 0 && (
-              <optgroup label="Imported">
+              <optgroup label={t('imported')}>
                 {customTranslations.map((ct) => (
                   <option key={ct.abbreviation} value={ct.abbreviation}>
                     {ct.abbreviation}{ct.fullName ? ` — ${ct.fullName}` : ''}
@@ -207,7 +210,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           {canRemove && (
             <button
               onClick={(e) => { e.stopPropagation(); togglePaneSync(paneId); }}
-              title={pane.synced ? 'Unsync pane (currently synced)' : 'Sync pane with others'}
+              title={pane.synced ? t('unsyncPane') : t('syncPane')}
               className={`flex items-center gap-1 px-2 py-1 rounded text-sm font-medium border transition-colors
                 ${pane.synced
                   ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-800/50'
@@ -215,8 +218,8 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                 }`}
             >
               {pane.synced
-                ? <><Link2 size={13} strokeWidth={2} /><span>Synced</span></>
-                : <><Link2Off size={13} strokeWidth={2} /><span>Sync</span></>
+                ? <><Link2 size={13} strokeWidth={2} /><span>{t('synced')}</span></>
+                : <><Link2Off size={13} strokeWidth={2} /><span>{t('sync')}</span></>
               }
             </button>
           )}
@@ -224,7 +227,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           {canRemove && (
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              title="Close pane"
+              title={t('closePane')}
               className="ml-1 px-2 py-1 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none"
             >
               ×
@@ -237,7 +240,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       <div className="flex-1 overflow-y-auto p-6">
         {/* Loading state */}
         {isLoading && (
-          <div className="text-gray-500 dark:text-gray-400 italic">Loading...</div>
+          <div className="text-gray-500 dark:text-gray-400 italic">{t('loading')}</div>
         )}
 
         {/* Error state */}
@@ -265,7 +268,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                         e.stopPropagation();
                         bookmarked ? removeBookmark(verseKey) : addBookmark(verseKey);
                       }}
-                      title={bookmarked ? 'Remove bookmark' : 'Bookmark verse'}
+                      title={bookmarked ? t('removeBookmark') : t('bookmarkVerse')}
                       className={`p-0.5 rounded transition-colors
                         ${bookmarked
                           ? 'text-blue-500 dark:text-blue-400'
@@ -282,7 +285,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                           e.stopPropagation();
                           setOpenPickerIdx(pickerOpen ? null : idx);
                         }}
-                        title="Highlight verse"
+                        title={t('highlightVerse')}
                         className={`p-0.5 rounded transition-colors
                           ${highlight
                             ? 'text-amber-500 dark:text-amber-400'
@@ -299,10 +302,10 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                           className="absolute left-full top-0 ml-1 z-50 flex items-center gap-1 p-1.5 rounded-lg shadow-lg border border-black/[0.14] dark:border-white/[0.15]
                             bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl"
                         >
-                          {HIGHLIGHT_COLORS.map(({ color, bg, label }) => (
+                          {HIGHLIGHT_COLORS.map(({ color, bg, labelKey }) => (
                             <button
                               key={color}
-                              title={label}
+                              title={t(labelKey)}
                               onClick={() => {
                                 addHighlight(verseKey, color);
                                 setOpenPickerIdx(null);
@@ -315,7 +318,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                           {/* Remove highlight */}
                           {highlight && (
                             <button
-                              title="Remove highlight"
+                              title={t('removeHighlight')}
                               onClick={() => {
                                 removeHighlight(verseKey);
                                 setOpenPickerIdx(null);
@@ -336,7 +339,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                         setOpenNoteIdx(noteOpen ? null : idx);
                         setOpenPickerIdx(null);
                       }}
-                      title={note ? 'Edit note' : 'Add note'}
+                      title={note ? t('editNote') : t('addNote')}
                       className={`p-0.5 rounded transition-colors
                         ${note
                           ? 'text-emerald-500 dark:text-emerald-400'
@@ -355,7 +358,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                     {/* Verse number — click to view TSK cross-references */}
                     <span
                       className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-1.5 select-none cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                      title="View cross-references for this verse"
+                      title={t('viewCrossRefs')}
                       onClick={(e) => { e.stopPropagation(); setTskVerse(verseKey); }}
                     >
                       {idx + 1}
@@ -394,7 +397,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
         {/* Empty state — show loading hint while startup module scan is in progress */}
         {!isLoading && !loadError && verses.length === 0 && (
           <div className="text-gray-500 dark:text-gray-400 italic">
-            {!modulesReady ? 'Loading…' : 'Select a book and chapter above to start reading.'}
+            {!modulesReady ? t('loading') : t('selectBookChapter')}
           </div>
         )}
       </div>

@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useBibleStore } from '../store/bibleStore';
 import { getTSKRefs } from '../data/tskLoader';
 import type { TSKRef } from '../data/tskLoader';
+import { useTranslation } from '../i18n/useTranslation';
 
 export function TskPanel() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
 
   const tskVerse = useBibleStore((s) => s.tskVerse);
@@ -32,7 +34,7 @@ export function TskPanel() {
       <div className="w-9 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center justify-start pt-2 h-full">
         <button
           onClick={() => setCollapsed(false)}
-          title="Expand cross-references panel"
+          title={t('expandCrossRefs')}
           className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none mb-3"
         >
           ‹
@@ -41,7 +43,7 @@ export function TskPanel() {
           className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-300 select-none"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
         >
-          TSK Refs
+          {t('tskCollapsedLabel')}
         </span>
       </div>
     );
@@ -52,21 +54,21 @@ export function TskPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10]">
         <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-          Cross-References
+          {t('crossRefsHeader')}
         </span>
         <div className="flex items-center gap-2">
           {tskVerse && (
             <button
               onClick={() => setTskVerse(null)}
               className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
-              title="Clear"
+              title={t('clearCrossRefs')}
             >
               ✕
             </button>
           )}
           <button
             onClick={() => setCollapsed(true)}
-            title="Collapse cross-references panel"
+            title={t('collapseCrossRefs')}
             className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
           >
             ›
@@ -80,17 +82,17 @@ export function TskPanel() {
           <div className="flex flex-col items-center justify-center h-full text-center px-4 text-gray-500 dark:text-gray-400">
             <span className="text-3xl mb-2">🔗</span>
             <p className="text-xs leading-relaxed">
-              Click a verse number in the text to view TSK cross-references.
+              {t('tskEmptyHint')}
             </p>
           </div>
         ) : refs.length === 0 ? (
           <div className="px-3 py-4 text-xs text-gray-500 dark:text-gray-400">
-            No cross-references found for {tskVerse.book} {tskVerse.chapter}:{tskVerse.verse}.
+            {t('tskNoRefs', { book: tskVerse.book, chapter: String(tskVerse.chapter), verse: String(tskVerse.verse) })}
           </div>
         ) : (
           <div>
             <div className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 border-b border-black/[0.10] dark:border-white/[0.12]">
-              {tskVerse.book} {tskVerse.chapter}:{tskVerse.verse} — {refs.length} reference{refs.length !== 1 ? 's' : ''}
+              {t('tskRefHeader', { book: tskVerse.book, chapter: String(tskVerse.chapter), verse: String(tskVerse.verse), count: String(refs.length) })}
             </div>
             <div className="divide-y divide-black/[0.10] dark:divide-white/[0.10]">
               {refs.map((ref, i) => (

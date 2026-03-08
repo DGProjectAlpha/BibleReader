@@ -12,6 +12,8 @@ export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
 
 export type Theme = 'dark-blue' | 'dark-oled' | 'light-cool' | 'light-warm';
 
+export type AppLanguage = 'en' | 'ru';
+
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
 
 export interface VerseKey {
@@ -94,6 +96,9 @@ interface BibleStore {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleSyncScroll: () => void;
+
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
 
   // Strong's concordance state
   strongsWord: string | null;
@@ -188,6 +193,7 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   syncScroll: false,
   darkMode: false,
   theme: 'light-cool',
+  language: 'en',
   fontSize: 16,
   fontFamily: 'sans',
   modulesReady: false,
@@ -307,6 +313,7 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       darkMode: theme === 'dark-blue' || theme === 'dark-oled',
     }),
   toggleSyncScroll: () => set((state) => ({ syncScroll: !state.syncScroll })),
+  setLanguage: (lang) => set({ language: lang }),
   setFontSize: (size) => set({ fontSize: size }),
   setFontFamily: (family) => set({ fontFamily: family }),
 

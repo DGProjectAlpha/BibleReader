@@ -5,6 +5,7 @@ import type { SearchScope, SearchResult } from '../store/bibleStore';
 import { books } from '../data/books';
 import { getChapterText, getBook } from '../data/bibleLoader';
 import type { Translation } from '../data/bibleLoader';
+import { useTranslation } from '../i18n/useTranslation';
 
 // Run the actual text search against the active translation
 function runSearch(
@@ -69,6 +70,7 @@ export function SearchBar() {
   } = useBibleStore();
 
   const activePane = useBibleStore(selectActivePane);
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
 
@@ -105,11 +107,11 @@ export function SearchBar() {
     return (
       <button
         onClick={() => setSearchOpen(true)}
-        title="Search Bible (Ctrl+F)"
+        title={t('searchBibleTitle')}
         className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
       >
         <Search size={14} />
-        <span>Search</span>
+        <span>{t('searchButton')}</span>
       </button>
     );
   }
@@ -126,7 +128,7 @@ export function SearchBar() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search the Bible..."
+          placeholder={t('searchPlaceholder')}
           className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 outline-none"
         />
 
@@ -140,7 +142,7 @@ export function SearchBar() {
           onClick={handleSearch}
           className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
         >
-          Search
+          {t('searchButton')}
         </button>
 
         <button
@@ -153,7 +155,7 @@ export function SearchBar() {
 
       {/* Scope controls */}
       <div className="flex flex-wrap items-center gap-2 px-3 pb-2 text-xs">
-        <span className="text-gray-500 dark:text-gray-400 font-medium">Scope:</span>
+        <span className="text-gray-500 dark:text-gray-400 font-medium">{t('searchScope')}</span>
 
         {(['bible', 'OT', 'NT', 'book', 'chapter'] as SearchScope[]).map((s) => (
           <button
@@ -165,7 +167,7 @@ export function SearchBar() {
                 : 'text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
             }`}
           >
-            {s === 'bible' ? 'Whole Bible' : s === 'OT' ? 'Old Testament' : s === 'NT' ? 'New Testament' : s === 'book' ? 'Book' : 'Chapter'}
+            {s === 'bible' ? t('scopeWholeBible') : s === 'OT' ? t('scopeOT') : s === 'NT' ? t('scopeNT') : s === 'book' ? t('scopeBook') : t('scopeChapter')}
           </button>
         ))}
 
@@ -193,26 +195,26 @@ export function SearchBar() {
             className="px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs"
           >
             {Array.from({ length: chapterCount }, (_, i) => i + 1).map((ch) => (
-              <option key={ch} value={ch}>Ch. {ch}</option>
+              <option key={ch} value={ch}>{t('scopeChapter')} {ch}</option>
             ))}
           </select>
         )}
 
         {searchResults.length > 0 && (
           <span className="ml-auto text-gray-400">
-            {searchResults.length === 500 ? '500+ results' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}
+            {searchResults.length === 500 ? t('resultCountMany') : t('resultCount', { count: searchResults.length })}
           </span>
         )}
       </div>
 
       {/* Loading indicator */}
       {loading && (
-        <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">Searching...</div>
+        <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">{t('searching')}</div>
       )}
 
       {!loading && searchQuery && searchResults.length === 0 && (
         <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
-          No results found.
+          {t('noResults')}
         </div>
       )}
     </div>

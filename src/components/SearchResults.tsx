@@ -3,6 +3,7 @@ import { ArrowLeftRight } from 'lucide-react';
 import { useBibleStore, selectActivePane, MAX_PANES } from '../store/bibleStore';
 import type { SearchResult } from '../store/bibleStore';
 import { getChapterText } from '../data/bibleLoader';
+import { useTranslation } from '../i18n/useTranslation';
 
 // Highlight matched substring
 function HighlightedText({ text, query }: { text: string; query: string }) {
@@ -47,6 +48,7 @@ interface ResultCardProps {
 
 function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPane, canAddPane, translation }: ResultCardProps) {
   const verseIndex = result.verse - 1; // convert to 0-indexed
+  const { t } = useTranslation();
 
   const prevVerse = getContextVerse(result.book, result.chapter, verseIndex - 1, translation);
   const nextVerse = getContextVerse(result.book, result.chapter, verseIndex + 1, translation);
@@ -64,7 +66,7 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
             {result.book} {result.chapter}:{result.verse}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-            {multiPane ? 'Active pane →' : 'Navigate →'}
+            {multiPane ? t('activePaneArrow') : t('navigateTo')}
           </span>
         </div>
 
@@ -105,7 +107,7 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
             className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md ring-1 ring-indigo-500/50 transition-colors"
           >
             <ArrowLeftRight size={12} strokeWidth={2.5} />
-            Sync all panes
+            {t('syncAllPanes')}
           </button>
         )}
         {canAddPane && (
@@ -113,7 +115,7 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
             onClick={onOpenParallel}
             className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:underline"
           >
-            Open parallel
+            {t('openParallel')}
           </button>
         )}
       </div>
@@ -135,6 +137,8 @@ export function SearchResults() {
   const navigateAllPanes = useBibleStore((s) => s.navigateAllPanes);
   const addPaneWithRef = useBibleStore((s) => s.addPaneWithRef);
   const paneCount = useBibleStore((s) => s.panes.length);
+
+  const { t } = useTranslation();
 
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
   const dragStartY = useRef<number | null>(null);
@@ -191,7 +195,7 @@ export function SearchResults() {
   };
 
   const resultCount = searchResults.length;
-  const label = resultCount === 500 ? '500+ results' : `${resultCount} result${resultCount !== 1 ? 's' : ''}`;
+  const label = resultCount === 500 ? t('resultCountMany') : t('resultCount', { count: resultCount });
 
   return (
     // Sits below the SearchBar in the flex column, above the reading panes
@@ -202,14 +206,14 @@ export function SearchResults() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
         <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-          {label} for <span className="text-blue-600 dark:text-blue-400 font-semibold">"{searchQuery}"</span>
-          <span className="ml-2 text-gray-500 dark:text-gray-400">— click any result to navigate</span>
+          {label} <span className="text-blue-600 dark:text-blue-400 font-semibold">{t('forQuery', { query: searchQuery })}</span>
+          <span className="ml-2 text-gray-500 dark:text-gray-400">{t('clickToNavigate')}</span>
         </span>
         <button
           onClick={() => setSearchOpen(false)}
           className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          Close
+          {t('closeButton')}
         </button>
       </div>
 
@@ -234,7 +238,7 @@ export function SearchResults() {
       <div
         onMouseDown={onDragHandleMouseDown}
         className="shrink-0 h-2 cursor-ns-resize flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors group"
-        title="Drag to resize"
+        title={t('dragToResize')}
       >
         <div className="w-8 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors" />
       </div>

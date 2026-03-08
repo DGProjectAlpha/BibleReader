@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Type } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
 
-export const FONT_FAMILIES: { id: string; label: string; css: string }[] = [
-  { id: 'sans',  label: 'Sans',  css: 'system-ui, -apple-system, sans-serif' },
-  { id: 'serif', label: 'Serif', css: 'Georgia, "Times New Roman", serif' },
-  { id: 'mono',  label: 'Mono',  css: 'ui-monospace, "Cascadia Code", monospace' },
+// Font family ids — labels are resolved via translation keys at render time
+export const FONT_FAMILIES: { id: string; labelKey: 'fontSans' | 'fontSerif' | 'fontMono'; css: string }[] = [
+  { id: 'sans',  labelKey: 'fontSans',  css: 'system-ui, -apple-system, sans-serif' },
+  { id: 'serif', labelKey: 'fontSerif', css: 'Georgia, "Times New Roman", serif' },
+  { id: 'mono',  labelKey: 'fontMono',  css: 'ui-monospace, "Cascadia Code", monospace' },
 ];
 
 export const FONT_SIZE_MIN = 13;
@@ -16,6 +18,7 @@ export function FontControls() {
   const fontFamily = useBibleStore((s) => s.fontFamily);
   const setFontSize = useBibleStore((s) => s.setFontSize);
   const setFontFamily = useBibleStore((s) => s.setFontFamily);
+  const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -40,7 +43,7 @@ export function FontControls() {
       <button
         ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
-        title="Font size & style"
+        title={t('fontSizeStyle')}
         className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-sm border transition-colors
           ${open
             ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600'
@@ -60,7 +63,7 @@ export function FontControls() {
           {/* Size slider */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Size</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('sectionSize')}</span>
               <span className="text-xs font-mono text-gray-700 dark:text-gray-200">{fontSize}px</span>
             </div>
             <input
@@ -80,13 +83,13 @@ export function FontControls() {
 
           {/* Font family picker */}
           <div>
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide block mb-1.5">Font</span>
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide block mb-1.5">{t('sectionFont')}</span>
             <div className="flex gap-1.5">
               {FONT_FAMILIES.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setFontFamily(f.id)}
-                  title={f.label}
+                  title={t(f.labelKey)}
                   style={{ fontFamily: f.css }}
                   className={`flex-1 py-1.5 rounded text-xs font-medium border transition-colors
                     ${fontFamily === f.id
@@ -94,7 +97,7 @@ export function FontControls() {
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                     }`}
                 >
-                  {f.label}
+                  {t(f.labelKey)}
                 </button>
               ))}
             </div>
@@ -105,7 +108,7 @@ export function FontControls() {
             onClick={() => { setFontSize(16); setFontFamily('sans'); }}
             className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            Reset to defaults
+            {t('resetDefaults')}
           </button>
         </div>
       )}

@@ -209,6 +209,19 @@ export async function setFontFamily(value: string): Promise<void> {
   await store.save();
 }
 
+export type AppLanguage = 'en' | 'ru';
+
+export async function getLanguage(): Promise<AppLanguage | null> {
+  const store = await getStore();
+  return (await store.get<AppLanguage>('language')) ?? null;
+}
+
+export async function saveLanguage(value: AppLanguage): Promise<void> {
+  const store = await getStore();
+  await store.set('language', value);
+  await store.save();
+}
+
 // ---------------------------------------------------------------------------
 // Custom translations metadata
 // ---------------------------------------------------------------------------

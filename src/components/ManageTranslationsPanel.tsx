@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trash2, BookOpen } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { deleteCustomTranslation, deleteCustomBibleData } from '../utils/persistence';
+import { useTranslation } from '../i18n/useTranslation';
 
 export function ManageTranslationsPanel() {
   const customTranslations = useBibleStore((s) => s.customTranslations);
@@ -9,6 +10,7 @@ export function ManageTranslationsPanel() {
   const panes = useBibleStore((s) => s.panes);
   const updatePane = useBibleStore((s) => s.updatePane);
 
+  const { t } = useTranslation();
   const [deletingAbbr, setDeletingAbbr] = useState<string | null>(null);
   const [confirmAbbr, setConfirmAbbr] = useState<string | null>(null);
 
@@ -40,10 +42,10 @@ export function ManageTranslationsPanel() {
       <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
         <BookOpen size={28} className="text-gray-300 dark:text-gray-600" />
         <p className="text-sm text-gray-400 dark:text-gray-500">
-          No imported translations.
+          {t('noImportedTranslations')}
         </p>
         <p className="text-xs text-gray-400 dark:text-gray-600">
-          Use the Import button above to add a translation.
+          {t('useImportButton')}
         </p>
       </div>
     );
@@ -96,7 +98,7 @@ export function ManageTranslationsPanel() {
                     className="px-2 py-1 rounded text-[11px] font-medium
                       bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white transition-colors"
                   >
-                    {isDeleting ? 'Removing…' : 'Delete'}
+                    {isDeleting ? t('removingLabel') : t('deleteButton2')}
                   </button>
                   <button
                     onClick={() => setConfirmAbbr(null)}
@@ -105,7 +107,7 @@ export function ManageTranslationsPanel() {
                       bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600
                       text-gray-600 dark:text-gray-300 transition-colors"
                   >
-                    Cancel
+                    {t('cancelButton')}
                   </button>
                 </div>
               )}
@@ -114,7 +116,7 @@ export function ManageTranslationsPanel() {
             {/* Confirm warning */}
             {isConfirming && (
               <p className="text-[11px] text-red-600 dark:text-red-400">
-                This will remove the translation from all panes. Continue?
+                {t('confirmRemoveTranslation')}
               </p>
             )}
           </div>

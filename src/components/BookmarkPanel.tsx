@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Bookmark, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface BookmarkPanelProps {
   /** When true, renders as full-height tab content (no collapsible header) */
@@ -14,6 +15,8 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
   const setSelectedBook = useBibleStore((s) => s.setSelectedBook);
   const setSelectedChapter = useBibleStore((s) => s.setSelectedChapter);
 
+  const { t } = useTranslation();
+
   // Newest first
   const sorted = [...bookmarks].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -26,7 +29,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
     <>
       {sorted.length === 0 ? (
         <p className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 italic">
-          No bookmarks yet. Click the ribbon icon on any verse to add one.
+          {t('bookmarksEmpty')}
         </p>
       ) : (
         <ul>
@@ -58,7 +61,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
               <button
                 onClick={() => removeBookmark({ book: bm.book, chapter: bm.chapter, verse: bm.verse })}
                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-opacity"
-                title="Remove bookmark"
+                title={t('removeBookmarkTitle')}
               >
                 <X size={11} />
               </button>
@@ -82,7 +85,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
         className="flex items-center gap-2 w-full px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       >
         <Bookmark size={13} />
-        <span className="flex-1 text-left">Bookmarks</span>
+        <span className="flex-1 text-left">{t('tabBookmarks')}</span>
         <span className="text-gray-500 dark:text-gray-400 font-normal normal-case tracking-normal">
           {sorted.length}
         </span>

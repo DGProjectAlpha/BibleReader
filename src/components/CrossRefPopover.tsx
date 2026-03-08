@@ -4,6 +4,7 @@ import { getChapterText } from '../data/bibleLoader';
 import type { Translation } from '../data/bibleLoader';
 import type { RefSegment } from '../utils/crossRefs';
 import { useBibleStore } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface CrossRefPopoverProps {
   refSeg: RefSegment;
@@ -13,6 +14,7 @@ interface CrossRefPopoverProps {
 }
 
 export function CrossRefPopover({ refSeg, anchor, translation, onClose }: CrossRefPopoverProps) {
+  const { t } = useTranslation();
   const addPaneWithRef = useBibleStore((s) => s.addPaneWithRef);
   const [verseText, setVerseText] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -73,17 +75,17 @@ export function CrossRefPopover({ refSeg, anchor, translation, onClose }: CrossR
             addPaneWithRef(refSeg.book, refSeg.chapter, translation);
             onClose?.();
           }}
-          title="Open in new pane"
+          title={t('openInPane')}
           className="ml-3 text-xs px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors whitespace-nowrap"
         >
-          Open in pane
+          {t('openInPane')}
         </button>
       </div>
       {verseText == null && !error && (
-        <div className="text-sm text-gray-400 dark:text-gray-500 italic">Loading...</div>
+        <div className="text-sm text-gray-400 dark:text-gray-500 italic">{t('loading')}</div>
       )}
       {error && (
-        <div className="text-sm text-red-500 dark:text-red-400">Verse not found.</div>
+        <div className="text-sm text-red-500 dark:text-red-400">{t('verseNotFound')}</div>
       )}
       {verseText != null && (
         <p className="text-sm leading-relaxed">{verseText}</p>

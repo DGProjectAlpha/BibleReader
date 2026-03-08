@@ -9,6 +9,7 @@ import { FontControls } from './components/FontControls';
 import { FONT_FAMILIES } from './components/FontControls';
 import { ImportModal } from './components/ImportModal';
 import { useBibleStore, MAX_PANES } from './store/bibleStore';
+import { useTranslation } from './i18n/useTranslation';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
 import type { BibleData } from './data/bibleLoader';
@@ -150,6 +151,7 @@ export function App() {
   const setActivePaneIndex = useBibleStore((s) => s.setActivePaneIndex);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
   const searchOpen = useBibleStore((s) => s.searchOpen);
+  const { t } = useTranslation();
 
   // Sync dark mode to <html> class for Tailwind's dark: variant
   // and data-theme attribute for CSS variable theming.
@@ -208,7 +210,7 @@ export function App() {
           {!searchOpen ? (
             <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
               <SearchBar />
-              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">Ctrl+F</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{t('ctrlFHint')}</span>
               <div className="ml-auto">
                 <FontControls />
               </div>
@@ -238,7 +240,7 @@ export function App() {
         {panes.length < MAX_PANES && (
           <button
             onClick={addPane}
-            title="Add pane"
+            title={t('addPane')}
             className="shrink-0 w-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors text-2xl border-l border-black/[0.10] dark:border-white/[0.12]"
           >
             +

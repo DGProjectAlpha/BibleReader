@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { VerseKey } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface NoteEditorProps {
   verseKey: VerseKey;
@@ -17,6 +18,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
   const existing = getNoteForVerse(verseKey);
   const [text, setText] = useState(existing?.text ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { t } = useTranslation();
 
   // Focus textarea on open
   useEffect(() => {
@@ -64,7 +66,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-            Note — {book} {chapter}:{verse}
+            {t('noteEditorHeader', { book, chapter, verse })}
           </span>
           <button
             onClick={onClose}
@@ -85,7 +87,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Write your note here..."
+            placeholder={t('notePlaceholder')}
             rows={5}
             className="w-full resize-none rounded-lg border px-3 py-2 text-sm
               bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-600
@@ -103,7 +105,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 <Trash2 size={14} />
-                Delete
+                {t('deleteButton')}
               </button>
             )}
           </div>
@@ -112,13 +114,13 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
               onClick={onClose}
               className="px-3 py-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              Cancel
+              {t('cancelButton')}
             </button>
             <button
               onClick={handleSave}
               className="px-4 py-1.5 rounded text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
             >
-              Save
+              {t('saveButton')}
             </button>
           </div>
         </div>

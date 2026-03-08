@@ -7,6 +7,8 @@ import type { ValidationResult } from '../utils/bibleImport';
 import { validateBrbMod } from '../types/brbmod';
 import type { BibleDataTagged } from '../types/brbmod';
 import { ErrorBoundary } from './ErrorBoundary';
+import { useTranslation } from '../i18n/useTranslation';
+import type { TranslationKey } from '../i18n/translations';
 
 /** Defer a synchronous callback behind one event-loop tick so React can paint loading states first. */
 function defer<T>(fn: () => T): Promise<T> {
@@ -37,10 +39,12 @@ function MetaForm({
   abbreviation, setAbbreviation,
   fullName, setFullName,
   language, setLanguage,
+  t,
 }: {
   abbreviation: string; setAbbreviation: (v: string) => void;
   fullName: string; setFullName: (v: string) => void;
   language: string; setLanguage: (v: string) => void;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
 }) {
   const inputCls = `px-3 py-1.5 rounded-lg border text-sm
     bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500
@@ -51,19 +55,19 @@ function MetaForm({
   return (
     <div className="flex flex-col gap-3 border-t border-gray-200 dark:border-gray-600 pt-4">
       <div className="flex flex-col gap-1">
-        <label className={labelCls}>Abbreviation <span className="text-gray-400">(e.g. NASB)</span></label>
+        <label className={labelCls}>{t('labelAbbreviation')} <span className="text-gray-400">(e.g. NASB)</span></label>
         <input type="text" value={abbreviation}
           onChange={(e) => setAbbreviation(e.target.value.toUpperCase().slice(0, 12))}
           placeholder="NASB" className={inputCls} />
       </div>
       <div className="flex flex-col gap-1">
-        <label className={labelCls}>Full Name</label>
+        <label className={labelCls}>{t('labelFullName')}</label>
         <input type="text" value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="New American Standard Bible" className={inputCls} />
       </div>
       <div className="flex flex-col gap-1">
-        <label className={labelCls}>Language <span className="text-gray-400">(BCP-47, e.g. en, es, ru)</span></label>
+        <label className={labelCls}>{t('labelLanguage')} <span className="text-gray-400">(BCP-47, e.g. en, es, ru)</span></label>
         <input type="text" value={language}
           onChange={(e) => setLanguage(e.target.value.slice(0, 10))}
           placeholder="en" className={`${inputCls} w-32`} />
@@ -73,6 +77,8 @@ function MetaForm({
 }
 
 export function ImportModal({ onClose, onImport }: ImportModalProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     console.log('[ImportModal] mounted — modal is now visible');
     return () => console.log('[ImportModal] unmounted');
@@ -346,10 +352,10 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
 
   const primaryLabel =
     tab === 'file'
-      ? 'Import Translation'
+      ? t('importTranslationButton')
       : apiImporting
-        ? 'Importing…'
-        : 'Import Full Bible';
+        ? t('importingButton')
+        : t('importFullBibleButton');
 
   // ── Render ────────────────────────────────────────────────────────────────
   const tabCls = (active: boolean) =>
@@ -377,7 +383,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-600 shrink-0">
           <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
-            Import Bible Translation
+            {t('importModalHeader')}
           </h2>
           <button
             onClick={onClose}
@@ -390,10 +396,10 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-600 shrink-0 px-2">
           <button className={tabCls(tab === 'file')} onClick={() => setTab('file')}>
-            <span className="flex items-center gap-1.5"><FolderOpen size={13} /> Local File</span>
+            <span className="flex items-center gap-1.5"><FolderOpen size={13} /> {t('tabLocalFile')}</span>
           </button>
           <button className={tabCls(tab === 'api')} onClick={() => setTab('api')}>
-            <span className="flex items-center gap-1.5"><Globe size={13} /> api.bible</span>
+            <span className="flex items-center gap-1.5"><Globe size={13} /> {t('tabApiBible')}</span>
           </button>
         </div>
 
@@ -404,8 +410,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           {tab === 'file' && (
             <>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Select a <span className="font-medium">.brbmod</span> module file, or a raw JSON Bible
-                (book &rarr; chapter &rarr; verse array). Module files auto-fill the metadata below.
+                {t('localFileInstructions')}
               </p>
               <button
                 onClick={handlePickFile}
@@ -417,7 +422,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                 {filePhase === 'loading'
                   ? <Loader size={14} className="animate-spin" />
                   : <FolderOpen size={14} />}
-                {filePhase === 'loading' ? (loadingStep || 'Loading…') : 'Choose File…'}
+                {filePhase === 'loading' ? (loadingStep || t('loadingFile')) : t('chooseFile')}
               </button>
 
               {/* Large file warning — shown while loading a big file */}
@@ -427,7 +432,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                 >
                   <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
                   <p className="text-xs text-amber-700 dark:text-amber-300">
-                    Large file — this may take a moment, the UI will respond shortly.
+                    {t('largeFileWarning')}
                   </p>
                 </div>
               )}
@@ -449,8 +454,8 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                       )}
                     </div>
                     {fileIsModule
-                      ? 'Module loaded — metadata auto-filled from module header. Edit below if needed.'
-                      : 'Schema valid. Fill in the details below.'}
+                      ? t('moduleLoaded')
+                      : t('schemaValid')}
                   </div>
                 </div>
               )}
@@ -462,7 +467,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   <div className="flex items-center gap-2">
                     <XCircle size={16} className="text-red-600 dark:text-red-400 shrink-0" />
                     <span className="text-sm font-medium text-red-800 dark:text-red-300">
-                      Validation failed — {fileErrors.length} error{fileErrors.length !== 1 ? 's' : ''}
+                      {t('validationFailed', { count: fileErrors.length })}
                     </span>
                   </div>
                   <ul className="list-disc list-inside text-xs text-red-700 dark:text-red-300 space-y-1 max-h-36 overflow-y-auto">
@@ -476,6 +481,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   abbreviation={fileAbbr} setAbbreviation={setFileAbbr}
                   fullName={fileFullName} setFullName={setFileFullName}
                   language={fileLang} setLanguage={setFileLang}
+                  t={t}
                 />
               )}
             </>
@@ -485,29 +491,28 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           {tab === 'api' && (
             <>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Fetch a translation directly from{' '}
-                <span className="font-medium text-blue-600 dark:text-blue-400">api.bible</span>.
-                You'll need a free API key and a Bible ID from their catalogue.
+                {t('apiBibleInstructions')}{' '}
+                {t('apiBibleKeyInstructions')}
               </p>
 
               {/* Credentials */}
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    API Key
+                    {t('labelApiKey')}
                   </label>
                   <input
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Paste your api.bible key here"
+                    placeholder={t('placeholderApiKey')}
                     className={inputCls}
                     disabled={apiImporting}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Bible ID{' '}
+                    {t('labelBibleId')}{' '}
                     <span className="text-gray-400 font-normal">(e.g. de4e12af7f28f599-02 for KJV)</span>
                   </label>
                   <input
@@ -529,7 +534,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   {apiPhase === 'previewing'
                     ? <Loader size={14} className="animate-spin" />
                     : <Globe size={14} />}
-                  {apiPhase === 'previewing' ? 'Fetching preview…' : 'Preview Genesis 1'}
+                  {apiPhase === 'previewing' ? t('fetchingPreview') : t('previewGenesis')}
                 </button>
               </div>
 
@@ -549,7 +554,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   <div className="flex items-center gap-2">
                     <CheckCircle size={14} className="text-green-600 dark:text-green-400 shrink-0" />
                     <span className="text-xs font-medium text-green-700 dark:text-green-300">
-                      Connection OK — Genesis 1 preview (first 5 verses):
+                      {t('connectionOk')}
                     </span>
                   </div>
                   <div className="rounded-lg border border-gray-200 dark:border-gray-600
@@ -560,7 +565,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                       <p key={i}><span className="font-medium text-gray-400 mr-1">{i + 1}</span>{v}</p>
                     ))}
                     {previewVerses.length > 5 && (
-                      <p className="text-gray-400 italic">…{previewVerses.length - 5} more verses</p>
+                      <p className="text-gray-400 italic">{t('moreVerses', { count: previewVerses.length - 5 })}</p>
                     )}
                   </div>
                 </div>
@@ -572,19 +577,20 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   abbreviation={apiAbbr} setAbbreviation={setApiAbbr}
                   fullName={apiFullName} setFullName={setApiFullName}
                   language={apiLang} setLanguage={setApiLang}
+                  t={t}
                 />
               )}
 
               {/* Import progress log */}
               {(apiPhase === 'importing' || apiPhase === 'import-done' || apiPhase === 'import-err') && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Progress</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('sectionProgress')}</span>
                   <div className="rounded-lg border border-gray-200 dark:border-gray-600
                     bg-gray-50 dark:bg-gray-900/40 p-3 text-xs text-gray-600 dark:text-gray-400
                     space-y-0.5 max-h-36 overflow-y-auto font-mono"
                   >
                     {progressLog.length === 0
-                      ? <span className="text-gray-400">Starting…</span>
+                      ? <span className="text-gray-400">{t('progressStarting')}</span>
                       : progressLog.map((line, i) => <p key={i}>{line}</p>)
                     }
                   </div>
@@ -613,7 +619,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
               border-gray-300 dark:border-gray-500
               hover:bg-gray-50 dark:hover:bg-gray-600"
           >
-            Cancel
+            {t('cancelButton')}
           </button>
           <button
             onClick={handlePrimaryAction}

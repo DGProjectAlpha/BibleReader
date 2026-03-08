@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface NotesPanelProps {
   /** When true, renders as full-height tab content (no collapsible header) */
@@ -13,6 +14,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
   const deleteNote = useBibleStore((s) => s.deleteNote);
   const setSelectedBook = useBibleStore((s) => s.setSelectedBook);
   const setSelectedChapter = useBibleStore((s) => s.setSelectedChapter);
+  const { t } = useTranslation();
 
   // Most recently updated first
   const sorted = [...notes].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -26,7 +28,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
     <>
       {sorted.length === 0 ? (
         <p className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 italic">
-          No notes yet. Click the note icon on any verse to add one.
+          {t('notesEmpty')}
         </p>
       ) : (
         <ul>
@@ -38,7 +40,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
               <button
                 onClick={() => navigate(note.book, note.chapter)}
                 className="flex-1 text-left min-w-0"
-                title={`${note.book} ${note.chapter}:${note.verse} — ${note.text}`}
+                title={`${note.book} ${note.chapter}:${note.verse} \u2014 ${note.text}`}
               >
                 <span className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                   {note.book} {note.chapter}:{note.verse}
@@ -51,7 +53,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
               <button
                 onClick={() => deleteNote(note.id)}
                 className="opacity-0 group-hover:opacity-100 mt-0.5 p-0.5 rounded text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-opacity shrink-0"
-                title="Delete note"
+                title={t('deleteButton')}
               >
                 <X size={11} />
               </button>
@@ -75,7 +77,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
         className="flex items-center gap-2 w-full px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       >
         <FileText size={13} />
-        <span className="flex-1 text-left">Notes</span>
+        <span className="flex-1 text-left">{t('tabNotes')}</span>
         <span className="text-gray-500 dark:text-gray-400 font-normal normal-case tracking-normal">
           {sorted.length}
         </span>

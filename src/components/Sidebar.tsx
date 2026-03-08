@@ -5,6 +5,7 @@ import { NotesPanel } from './NotesPanel';
 import { ManageTranslationsPanel } from './ManageTranslationsPanel';
 import { Bookmark, FileText, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
+import { useTranslation } from '../i18n/useTranslation';
 
 type SidebarTab = 'bookmarks' | 'notes' | 'translations';
 
@@ -15,15 +16,16 @@ interface SidebarProps {
 export function Sidebar({ onOpenImport }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('bookmarks');
   const [collapsed, setCollapsed] = useState(false);
+  const { t } = useTranslation();
 
   const bookmarkCount = useBibleStore((s) => s.bookmarks.length);
   const noteCount = useBibleStore((s) => s.notes.length);
   const translationCount = useBibleStore((s) => s.customTranslations.length);
 
   const tabs: { id: SidebarTab; icon: React.ReactNode; label: string; badge?: number }[] = [
-    { id: 'bookmarks',    icon: <Bookmark size={15} />,  label: 'Bookmarks',    badge: bookmarkCount },
-    { id: 'notes',        icon: <FileText size={15} />,  label: 'Notes',        badge: noteCount },
-    { id: 'translations', icon: <Languages size={15} />, label: 'Translations', badge: translationCount },
+    { id: 'bookmarks',    icon: <Bookmark size={15} />,  label: t('tabBookmarks'),    badge: bookmarkCount },
+    { id: 'notes',        icon: <FileText size={15} />,  label: t('tabNotes'),        badge: noteCount },
+    { id: 'translations', icon: <Languages size={15} />, label: t('tabTranslations'), badge: translationCount },
   ];
 
   // Collapsed: show a narrow strip with vertical label + expand button
@@ -33,7 +35,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
         <button
           onClick={() => setCollapsed(false)}
           className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-          title="Expand panel"
+          title={t('expandPanel')}
         >
           <ChevronRight size={16} />
         </button>
@@ -41,9 +43,9 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
           className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 tracking-widest cursor-pointer select-none"
           style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
           onClick={() => setCollapsed(false)}
-          title="Expand panel"
+          title={t('expandPanel')}
         >
-          {activeTab === 'bookmarks' ? 'BOOKMARKS' : activeTab === 'notes' ? 'NOTES' : 'TRANSLATIONS'}
+          {activeTab === 'bookmarks' ? t('sidebarCollapsedBookmarks') : activeTab === 'notes' ? t('sidebarCollapsedNotes') : t('sidebarCollapsedTranslations')}
         </span>
       </div>
     );
@@ -53,14 +55,14 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
     <div className="flex flex-col h-full w-64 shrink-0 border-r border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.10] dark:border-white/[0.10]">
-        <span className="font-bold text-lg text-gray-800 dark:text-gray-100">BibleReader</span>
+        <span className="font-bold text-lg text-gray-800 dark:text-gray-100">{t('appTitle')}</span>
         <div className="flex items-center gap-1">
           <SettingsPanel onOpenImport={onOpenImport} />
           <button
             onClick={() => setCollapsed(true)}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
-            aria-label="Collapse panel"
-            title="Collapse panel"
+            aria-label={t('collapsePanel')}
+            title={t('collapsePanel')}
           >
             <ChevronLeft size={16} />
           </button>
