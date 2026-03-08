@@ -6,6 +6,7 @@
 
 import * as kjv from './kjvLoader';
 import * as asv from './asvLoader';
+import * as rst from './rstLoader';
 
 // Translation is any string — 'KJV' and 'ASV' are built-ins; custom translations use their abbreviation.
 export type Translation = string;
@@ -33,6 +34,7 @@ interface BibleLoader {
 const loaders: Record<string, BibleLoader> = {
   KJV: kjv,
   ASV: asv,
+  SYN: rst,
 };
 
 /**
@@ -142,7 +144,7 @@ function resolveLoader(translation: Translation): BibleLoader {
  * before rendering the React tree so all sync loader functions work immediately.
  */
 export async function initBibleData(): Promise<void> {
-  await Promise.all([kjv.initKjv(), asv.initAsv()]);
+  await Promise.all([kjv.initKjv(), asv.initAsv(), rst.initRst()]);
 }
 
 /**
@@ -192,4 +194,4 @@ export function getChapterCount(translation: Translation, bookName: string): num
   return resolveLoader(translation).getBook(bookName).length;
 }
 
-export const TRANSLATIONS: Translation[] = ['KJV', 'ASV'];
+export const TRANSLATIONS: Translation[] = ['KJV', 'ASV', 'SYN'];
