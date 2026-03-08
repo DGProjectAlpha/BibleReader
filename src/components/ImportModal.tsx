@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, FolderOpen, CheckCircle, XCircle, Loader, Globe, AlertTriangle } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
@@ -73,6 +73,11 @@ function MetaForm({
 }
 
 export function ImportModal({ onClose, onImport }: ImportModalProps) {
+  useEffect(() => {
+    console.log('[ImportModal] mounted — modal is now visible');
+    return () => console.log('[ImportModal] unmounted');
+  }, []);
+
   const [tab, setTab] = useState<'file' | 'api'>('file');
 
   // ── File tab state ────────────────────────────────────────────────────────
@@ -102,14 +107,25 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
 
   // ── File tab handlers ─────────────────────────────────────────────────────
   async function handlePickFile() {
-    const selected = await open({
-      multiple: false,
-      filters: [
-        { name: 'BibleReader Module', extensions: ['brbmod'] },
-        { name: 'JSON Bible', extensions: ['json'] },
-      ],
-    });
-    if (!selected || typeof selected !== 'string') return;
+    console.log('[ImportModal] handlePickFile — invoking Tauri dialog open()');
+    let selected: string | null;
+    try {
+      const result = await open({
+        multiple: false,
+        filters: [
+          { name: 'BibleReader Module', extensions: ['brbmod'] },
+          { name: 'JSON Bible', extensions: ['json'] },
+        ],
+      });
+      selected = typeof result === 'string' ? result : null;
+      console.log('[ImportModal] dialog open() resolved — selected:', selected);
+    } catch (err) {
+      console.error('[ImportModal] dialog open() threw:', err);
+      setFilePhase('invalid');
+      setFileErrors([`Could not open file picker: ${err instanceof Error ? err.message : String(err)}`]);
+      return;
+    }
+    if (!selected) return;
 
     setFilePhase('loading');
     setFileErrors([]);
