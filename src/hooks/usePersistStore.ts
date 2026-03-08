@@ -110,7 +110,7 @@ export function usePersistStore() {
           } else if (isBrbModPlain(mod)) {
             addCustomTranslation(meta, mod.data as import('../data/bibleLoader').BibleData, null);
           } else {
-            console.warn(`[usePersistStore] unknown format for "${mod.meta.abbreviation}" — skipped`);
+            console.warn(`[usePersistStore] unknown format for "${(mod as import('../types/brbmod').BrbMod).meta.abbreviation}" — skipped`);
           }
         });
         // Signal that all on-disk modules are registered — VerseDisplay gates its

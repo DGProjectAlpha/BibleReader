@@ -120,7 +120,7 @@ export function App() {
 
     if (bookNameWarnings.length > 0) {
       alert(
-        `"${meta.name}" imported successfully, but ${bookNameWarnings.length} book name(s) could not be matched to canonical Bible books and will not appear in navigation:\n\n` +
+        `"${meta.fullName}" imported successfully, but ${bookNameWarnings.length} book name(s) could not be matched to canonical Bible books and will not appear in navigation:\n\n` +
         bookNameWarnings.join('\n')
       );
     }
