@@ -22,8 +22,11 @@ import {
   exists,
   mkdir,
   remove,
+  readDir,
   BaseDirectory,
 } from '@tauri-apps/plugin-fs';
+import { validateBrbMod } from '../types/brbmod';
+import type { BrbMod } from '../types/brbmod';
 
 const STORE_FILE = 'bible-reader.json';
 
@@ -279,4 +282,32 @@ export async function deleteCustomBibleData(abbreviation: string): Promise<void>
   if (fileExists) {
     await remove(path, { baseDir: BaseDirectory.AppData });
   }
+}
+
+/**
+ * Scan {AppData}/modules/ for all *.brbmod files and return parsed + validated
+ * module objects. Files that fail validation are silently skipped (logged to console).
+ *
+ * This is the authoritative loader — the plugin-store 'customTranslations' key
+ * is NOT the source of truth. The filesystem is.
+ */
+export async function scanAndLoadModules(): Promise<BrbMod[]> {
+  await ensureModulesDir();
+  const entries = await readDir(MODULES_DIR, { baseDir: BaseDirectory.AppData });
+  const results: BrbMod[] = [];
+
+  for (const entry of entries) {
+    if (!entry.name || !entry.name.endsWith('.brbmod')) continue;
+    try {
+      const filePath = `${MODULES_DIR}/${entry.name}`;
+      const text = await readTextFile(filePath, { baseDir: BaseDirectory.AppData });
+      const raw = JSON.parse(text);
+      const mod = validateBrbMod(raw);
+      results.push(mod);
+    } catch (err) {
+      console.warn(`[scanAndLoadModules] skipping ${entry.name}:`, err);
+    }
+  }
+
+  return results;
 }

@@ -19,8 +19,7 @@ import {
   getSyncScroll,
   getFontSize,
   getFontFamily,
-  getCustomTranslations,
-  getCustomBibleData,
+  scanAndLoadModules,
   setNote,
   deleteNote,
   setHighlight,
@@ -35,15 +34,16 @@ import {
   saveTheme,
   verseKey,
 } from '../utils/persistence';
-import { registerCustomTranslation } from '../data/bibleLoader';
-import type { BibleData } from '../data/bibleLoader';
+import { registerCustomTranslation, registerTaggedTranslation } from '../data/bibleLoader';
+import { isBrbModPlain, isBrbModTagged } from '../types/brbmod';
+import type { CustomTranslationMeta } from '../store/bibleStore';
 
 export function usePersistStore() {
   // ── Load persisted state on mount ──────────────────────────────────────────
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, customTranslationsMeta] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
@@ -52,7 +52,7 @@ export function usePersistStore() {
           getFontSize(),
           getFontFamily(),
           getTheme(),
-          getCustomTranslations(),
+          scanAndLoadModules(),
         ]);
 
         // Record<verseKey, text>  →  Note[]
@@ -91,22 +91,23 @@ export function usePersistStore() {
           createdAt: b.createdAt,
         }));
 
-        // Re-register any previously imported custom translations in bibleLoader
-        // so they are available in panes immediately on startup.
-        if (customTranslationsMeta.length > 0) {
-          await Promise.all(
-            customTranslationsMeta.map(async (meta) => {
-              try {
-                const data = await getCustomBibleData(meta.abbreviation);
-                if (data) {
-                  registerCustomTranslation(meta.abbreviation, data as BibleData);
-                }
-              } catch {
-                // Ignore missing data for a single translation
-              }
-            })
-          );
-        }
+        // Register every module found on disk into bibleLoader so panes can use them.
+        // The filesystem is the source of truth — no plugin-store key needed.
+        const customTranslationsMeta: CustomTranslationMeta[] = scannedMods.map((mod) => {
+          if (isBrbModTagged(mod)) {
+            registerTaggedTranslation(mod.meta.abbreviation, mod.data);
+          } else if (isBrbModPlain(mod)) {
+            registerCustomTranslation(mod.meta.abbreviation, mod.data as import('../data/bibleLoader').BibleData);
+          }
+          return {
+            id: mod.meta.abbreviation,
+            abbreviation: mod.meta.abbreviation,
+            fullName: mod.meta.name,
+            language: mod.meta.language,
+            fileName: `${mod.meta.abbreviation}.brbmod`,
+            importedAt: 0,
+          };
+        });
 
         // Hydrate store — only override if there's actually data to restore
         useBibleStore.setState((state) => ({
