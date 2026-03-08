@@ -214,8 +214,7 @@ export async function setFontFamily(value: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export interface CustomTranslationMeta {
-  id: string;
-  abbreviation: string;
+  abbreviation: string; // primary key
   fullName: string;
   language: string;
   fileName: string;
@@ -230,15 +229,15 @@ export async function getCustomTranslations(): Promise<CustomTranslationMeta[]> 
 export async function saveCustomTranslation(meta: CustomTranslationMeta): Promise<void> {
   const store = await getStore();
   const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
-  const filtered = existing.filter((t) => t.id !== meta.id);
+  const filtered = existing.filter((t) => t.abbreviation !== meta.abbreviation);
   await store.set('customTranslations', [...filtered, meta]);
   await store.save();
 }
 
-export async function deleteCustomTranslation(id: string): Promise<void> {
+export async function deleteCustomTranslation(abbreviation: string): Promise<void> {
   const store = await getStore();
   const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
-  await store.set('customTranslations', existing.filter((t) => t.id !== id));
+  await store.set('customTranslations', existing.filter((t) => t.abbreviation !== abbreviation));
   await store.save();
 }
 
@@ -262,7 +261,10 @@ async function ensureModulesDir(): Promise<void> {
 export async function saveCustomBibleData(abbreviation: string, data: unknown): Promise<void> {
   await ensureModulesDir();
   const path = `${MODULES_DIR}/${abbreviation}.brbmod`;
-  await writeTextFile(path, JSON.stringify(data), { baseDir: BaseDirectory.AppData });
+  const serialized = JSON.stringify(data);
+  console.log(`[persistence] saveCustomBibleData: writing ${abbreviation}.brbmod — ${serialized.length} bytes`);
+  await writeTextFile(path, serialized, { baseDir: BaseDirectory.AppData });
+  console.log(`[persistence] saveCustomBibleData: write complete for ${abbreviation}.brbmod`);
 }
 
 /** Read module data from {AppData}/modules/{abbreviation}.brbmod */
@@ -296,18 +298,26 @@ export async function scanAndLoadModules(): Promise<BrbMod[]> {
   const entries = await readDir(MODULES_DIR, { baseDir: BaseDirectory.AppData });
   const results: BrbMod[] = [];
 
+  console.log(`[scanAndLoadModules] found ${entries.length} entries in modules dir`);
+
   for (const entry of entries) {
-    if (!entry.name || !entry.name.endsWith('.brbmod')) continue;
+    if (!entry.name || !entry.name.endsWith('.brbmod')) {
+      console.log(`[scanAndLoadModules] skipping non-.brbmod entry: ${entry.name}`);
+      continue;
+    }
     try {
       const filePath = `${MODULES_DIR}/${entry.name}`;
       const text = await readTextFile(filePath, { baseDir: BaseDirectory.AppData });
+      console.log(`[scanAndLoadModules] read ${entry.name} — ${text.length} bytes`);
       const raw = JSON.parse(text);
       const mod = validateBrbMod(raw);
+      console.log(`[scanAndLoadModules] validated OK: ${mod.meta.abbreviation} (${mod.meta.format})`);
       results.push(mod);
     } catch (err) {
       console.warn(`[scanAndLoadModules] skipping ${entry.name}:`, err);
     }
   }
 
+  console.log(`[scanAndLoadModules] loaded ${results.length} modules:`, results.map((m) => m.meta.abbreviation));
   return results;
 }

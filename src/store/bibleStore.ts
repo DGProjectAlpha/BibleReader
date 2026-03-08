@@ -41,8 +41,7 @@ export interface Bookmark extends VerseKey {
 // Metadata for a user-imported bible translation.
 // The actual verse data is stored separately (as a JSON file in the Tauri app data dir).
 export interface CustomTranslationMeta {
-  id: string;           // unique, e.g. crypto.randomUUID()
-  abbreviation: string; // short label shown in pane header, e.g. "NASB"
+  abbreviation: string; // primary key — short label shown in pane header, e.g. "NASB"
   fullName: string;     // e.g. "New American Standard Bible"
   language: string;     // BCP-47 language tag, e.g. "en", "es", "ru"
   fileName: string;     // name of the JSON file stored in app data dir
@@ -136,6 +135,11 @@ interface BibleStore {
   setFontSize: (size: number) => void;
   setFontFamily: (family: string) => void;
 
+  // True once scanAndLoadModules() has completed on startup — gates VerseDisplay
+  // from attempting custom-translation lookups before they are registered.
+  modulesReady: boolean;
+  setModulesReady: (ready: boolean) => void;
+
   // Custom (user-imported) translations
   customTranslations: CustomTranslationMeta[];
   /**
@@ -148,8 +152,8 @@ interface BibleStore {
     meta: CustomTranslationMeta,
     data?: BibleData | null,
     taggedData?: BibleDataTagged | null
-  ) => void;
-  removeCustomTranslation: (id: string) => void;
+  ) => string[];
+  removeCustomTranslation: (abbreviation: string) => void;
 
   // Search state
   searchQuery: string;
@@ -185,6 +189,9 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   theme: 'light-cool',
   fontSize: 16,
   fontFamily: 'sans',
+  modulesReady: false,
+
+  setModulesReady: (ready) => set({ modulesReady: ready }),
 
   addPane: () =>
     set((state) => {
@@ -443,17 +450,18 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   addCustomTranslation: (meta, data, taggedData) => {
     // Register in bibleLoader so panes can retrieve verse data immediately.
     // This is the single authoritative indexing call — all callers go through here.
+    let warnings: string[] = [];
     try {
       if (taggedData != null) {
         console.log(`[bibleStore] addCustomTranslation: registering tagged "${meta.abbreviation}" — ${taggedData.length} books`);
-        registerTaggedTranslation(meta.abbreviation, taggedData);
+        warnings = registerTaggedTranslation(meta.abbreviation, taggedData);
       } else if (data != null) {
         const bookCount = Object.keys(data).length;
         console.log(`[bibleStore] addCustomTranslation: registering plain "${meta.abbreviation}" — ${bookCount} books`);
         if (bookCount === 0) {
           console.warn(`[bibleStore] addCustomTranslation: "${meta.abbreviation}" has 0 books — verse display will be empty`);
         }
-        registerCustomTranslation(meta.abbreviation, data);
+        warnings = registerCustomTranslation(meta.abbreviation, data);
       } else {
         console.warn(`[bibleStore] addCustomTranslation: "${meta.abbreviation}" called with no data or taggedData — verses will not load`);
       }
@@ -469,16 +477,14 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
       }
       return { customTranslations: [...filtered, meta] };
     });
+
+    return warnings;
   },
-  removeCustomTranslation: (id) => {
-    // Unregister from bibleLoader so panes fall back to KJV instead of using stale data
-    const removing = useBibleStore.getState().customTranslations.find((t) => t.id === id);
-    if (removing) {
-      console.log(`[bibleStore] removeCustomTranslation: unregistering "${removing.abbreviation}"`);
-      unregisterCustomTranslation(removing.abbreviation);
-    }
+  removeCustomTranslation: (abbreviation) => {
+    console.log(`[bibleStore] removeCustomTranslation: unregistering "${abbreviation}"`);
+    unregisterCustomTranslation(abbreviation);
     set((state) => ({
-      customTranslations: state.customTranslations.filter((t) => t.id !== id),
+      customTranslations: state.customTranslations.filter((t) => t.abbreviation !== abbreviation),
     }));
   },
 

@@ -124,10 +124,12 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
       const raw = await readTextFile(selected);
       const name = selected.split(/[\\/]/).pop() ?? selected;
       setFileName(name);
+      console.log(`[ImportModal] file read OK: "${name}" — ${raw.length} bytes`);
 
       // Flag large files (>5 MB of text) so the UI can warn the user
       if (raw.length > LARGE_FILE_BYTES) {
         setFileLarge(true);
+        console.log(`[ImportModal] large file detected (${(raw.length / 1024 / 1024).toFixed(1)} MB)`);
       }
 
       // Defer heavy sync work so the loading spinner is visible before we block
@@ -135,6 +137,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
       let parsed: unknown;
       try {
         parsed = await defer(() => JSON.parse(raw));
+        console.log(`[ImportModal] JSON.parse OK — type=${Array.isArray(parsed) ? 'array' : typeof parsed}`);
       } catch (e) {
         setFilePhase('invalid');
         setFileErrors([`File is not valid JSON: ${e instanceof Error ? e.message : String(e)}`]);
@@ -155,6 +158,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
         setFileIsModule(true);
         metaAutoFilled = true;
         detectedFormat = mod.meta.format === 'tagged' ? 'tagged' : 'plain';
+        console.log(`[ImportModal] .brbmod detected — format=${detectedFormat} abbr=${mod.meta.abbreviation}`);
         setFileModuleFormat(detectedFormat);
         // Auto-populate meta fields from the module header
         if (typeof mod.meta.abbreviation === 'string') {
@@ -167,6 +171,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           setFileLang(mod.meta.language.slice(0, 10));
         }
       } else {
+        console.log('[ImportModal] plain JSON bible detected (no .brbmod envelope)');
         setFileIsModule(false);
         setFileModuleFormat(null);
         setFileTaggedData(null);
@@ -181,11 +186,17 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           const validated = await defer(() => validateBrbMod(parsed as unknown));
           setLoadingStep('');
           setFileLarge(false);
-          setFileTaggedData(validated.data as BibleDataTagged);
-          // Dummy ValidationResult — tagged data bypasses the plain data path in handleImport
+          const taggedData = validated.data as BibleDataTagged;
+          console.log(`[ImportModal] tagged module validated OK — ${taggedData.length} books`);
+          setFileTaggedData(taggedData);
+          // Placeholder ValidationResult for tagged modules. The actual bible data lives in
+          // fileTaggedData (set above). handleImport checks `userMeta.moduleFormat === 'tagged'`
+          // before touching result.data, so this empty object is intentionally never read.
+          // If you add a code path that reads result.data in the tagged branch, this will break.
           setFileResult({ valid: true, data: {} });
           setFilePhase('valid');
         } catch (e) {
+          console.error('[ImportModal] tagged module validation failed:', e);
           setLoadingStep('');
           setFileLarge(false);
           setFilePhase('invalid');
@@ -197,6 +208,7 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
         setFileLarge(false);
 
         if (result.valid) {
+          console.log(`[ImportModal] plain bible validated OK — ${Object.keys(result.data).length} books`);
           setFileResult(result);
           setFilePhase('valid');
           // Only fall back to stem-based abbreviation if not auto-filled from module meta
@@ -217,12 +229,18 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
     }
   }
 
+  const BUILTIN_ABBRS = ['KJV', 'ASV', 'SYN'];
+
   function handleFileImport() {
     if (!fileResult) return;
     const trimAbbr = fileAbbr.trim();
     const trimFull = fileFullName.trim();
     const trimLang = fileLang.trim();
     if (!trimAbbr || !trimFull || !trimLang) return;
+    if (BUILTIN_ABBRS.includes(trimAbbr.toUpperCase())) {
+      setFileErrors([`"${trimAbbr.toUpperCase()}" is a built-in translation and cannot be overwritten. Choose a different abbreviation.`]);
+      return;
+    }
     onImport(fileResult, {
       abbreviation: trimAbbr,
       fullName: trimFull,
@@ -266,6 +284,10 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
     const trimFull = apiFullName.trim();
     const trimLang = apiLang.trim();
     if (!key || !id || !trimAbbr || !trimFull || !trimLang) return;
+    if (BUILTIN_ABBRS.includes(trimAbbr.toUpperCase())) {
+      setApiError(`"${trimAbbr.toUpperCase()}" is a built-in translation and cannot be overwritten. Choose a different abbreviation.`);
+      return;
+    }
 
     setApiPhase('importing');
     setProgressLog([]);

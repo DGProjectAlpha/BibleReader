@@ -47,6 +47,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
 
   const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
   const customTranslations = useBibleStore((s) => s.customTranslations);
+  const modulesReady = useBibleStore((s) => s.modulesReady);
 
   const [verses, setVerses] = useState<TaggedVerse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,9 +75,13 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const selectedTranslation = pane?.selectedTranslation ?? 'KJV';
   const id = pane?.id ?? paneId;
 
-  // Load verses whenever book, chapter, or translation changes
+  // Load verses whenever book, chapter, or translation changes.
+  // modulesReady gates the effect: custom translations registered by usePersistStore
+  // after startup are not available until that flag flips, so we wait to avoid a
+  // "no data found" error flash on first render with a custom translation selected.
   useEffect(() => {
     if (!pane || !selectedBook || !selectedChapter) return;
+    if (!modulesReady) return;
 
     console.log(`[VerseDisplay] loading: translation=${selectedTranslation} book="${selectedBook}" chapter=${selectedChapter}`);
     setIsLoading(true);
@@ -100,8 +105,9 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       setIsLoading(false);
     }
   // customTranslations included so the effect re-runs when a newly imported
-  // translation becomes available (handles the async startup registration case)
-  }, [selectedBook, selectedChapter, selectedTranslation, customTranslations]);
+  // translation becomes available; modulesReady ensures we wait for startup
+  // registration before attempting any custom-translation lookup.
+  }, [selectedBook, selectedChapter, selectedTranslation, customTranslations, modulesReady]);
 
   // Auto-scroll to target verse after chapter loads; each pane clears its own scroll target
   useEffect(() => {
@@ -180,7 +186,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
             {customTranslations.length > 0 && (
               <optgroup label="Imported">
                 {customTranslations.map((ct) => (
-                  <option key={ct.id} value={ct.abbreviation}>
+                  <option key={ct.abbreviation} value={ct.abbreviation}>
                     {ct.abbreviation}{ct.fullName ? ` — ${ct.fullName}` : ''}
                   </option>
                 ))}
@@ -375,10 +381,10 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state — show loading hint while startup module scan is in progress */}
         {!isLoading && !loadError && verses.length === 0 && (
           <div className="text-gray-500 dark:text-gray-400 italic">
-            Select a book and chapter above to start reading.
+            {!modulesReady ? 'Loading…' : 'Select a book and chapter above to start reading.'}
           </div>
         )}
       </div>

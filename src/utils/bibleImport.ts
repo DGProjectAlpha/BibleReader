@@ -22,6 +22,28 @@ export interface BibleData {
   };
 }
 
+/**
+ * Reorders BibleData keys to match the canonical 66-book order defined in books.ts.
+ * Books not found in the canonical list are appended at the end in their original order.
+ * This is cosmetic — the sidebar uses books.ts for navigation regardless.
+ */
+export function sortBibleData(data: BibleData, canonicalOrder: string[]): BibleData {
+  const sorted: BibleData = {};
+  // First pass: add books in canonical order
+  for (const name of canonicalOrder) {
+    if (data[name] !== undefined) {
+      sorted[name] = data[name];
+    }
+  }
+  // Second pass: append any books not in canonical list
+  for (const name of Object.keys(data)) {
+    if (sorted[name] === undefined) {
+      sorted[name] = data[name];
+    }
+  }
+  return sorted;
+}
+
 export interface ValidationResult {
   valid: true;
   data: BibleData;
@@ -34,6 +56,10 @@ export interface ValidationFailure {
 
 export type ImportResult = ValidationResult | ValidationFailure;
 
+import { books as canonicalBooks } from "../data/books";
+
+const CANONICAL_ORDER = canonicalBooks.map((b) => b.name);
+
 /**
  * Validates a parsed JSON object against the BibleData schema.
  * Returns typed BibleData on success, or a list of human-readable errors on failure.
@@ -41,8 +67,11 @@ export type ImportResult = ValidationResult | ValidationFailure;
 export function validateBibleJson(input: unknown): ImportResult {
   const errors: string[] = [];
 
+  console.log(`[validateBibleJson] start — type=${Array.isArray(input) ? 'array' : typeof input}`);
+
   // Top level must be a plain object
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    console.warn('[validateBibleJson] root is not a plain object');
     return {
       valid: false,
       errors: ["Root value must be a JSON object, not " + (Array.isArray(input) ? "an array" : String(input))],
@@ -73,7 +102,10 @@ export function validateBibleJson(input: unknown): ImportResult {
     }
 
     for (const chapterKey of chapterKeys) {
-      // Chapter key must be a numeric string
+      // Chapter key must be a numeric string (e.g. "1", "2", not "1a" or "Genesis_1").
+      // JSON.parse() always produces string keys regardless of what the source looks like,
+      // so true integer keys cannot appear here — but non-numeric strings (typos, named keys)
+      // are caught and rejected. This is the full protection for Bug #8.
       if (!/^\d+$/.test(chapterKey)) {
         errors.push(`Book "${book}", chapter key "${chapterKey}": keys must be numeric strings like "1", "2", etc.`);
         continue;
@@ -107,10 +139,12 @@ export function validateBibleJson(input: unknown): ImportResult {
   }
 
   if (errors.length > 0) {
+    console.warn(`[validateBibleJson] invalid — ${errors.length} error(s):`, errors.slice(0, 3));
     return { valid: false, errors };
   }
 
-  return { valid: true, data: root as BibleData };
+  console.log(`[validateBibleJson] valid — ${bookNames.length} books: ${bookNames.slice(0, 5).join(', ')}${bookNames.length > 5 ? '…' : ''}`);
+  return { valid: true, data: sortBibleData(root as BibleData, CANONICAL_ORDER) };
 }
 
 // ─── api.bible fetch path ────────────────────────────────────────────────────
@@ -194,7 +228,9 @@ export async function fetchFromApiBible(
   // ── 2 & 3. For each book, fetch chapters, then fetch each chapter's content
   for (let bi = 0; bi < books.length; bi++) {
     const book = books[bi];
-    const bookName = book.nameLong ?? book.name;
+    // Use the short name only — nameLong can be "The First Book of Moses, Called Genesis"
+    // which won't match the canonical book names in books.ts
+    const bookName = book.name;
 
     // Fetch chapter list for this book
     let chapters: ApiBibleChapter[];
@@ -261,7 +297,7 @@ export async function fetchFromApiBible(
     console.warn("api.bible import completed with warnings:", errors);
   }
 
-  return { valid: true, data: result };
+  return { valid: true, data: sortBibleData(result, CANONICAL_ORDER) };
 }
 
 /**

@@ -42,9 +42,7 @@ export function App() {
       taggedData?: BibleDataTagged;
     }
   ) => {
-    const id = crypto.randomUUID();
     const meta: CustomTranslationMeta = {
-      id,
       abbreviation: userMeta.abbreviation,
       fullName: userMeta.fullName,
       language: userMeta.language,
@@ -55,6 +53,12 @@ export function App() {
     // Determine the payload to persist: tagged modules supply pre-parsed tagged data;
     // plain modules and raw JSON imports use the validated string verse data.
     const isTagged = userMeta.moduleFormat === 'tagged' && userMeta.taggedData != null;
+    // INVARIANT: result.data must NOT be read when isTagged is true — ImportModal passes a
+    // placeholder empty object there. The payload always comes from userMeta.taggedData instead.
+    if (isTagged && Object.keys(result.data).length > 0) {
+      // This branch should never be reached. If it is, the caller is doing something unexpected.
+      console.warn('[handleImport] unexpected: result.data is non-empty for a tagged module — ignoring it');
+    }
     const biblePayload = isTagged ? userMeta.taggedData : result.data;
 
     // Wrap in a full BrbMod envelope so scanAndLoadModules() can read it back on startup.
@@ -87,20 +91,38 @@ export function App() {
       await saveCustomTranslation(meta);
       console.log('[handleImport] saveCustomTranslation OK');
     } catch (err) {
-      // Running outside Tauri (browser dev) — persistence unavailable; still register in memory
-      console.warn('[handleImport] persistence unavailable:', err);
+      // Detect whether we're running inside Tauri (production) or plain browser (dev mode).
+      // Tauri 2.x injects __TAURI_INTERNALS__ into the window at startup.
+      const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+      if (inTauri) {
+        // Real disk failure — do NOT silently register in memory; user data would be lost on restart.
+        console.error('[handleImport] persistence failed in Tauri context, aborting import:', err);
+        alert(`Import failed: could not save translation to disk.\n\n${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
+      // Browser dev mode — Tauri store unavailable by design; allow in-memory registration.
+      console.warn('[handleImport] persistence unavailable (browser dev mode):', err);
     }
 
     // Register in bibleLoader + update Zustand in one atomic store action.
     // The store action is the single indexing point — it calls registerCustomTranslation /
     // registerTaggedTranslation internally and prevents duplicate entries.
+    // Only reached if persistence succeeded OR if running in browser dev mode.
+    let bookNameWarnings: string[] = [];
     if (isTagged) {
       console.log('[handleImport] registering tagged translation via store:', meta.abbreviation);
-      addCustomTranslation(meta, null, userMeta.taggedData as BibleDataTagged);
+      bookNameWarnings = addCustomTranslation(meta, null, userMeta.taggedData as BibleDataTagged);
     } else {
       const plainData = result.data as BibleData;
       console.log('[handleImport] registering plain translation via store:', meta.abbreviation, '— books:', Object.keys(plainData).length);
-      addCustomTranslation(meta, plainData, null);
+      bookNameWarnings = addCustomTranslation(meta, plainData, null);
+    }
+
+    if (bookNameWarnings.length > 0) {
+      alert(
+        `"${meta.name}" imported successfully, but ${bookNameWarnings.length} book name(s) could not be matched to canonical Bible books and will not appear in navigation:\n\n` +
+        bookNameWarnings.join('\n')
+      );
     }
 
     setImportOpen(false);

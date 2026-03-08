@@ -95,11 +95,10 @@ export function usePersistStore() {
         // metadata updates happen in one place — avoids the split-brain bug where
         // registerCustomTranslation is called but the store action is bypassed.
         console.log(`[usePersistStore] registering ${scannedMods.length} module(s) from disk`);
-        const { addCustomTranslation } = useBibleStore.getState();
+        const { addCustomTranslation, setModulesReady } = useBibleStore.getState();
         scannedMods.forEach((mod) => {
           console.log(`[usePersistStore] registering "${mod.meta.abbreviation}" format=${mod.meta.format}`);
           const meta: CustomTranslationMeta = {
-            id: mod.meta.abbreviation,
             abbreviation: mod.meta.abbreviation,
             fullName: mod.meta.name,
             language: mod.meta.language,
@@ -114,6 +113,10 @@ export function usePersistStore() {
             console.warn(`[usePersistStore] unknown format for "${mod.meta.abbreviation}" — skipped`);
           }
         });
+        // Signal that all on-disk modules are registered — VerseDisplay gates its
+        // first load on this flag to avoid a "no data" flash before custom translations
+        // are available.
+        setModulesReady(true);
 
         // Derive a consistent theme+darkMode pair from persisted values.
         // Two cases can cause a mismatch (both result in wrong CSS vars):
@@ -150,6 +153,8 @@ export function usePersistStore() {
       } catch (err) {
         // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.
         console.debug('[usePersistStore] persistence unavailable:', err);
+        // Still mark modules as ready so VerseDisplay renders (no custom modules to wait for)
+        useBibleStore.getState().setModulesReady(true);
       }
     }
 
