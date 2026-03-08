@@ -11,9 +11,10 @@ import { ImportModal } from './components/ImportModal';
 import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
-import { registerCustomTranslation } from './data/bibleLoader';
+import { registerCustomTranslation, registerTaggedTranslation } from './data/bibleLoader';
 import type { BibleData } from './data/bibleLoader';
 import type { ValidationResult } from './utils/bibleImport';
+import type { BibleDataTagged } from './types/brbmod';
 import { saveCustomBibleData, saveCustomTranslation } from './utils/persistence';
 
 export function App() {
@@ -33,7 +34,14 @@ export function App() {
    */
   const handleImport = useCallback(async (
     result: ValidationResult,
-    userMeta: { abbreviation: string; fullName: string; language: string; fileName: string }
+    userMeta: {
+      abbreviation: string;
+      fullName: string;
+      language: string;
+      fileName: string;
+      moduleFormat?: 'plain' | 'tagged';
+      taggedData?: BibleDataTagged;
+    }
   ) => {
     const id = crypto.randomUUID();
     const meta: CustomTranslationMeta = {
@@ -45,17 +53,28 @@ export function App() {
       importedAt: Date.now(),
     };
 
+    // Determine the payload to persist: tagged modules supply pre-parsed tagged data;
+    // plain modules and raw JSON imports use the validated string verse data.
+    const isTagged = userMeta.moduleFormat === 'tagged' && userMeta.taggedData != null;
+    const biblePayload = isTagged ? userMeta.taggedData : result.data;
+
     try {
-      // Persist verse data and metadata to Tauri store
-      await saveCustomBibleData(id, result.data);
+      // Persist verse data to AppData/modules/{abbreviation}.brbmod
+      await saveCustomBibleData(meta.abbreviation, biblePayload);
       await saveCustomTranslation(meta);
     } catch (err) {
       // Running outside Tauri (browser dev) — persistence unavailable; still register in memory
       console.debug('[handleImport] persistence unavailable:', err);
     }
 
-    // Register in bibleLoader so panes can use it this session
-    registerCustomTranslation(meta.abbreviation, result.data as BibleData);
+    // Register in bibleLoader so panes can use it this session.
+    // Tagged modules already carry per-word Strong's tokens — pass straight through.
+    // Plain imports need word-tokenisation (registerCustomTranslation handles that).
+    if (isTagged) {
+      registerTaggedTranslation(meta.abbreviation, userMeta.taggedData as BibleDataTagged);
+    } else {
+      registerCustomTranslation(meta.abbreviation, result.data as BibleData);
+    }
 
     // Update Zustand — triggers UI update (translation picker in pane headers)
     addCustomTranslation(meta);

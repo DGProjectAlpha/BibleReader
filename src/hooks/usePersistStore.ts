@@ -97,7 +97,7 @@ export function usePersistStore() {
           await Promise.all(
             customTranslationsMeta.map(async (meta) => {
               try {
-                const data = await getCustomBibleData(meta.id);
+                const data = await getCustomBibleData(meta.abbreviation);
                 if (data) {
                   registerCustomTranslation(meta.abbreviation, data as BibleData);
                 }

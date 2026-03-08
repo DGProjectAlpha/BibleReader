@@ -16,6 +16,14 @@
  */
 
 import { load, Store } from '@tauri-apps/plugin-store';
+import {
+  writeTextFile,
+  readTextFile,
+  exists,
+  mkdir,
+  remove,
+  BaseDirectory,
+} from '@tauri-apps/plugin-fs';
 
 const STORE_FILE = 'bible-reader.json';
 
@@ -47,6 +55,7 @@ export async function setNote(key: string, text: string): Promise<void> {
   const notes = (await store.get<Record<string, string>>('notes')) ?? {};
   notes[key] = text;
   await store.set('notes', notes);
+  await store.save();
 }
 
 export async function deleteNote(key: string): Promise<void> {
@@ -54,6 +63,7 @@ export async function deleteNote(key: string): Promise<void> {
   const notes = (await store.get<Record<string, string>>('notes')) ?? {};
   delete notes[key];
   await store.set('notes', notes);
+  await store.save();
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +82,7 @@ export async function setHighlight(key: string, color: HighlightColor): Promise<
   const highlights = (await store.get<Record<string, HighlightColor>>('highlights')) ?? {};
   highlights[key] = color;
   await store.set('highlights', highlights);
+  await store.save();
 }
 
 export async function clearHighlight(key: string): Promise<void> {
@@ -79,6 +90,7 @@ export async function clearHighlight(key: string): Promise<void> {
   const highlights = (await store.get<Record<string, HighlightColor>>('highlights')) ?? {};
   delete highlights[key];
   await store.set('highlights', highlights);
+  await store.save();
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +123,7 @@ export async function addBookmark(
   };
   bookmarks.push(newEntry);
   await store.set('bookmarks', bookmarks);
+  await store.save();
   return newEntry;
 }
 
@@ -118,6 +131,7 @@ export async function removeBookmark(id: string): Promise<void> {
   const store = await getStore();
   const bookmarks = (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
   await store.set('bookmarks', bookmarks.filter((b) => b.id !== id));
+  await store.save();
 }
 
 export async function updateBookmarkLabel(id: string, label: string): Promise<void> {
@@ -127,6 +141,7 @@ export async function updateBookmarkLabel(id: string, label: string): Promise<vo
   if (idx !== -1) {
     bookmarks[idx] = { ...bookmarks[idx], label };
     await store.set('bookmarks', bookmarks);
+    await store.save();
   }
 }
 
@@ -142,6 +157,7 @@ export async function getDarkMode(): Promise<boolean | null> {
 export async function setDarkMode(value: boolean): Promise<void> {
   const store = await getStore();
   await store.set('darkMode', value);
+  await store.save();
 }
 
 export async function getSyncScroll(): Promise<boolean | null> {
@@ -152,6 +168,7 @@ export async function getSyncScroll(): Promise<boolean | null> {
 export async function setSyncScroll(value: boolean): Promise<void> {
   const store = await getStore();
   await store.set('syncScroll', value);
+  await store.save();
 }
 
 export type Theme = 'dark-blue' | 'dark-oled' | 'light-cool' | 'light-warm';
@@ -164,6 +181,7 @@ export async function getTheme(): Promise<Theme | null> {
 export async function saveTheme(value: Theme): Promise<void> {
   const store = await getStore();
   await store.set('theme', value);
+  await store.save();
 }
 
 export async function getFontSize(): Promise<number | null> {
@@ -174,6 +192,7 @@ export async function getFontSize(): Promise<number | null> {
 export async function setFontSize(value: number): Promise<void> {
   const store = await getStore();
   await store.set('fontSize', value);
+  await store.save();
 }
 
 export async function getFontFamily(): Promise<string | null> {
@@ -184,6 +203,7 @@ export async function getFontFamily(): Promise<string | null> {
 export async function setFontFamily(value: string): Promise<void> {
   const store = await getStore();
   await store.set('fontFamily', value);
+  await store.save();
 }
 
 // ---------------------------------------------------------------------------
@@ -209,30 +229,54 @@ export async function saveCustomTranslation(meta: CustomTranslationMeta): Promis
   const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
   const filtered = existing.filter((t) => t.id !== meta.id);
   await store.set('customTranslations', [...filtered, meta]);
+  await store.save();
 }
 
 export async function deleteCustomTranslation(id: string): Promise<void> {
   const store = await getStore();
   const existing = (await store.get<CustomTranslationMeta[]>('customTranslations')) ?? [];
   await store.set('customTranslations', existing.filter((t) => t.id !== id));
+  await store.save();
 }
 
 // ---------------------------------------------------------------------------
 // Custom translation bible data (verse content)
-// Stored per-translation under key "custom_bible_<id>" to keep files small.
+// Each imported module is stored as a permanent file:
+//   {AppData}/modules/{abbreviation}.brbmod  (JSON-encoded)
+// This means the file survives app restarts and is independent of plugin-store.
 // ---------------------------------------------------------------------------
 
-export async function saveCustomBibleData(id: string, data: unknown): Promise<void> {
-  const store = await getStore();
-  await store.set(`custom_bible_${id}`, data);
+const MODULES_DIR = 'modules';
+
+async function ensureModulesDir(): Promise<void> {
+  const dirExists = await exists(MODULES_DIR, { baseDir: BaseDirectory.AppData });
+  if (!dirExists) {
+    await mkdir(MODULES_DIR, { baseDir: BaseDirectory.AppData, recursive: true });
+  }
 }
 
-export async function getCustomBibleData(id: string): Promise<unknown> {
-  const store = await getStore();
-  return store.get(`custom_bible_${id}`);
+/** Write module data to {AppData}/modules/{abbreviation}.brbmod */
+export async function saveCustomBibleData(abbreviation: string, data: unknown): Promise<void> {
+  await ensureModulesDir();
+  const path = `${MODULES_DIR}/${abbreviation}.brbmod`;
+  await writeTextFile(path, JSON.stringify(data), { baseDir: BaseDirectory.AppData });
 }
 
-export async function deleteCustomBibleData(id: string): Promise<void> {
-  const store = await getStore();
-  await store.delete(`custom_bible_${id}`);
+/** Read module data from {AppData}/modules/{abbreviation}.brbmod */
+export async function getCustomBibleData(abbreviation: string): Promise<unknown> {
+  await ensureModulesDir();
+  const path = `${MODULES_DIR}/${abbreviation}.brbmod`;
+  const fileExists = await exists(path, { baseDir: BaseDirectory.AppData });
+  if (!fileExists) return null;
+  const text = await readTextFile(path, { baseDir: BaseDirectory.AppData });
+  return JSON.parse(text);
+}
+
+/** Remove {AppData}/modules/{abbreviation}.brbmod */
+export async function deleteCustomBibleData(abbreviation: string): Promise<void> {
+  const path = `${MODULES_DIR}/${abbreviation}.brbmod`;
+  const fileExists = await exists(path, { baseDir: BaseDirectory.AppData });
+  if (fileExists) {
+    await remove(path, { baseDir: BaseDirectory.AppData });
+  }
 }
