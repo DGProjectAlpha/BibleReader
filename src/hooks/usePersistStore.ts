@@ -109,16 +109,27 @@ export function usePersistStore() {
           };
         });
 
+        // Derive a consistent theme when only darkMode was saved (no theme key yet).
+        // Without this, darkMode=true + theme=light-cool (default) causes a mismatch
+        // where the .dark Tailwind class is applied but CSS vars still show light colors.
+        const resolvedDarkMode = darkMode !== null ? darkMode : null;
+        const resolvedTheme =
+          theme !== null
+            ? theme
+            : resolvedDarkMode !== null
+              ? (resolvedDarkMode ? 'dark-blue' : 'light-cool')
+              : null;
+
         // Hydrate store — only override if there's actually data to restore
         useBibleStore.setState((state) => ({
           notes: notes.length > 0 ? notes : state.notes,
           highlights: highlights.length > 0 ? highlights : state.highlights,
           bookmarks: bookmarks.length > 0 ? bookmarks : state.bookmarks,
-          darkMode: darkMode !== null ? darkMode : state.darkMode,
+          darkMode: resolvedDarkMode !== null ? resolvedDarkMode : state.darkMode,
           syncScroll: syncScroll !== null ? syncScroll : state.syncScroll,
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
-          theme: theme !== null ? theme : state.theme,
+          theme: resolvedTheme !== null ? resolvedTheme : state.theme,
           customTranslations: customTranslationsMeta.length > 0 ? customTranslationsMeta : state.customTranslations,
         }));
       } catch (err) {

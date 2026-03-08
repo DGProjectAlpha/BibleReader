@@ -58,9 +58,22 @@ export function App() {
     const isTagged = userMeta.moduleFormat === 'tagged' && userMeta.taggedData != null;
     const biblePayload = isTagged ? userMeta.taggedData : result.data;
 
+    // Wrap in a full BrbMod envelope so scanAndLoadModules() can read it back on startup.
+    // Saving bare data (without meta) causes validateBrbMod to fail and silently skip the module.
+    const moduleEnvelope = {
+      meta: {
+        name: meta.fullName,
+        abbreviation: meta.abbreviation,
+        language: meta.language,
+        format: isTagged ? 'tagged' : 'plain',
+        version: 1,
+      },
+      data: biblePayload,
+    };
+
     try {
       // Persist verse data to AppData/modules/{abbreviation}.brbmod
-      await saveCustomBibleData(meta.abbreviation, biblePayload);
+      await saveCustomBibleData(meta.abbreviation, moduleEnvelope);
       await saveCustomTranslation(meta);
     } catch (err) {
       // Running outside Tauri (browser dev) — persistence unavailable; still register in memory

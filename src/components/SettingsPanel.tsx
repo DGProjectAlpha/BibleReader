@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Settings } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { Theme } from '../store/bibleStore';
@@ -79,7 +80,7 @@ export function SettingsPanel() {
         <Settings size={16} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           ref={panelRef}
           style={{ top: pos.top, left: pos.left }}
@@ -111,7 +112,8 @@ export function SettingsPanel() {
               />
             ))}
           </Section>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
