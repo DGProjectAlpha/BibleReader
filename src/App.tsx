@@ -11,7 +11,6 @@ import { ImportModal } from './components/ImportModal';
 import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
-import { registerCustomTranslation, registerTaggedTranslation } from './data/bibleLoader';
 import type { BibleData } from './data/bibleLoader';
 import type { ValidationResult } from './utils/bibleImport';
 import type { BibleDataTagged } from './types/brbmod';
@@ -71,26 +70,38 @@ export function App() {
       data: biblePayload,
     };
 
+    console.log('[handleImport] starting import:', {
+      abbreviation: meta.abbreviation,
+      fullName: meta.fullName,
+      language: meta.language,
+      isTagged,
+      dataKeys: isTagged
+        ? `tagged array length=${Array.isArray(biblePayload) ? (biblePayload as unknown[]).length : 'N/A'}`
+        : `plain keys=${Object.keys(biblePayload as object ?? {}).slice(0, 5).join(', ')}...`,
+    });
+
     try {
       // Persist verse data to AppData/modules/{abbreviation}.brbmod
       await saveCustomBibleData(meta.abbreviation, moduleEnvelope);
+      console.log(`[handleImport] saveCustomBibleData OK — ${meta.abbreviation}.brbmod written`);
       await saveCustomTranslation(meta);
+      console.log('[handleImport] saveCustomTranslation OK');
     } catch (err) {
       // Running outside Tauri (browser dev) — persistence unavailable; still register in memory
-      console.debug('[handleImport] persistence unavailable:', err);
+      console.warn('[handleImport] persistence unavailable:', err);
     }
 
-    // Register in bibleLoader so panes can use it this session.
-    // Tagged modules already carry per-word Strong's tokens — pass straight through.
-    // Plain imports need word-tokenisation (registerCustomTranslation handles that).
+    // Register in bibleLoader + update Zustand in one atomic store action.
+    // The store action is the single indexing point — it calls registerCustomTranslation /
+    // registerTaggedTranslation internally and prevents duplicate entries.
     if (isTagged) {
-      registerTaggedTranslation(meta.abbreviation, userMeta.taggedData as BibleDataTagged);
+      console.log('[handleImport] registering tagged translation via store:', meta.abbreviation);
+      addCustomTranslation(meta, null, userMeta.taggedData as BibleDataTagged);
     } else {
-      registerCustomTranslation(meta.abbreviation, result.data as BibleData);
+      const plainData = result.data as BibleData;
+      console.log('[handleImport] registering plain translation via store:', meta.abbreviation, '— books:', Object.keys(plainData).length);
+      addCustomTranslation(meta, plainData, null);
     }
-
-    // Update Zustand — triggers UI update (translation picker in pane headers)
-    addCustomTranslation(meta);
 
     setImportOpen(false);
   }, [addCustomTranslation]);

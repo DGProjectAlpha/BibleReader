@@ -1,7 +1,9 @@
 import { create } from 'zustand';
-import type { Translation, WordToken, TaggedVerse } from '../data/bibleLoader';
+import type { Translation, WordToken, TaggedVerse, BibleData } from '../data/bibleLoader';
+import { registerCustomTranslation, registerTaggedTranslation } from '../data/bibleLoader';
 import { searchByKjvWord, lookup } from '../data/strongs';
 import type { StrongsEntry, StrongsSearchResult } from '../data/strongs';
+import type { BibleDataTagged } from '../types/brbmod';
 
 // Re-export verse data types so components only need one import point
 export type { WordToken, TaggedVerse };
@@ -136,7 +138,17 @@ interface BibleStore {
 
   // Custom (user-imported) translations
   customTranslations: CustomTranslationMeta[];
-  addCustomTranslation: (meta: CustomTranslationMeta) => void;
+  /**
+   * Register + save a custom translation.
+   * Pass either `data` (plain string verses) or `taggedData` (Strong's-tagged) so
+   * the store can index the translation in bibleLoader immediately. At least one
+   * must be non-null for the translation to produce any verse output.
+   */
+  addCustomTranslation: (
+    meta: CustomTranslationMeta,
+    data?: BibleData | null,
+    taggedData?: BibleDataTagged | null
+  ) => void;
   removeCustomTranslation: (id: string) => void;
 
   // Search state
@@ -428,10 +440,36 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
 
   // Custom translations
   customTranslations: [],
-  addCustomTranslation: (meta) =>
-    set((state) => ({
-      customTranslations: [...state.customTranslations, meta],
-    })),
+  addCustomTranslation: (meta, data, taggedData) => {
+    // Register in bibleLoader so panes can retrieve verse data immediately.
+    // This is the single authoritative indexing call — all callers go through here.
+    try {
+      if (taggedData != null) {
+        console.log(`[bibleStore] addCustomTranslation: registering tagged "${meta.abbreviation}" — ${taggedData.length} books`);
+        registerTaggedTranslation(meta.abbreviation, taggedData);
+      } else if (data != null) {
+        const bookCount = Object.keys(data).length;
+        console.log(`[bibleStore] addCustomTranslation: registering plain "${meta.abbreviation}" — ${bookCount} books`);
+        if (bookCount === 0) {
+          console.warn(`[bibleStore] addCustomTranslation: "${meta.abbreviation}" has 0 books — verse display will be empty`);
+        }
+        registerCustomTranslation(meta.abbreviation, data);
+      } else {
+        console.warn(`[bibleStore] addCustomTranslation: "${meta.abbreviation}" called with no data or taggedData — verses will not load`);
+      }
+    } catch (err) {
+      console.error(`[bibleStore] addCustomTranslation: registration failed for "${meta.abbreviation}":`, err);
+    }
+
+    set((state) => {
+      // Prevent duplicates: if this abbreviation is already registered, replace its entry
+      const filtered = state.customTranslations.filter((t) => t.abbreviation !== meta.abbreviation);
+      if (filtered.length < state.customTranslations.length) {
+        console.log(`[bibleStore] addCustomTranslation: replaced existing entry for "${meta.abbreviation}"`);
+      }
+      return { customTranslations: [...filtered, meta] };
+    });
+  },
   removeCustomTranslation: (id) =>
     set((state) => ({
       customTranslations: state.customTranslations.filter((t) => t.id !== id),

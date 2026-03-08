@@ -34,7 +34,6 @@ import {
   saveTheme,
   verseKey,
 } from '../utils/persistence';
-import { registerCustomTranslation, registerTaggedTranslation } from '../data/bibleLoader';
 import { isBrbModPlain, isBrbModTagged } from '../types/brbmod';
 import type { CustomTranslationMeta } from '../store/bibleStore';
 
@@ -92,14 +91,14 @@ export function usePersistStore() {
         }));
 
         // Register every module found on disk into bibleLoader so panes can use them.
-        // The filesystem is the source of truth — no plugin-store key needed.
+        // Route through addCustomTranslation (the store action) so registration and
+        // metadata updates happen in one place — avoids the split-brain bug where
+        // registerCustomTranslation is called but the store action is bypassed.
+        console.log(`[usePersistStore] registering ${scannedMods.length} module(s) from disk`);
+        const { addCustomTranslation } = useBibleStore.getState();
         const customTranslationsMeta: CustomTranslationMeta[] = scannedMods.map((mod) => {
-          if (isBrbModTagged(mod)) {
-            registerTaggedTranslation(mod.meta.abbreviation, mod.data);
-          } else if (isBrbModPlain(mod)) {
-            registerCustomTranslation(mod.meta.abbreviation, mod.data as import('../data/bibleLoader').BibleData);
-          }
-          return {
+          console.log(`[usePersistStore] registering "${mod.meta.abbreviation}" format=${mod.meta.format}`);
+          const meta: CustomTranslationMeta = {
             id: mod.meta.abbreviation,
             abbreviation: mod.meta.abbreviation,
             fullName: mod.meta.name,
@@ -107,6 +106,14 @@ export function usePersistStore() {
             fileName: `${mod.meta.abbreviation}.brbmod`,
             importedAt: 0,
           };
+          if (isBrbModTagged(mod)) {
+            addCustomTranslation(meta, null, mod.data);
+          } else if (isBrbModPlain(mod)) {
+            addCustomTranslation(meta, mod.data as import('../data/bibleLoader').BibleData, null);
+          } else {
+            console.warn(`[usePersistStore] unknown format for "${mod.meta.abbreviation}" — skipped`);
+          }
+          return meta;
         });
 
         // Derive a consistent theme+darkMode pair from persisted values.
@@ -129,7 +136,8 @@ export function usePersistStore() {
           }
         }
 
-        // Hydrate store — only override if there's actually data to restore
+        // Hydrate store — only override if there's actually data to restore.
+        // customTranslations is already updated by the addCustomTranslation calls above.
         useBibleStore.setState((state) => ({
           notes: notes.length > 0 ? notes : state.notes,
           highlights: highlights.length > 0 ? highlights : state.highlights,
@@ -139,7 +147,6 @@ export function usePersistStore() {
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
           theme: resolvedTheme !== null ? resolvedTheme : state.theme,
-          customTranslations: customTranslationsMeta.length > 0 ? customTranslationsMeta : state.customTranslations,
         }));
       } catch (err) {
         // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.
