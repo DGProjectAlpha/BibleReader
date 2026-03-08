@@ -6,13 +6,12 @@
 
 import * as kjv from './kjvLoader';
 import * as asv from './asvLoader';
-import * as rst from './rstLoader';
 
 // Translation is any string — 'KJV' and 'ASV' are built-ins; custom translations use their abbreviation.
 export type Translation = string;
 
 // The two built-in translation keys
-export const BUILTIN_TRANSLATIONS = ['KJV', 'ASV', 'SYN'] as const;
+export const BUILTIN_TRANSLATIONS = ['KJV', 'ASV'] as const;
 export type BuiltinTranslation = typeof BUILTIN_TRANSLATIONS[number];
 
 export type { WordToken, TaggedVerse } from './kjvLoader';
@@ -34,7 +33,6 @@ interface BibleLoader {
 const loaders: Record<string, BibleLoader> = {
   KJV: kjv,
   ASV: asv,
-  SYN: rst,
 };
 
 /**
@@ -86,6 +84,39 @@ export function registerCustomTranslation(abbreviation: string, data: BibleData)
   loaders[abbreviation] = loader;
 }
 
+/**
+ * Register a custom translation that is already in tagged format
+ * (BibleDataTagged = BibleBookTagged[] from brbmod.ts).
+ * Each word token already carries Strong's numbers — no conversion needed.
+ */
+export function registerTaggedTranslation(
+  abbreviation: string,
+  data: import('../types/brbmod').BibleDataTagged
+): void {
+  // BibleBookTagged and BibleBook are structurally identical — reuse directly.
+  const books: BibleBook[] = data as BibleBook[];
+
+  const loader: BibleLoader = {
+    getData: () => books,
+    getChapter: (bookName, chapter) => {
+      const book = books.find((b) => b.name === bookName);
+      return book ? (book.chapters[chapter - 1] ?? []) : [];
+    },
+    getChapterText: (bookName, chapter) => {
+      const book = books.find((b) => b.name === bookName);
+      if (!book) return [];
+      const ch = book.chapters[chapter - 1] ?? [];
+      return ch.map((verse) => verse.map((t) => t.word).join(' '));
+    },
+    getBook: (bookName) => {
+      const book = books.find((b) => b.name === bookName);
+      return book ? book.chapters : [];
+    },
+  };
+
+  loaders[abbreviation] = loader;
+}
+
 /** Removes a custom translation from the in-memory registry. */
 export function unregisterCustomTranslation(abbreviation: string): void {
   delete loaders[abbreviation];
@@ -111,7 +142,7 @@ function resolveLoader(translation: Translation): BibleLoader {
  * before rendering the React tree so all sync loader functions work immediately.
  */
 export async function initBibleData(): Promise<void> {
-  await Promise.all([kjv.initKjv(), asv.initAsv(), rst.initRst()]);
+  await Promise.all([kjv.initKjv(), asv.initAsv()]);
 }
 
 /**
@@ -161,4 +192,4 @@ export function getChapterCount(translation: Translation, bookName: string): num
   return resolveLoader(translation).getBook(bookName).length;
 }
 
-export const TRANSLATIONS: Translation[] = ['KJV', 'ASV', 'SYN'];
+export const TRANSLATIONS: Translation[] = ['KJV', 'ASV'];

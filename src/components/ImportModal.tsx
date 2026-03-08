@@ -4,6 +4,8 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { validateBibleJson, previewFromApiBible, fetchFromApiBible } from '../utils/bibleImport';
 import type { ValidationResult } from '../utils/bibleImport';
+import { validateBrbMod } from '../types/brbmod';
+import type { BibleDataTagged } from '../types/brbmod';
 import { ErrorBoundary } from './ErrorBoundary';
 
 /** Defer a synchronous callback behind one event-loop tick so React can paint loading states first. */
@@ -17,7 +19,14 @@ const LARGE_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 interface ImportModalProps {
   onClose: () => void;
-  onImport: (result: ValidationResult, meta: { abbreviation: string; fullName: string; language: string; fileName: string }) => void;
+  onImport: (result: ValidationResult, meta: {
+    abbreviation: string;
+    fullName: string;
+    language: string;
+    fileName: string;
+    moduleFormat?: 'plain' | 'tagged';
+    taggedData?: BibleDataTagged;
+  }) => void;
 }
 
 type FilePhase = 'idle' | 'loading' | 'valid' | 'invalid';
@@ -74,6 +83,9 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
   const [fileAbbr, setFileAbbr] = useState('');
   const [fileFullName, setFileFullName] = useState('');
   const [fileLang, setFileLang] = useState('en');
+  const [fileIsModule, setFileIsModule] = useState(false);
+  const [fileModuleFormat, setFileModuleFormat] = useState<'plain' | 'tagged' | null>(null);
+  const [fileTaggedData, setFileTaggedData] = useState<BibleDataTagged | null>(null);
   const [fileLarge, setFileLarge] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>('');
 
@@ -92,7 +104,10 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
   async function handlePickFile() {
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'JSON Bible', extensions: ['json'] }],
+      filters: [
+        { name: 'BibleReader Module', extensions: ['brbmod'] },
+        { name: 'JSON Bible', extensions: ['json'] },
+      ],
     });
     if (!selected || typeof selected !== 'string') return;
 
@@ -100,6 +115,9 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
     setFileErrors([]);
     setFileResult(null);
     setFileLarge(false);
+    setFileIsModule(false);
+    setFileModuleFormat(null);
+    setFileTaggedData(null);
     setLoadingStep('Reading file…');
 
     try {
@@ -124,19 +142,72 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
         return;
       }
 
-      setLoadingStep('Validating schema…');
-      const result = await defer(() => validateBibleJson(parsed));
-      setLoadingStep('');
-      setFileLarge(false);
-
-      if (result.valid) {
-        setFileResult(result);
-        setFilePhase('valid');
-        const stem = name.replace(/\.json$/i, '').toUpperCase().slice(0, 8);
-        setFileAbbr(stem);
+      // Detect .brbmod format: has top-level { meta, data } structure
+      let biblePayload: unknown = parsed;
+      let metaAutoFilled = false;
+      let detectedFormat: 'plain' | 'tagged' | null = null;
+      if (
+        typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) &&
+        'meta' in parsed && 'data' in parsed
+      ) {
+        const mod = parsed as { meta: Record<string, unknown>; data: unknown };
+        biblePayload = mod.data;
+        setFileIsModule(true);
+        metaAutoFilled = true;
+        detectedFormat = mod.meta.format === 'tagged' ? 'tagged' : 'plain';
+        setFileModuleFormat(detectedFormat);
+        // Auto-populate meta fields from the module header
+        if (typeof mod.meta.abbreviation === 'string') {
+          setFileAbbr(mod.meta.abbreviation.toUpperCase().slice(0, 12));
+        }
+        if (typeof mod.meta.name === 'string') {
+          setFileFullName(mod.meta.name);
+        }
+        if (typeof mod.meta.language === 'string') {
+          setFileLang(mod.meta.language.slice(0, 10));
+        }
       } else {
-        setFilePhase('invalid');
-        setFileErrors(result.errors);
+        setFileIsModule(false);
+        setFileModuleFormat(null);
+        setFileTaggedData(null);
+      }
+
+      setLoadingStep('Validating schema…');
+
+      // Tagged modules store BibleBookTagged[] — an array, not the plain object format.
+      // Skip validateBibleJson and use validateBrbMod for structural validation instead.
+      if (detectedFormat === 'tagged') {
+        try {
+          const validated = await defer(() => validateBrbMod(parsed as unknown));
+          setLoadingStep('');
+          setFileLarge(false);
+          setFileTaggedData(validated.data as BibleDataTagged);
+          // Dummy ValidationResult — tagged data bypasses the plain data path in handleImport
+          setFileResult({ valid: true, data: {} });
+          setFilePhase('valid');
+        } catch (e) {
+          setLoadingStep('');
+          setFileLarge(false);
+          setFilePhase('invalid');
+          setFileErrors([`Module validation failed: ${e instanceof Error ? e.message : String(e)}`]);
+        }
+      } else {
+        const result = await defer(() => validateBibleJson(biblePayload));
+        setLoadingStep('');
+        setFileLarge(false);
+
+        if (result.valid) {
+          setFileResult(result);
+          setFilePhase('valid');
+          // Only fall back to stem-based abbreviation if not auto-filled from module meta
+          if (!metaAutoFilled) {
+            const stem = name.replace(/\.(json|brbmod)$/i, '').toUpperCase().slice(0, 8);
+            setFileAbbr(stem);
+          }
+        } else {
+          setFilePhase('invalid');
+          setFileErrors(result.errors);
+        }
       }
     } catch (e) {
       setFilePhase('invalid');
@@ -152,7 +223,14 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
     const trimFull = fileFullName.trim();
     const trimLang = fileLang.trim();
     if (!trimAbbr || !trimFull || !trimLang) return;
-    onImport(fileResult, { abbreviation: trimAbbr, fullName: trimFull, language: trimLang, fileName });
+    onImport(fileResult, {
+      abbreviation: trimAbbr,
+      fullName: trimFull,
+      language: trimLang,
+      fileName,
+      moduleFormat: fileModuleFormat ?? undefined,
+      taggedData: fileTaggedData ?? undefined,
+    });
   }
 
   const canFileImport =
@@ -288,7 +366,8 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           {tab === 'file' && (
             <>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Select a JSON file in the BibleReader format (book → chapter → verse array).
+                Select a <span className="font-medium">.brbmod</span> module file, or a raw JSON Bible
+                (book &rarr; chapter &rarr; verse array). Module files auto-fill the metadata below.
               </p>
               <button
                 onClick={handlePickFile}
@@ -321,7 +400,19 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                 >
                   <CheckCircle size={16} className="text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                   <div className="text-sm text-green-800 dark:text-green-300">
-                    <span className="font-medium">{fileName}</span> — schema valid. Fill in the details below.
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{fileName}</span>
+                      {fileIsModule && (
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded
+                          bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300
+                          border border-blue-300 dark:border-blue-600">
+                          .brbmod
+                        </span>
+                      )}
+                    </div>
+                    {fileIsModule
+                      ? 'Module loaded — metadata auto-filled from module header. Edit below if needed.'
+                      : 'Schema valid. Fill in the details below.'}
                   </div>
                 </div>
               )}
