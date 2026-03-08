@@ -476,7 +476,7 @@ export function registerTaggedTranslation(
   const books: BibleBook[] = data.map((bookEntry) => {
     // If the module embeds a pre-resolved English canonical name (e.g. RST brbmod adds
     // nameEn: "Genesis" via the build script), use it directly to skip alias lookup entirely.
-    const nameEn = (bookEntry as Record<string, unknown>)['nameEn'];
+    const nameEn = (bookEntry as unknown as Record<string, unknown>)['nameEn'];
     if (typeof nameEn === 'string') {
       const directMatch = canonicalBooks.find((b) => b.name === nameEn);
       if (directMatch) {

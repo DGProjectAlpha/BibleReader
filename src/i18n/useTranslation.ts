@@ -14,7 +14,7 @@ export function useTranslation() {
 
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
-        str = str.replaceAll(`{${k}}`, String(v))
+        str = str.split(`{${k}}`).join(String(v))
       }
     }
 
