@@ -24,6 +24,21 @@
   --bg-solid: #dde8fe;
   --scrollbar-thumb: rgba(100, 116, 160, 0.45);
   --scrollbar-thumb-hover: rgba(100, 116, 160, 0.70);
+
+  /* Panel / UI element colors */
+  --panel-bg: rgba(255, 255, 255, 0.82);
+  --panel-bg-solid: #ffffff;
+  --panel-bg-secondary: rgba(248, 250, 255, 0.90);
+  --panel-bg-hover: rgba(219, 234, 254, 0.60);
+  --panel-border: rgba(0, 0, 0, 0.12);
+  --panel-text: #1e293b;
+  --panel-text-muted: #64748b;
+  --panel-text-faint: #94a3b8;
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, 0.15);
+  --tab-active-bg: rgba(219, 234, 254, 0.80);
+  --tab-active-text: #1d4ed8;
+  --header-bg: rgba(255, 255, 255, 0.82);
 }
 
 [data-theme="light-warm"] {
@@ -36,6 +51,21 @@
   --bg-solid: #fdf6e3;
   --scrollbar-thumb: rgba(160, 130, 80, 0.45);
   --scrollbar-thumb-hover: rgba(160, 130, 80, 0.70);
+
+  /* Panel / UI element colors — warm cream tint */
+  --panel-bg: rgba(254, 248, 236, 0.88);
+  --panel-bg-solid: #fef8ec;
+  --panel-bg-secondary: rgba(253, 243, 208, 0.90);
+  --panel-bg-hover: rgba(253, 236, 196, 0.60);
+  --panel-border: rgba(180, 130, 60, 0.18);
+  --panel-text: #3b2a0e;
+  --panel-text-muted: #7c5e30;
+  --panel-text-faint: #a8845a;
+  --input-bg: #fffdf5;
+  --input-border: rgba(180, 130, 60, 0.20);
+  --tab-active-bg: rgba(253, 236, 196, 0.80);
+  --tab-active-text: #92400e;
+  --header-bg: rgba(254, 248, 236, 0.88);
 }
 
 [data-theme="dark-blue"] {
@@ -48,6 +78,21 @@
   --bg-solid: #0b1220;
   --scrollbar-thumb: rgba(128, 128, 180, 0.50);
   --scrollbar-thumb-hover: rgba(128, 128, 180, 0.75);
+
+  /* Panel / UI element colors — deep navy */
+  --panel-bg: rgba(15, 23, 42, 0.85);
+  --panel-bg-solid: #0f172a;
+  --panel-bg-secondary: rgba(18, 24, 48, 0.90);
+  --panel-bg-hover: rgba(30, 41, 80, 0.60);
+  --panel-border: rgba(255, 255, 255, 0.10);
+  --panel-text: #e2e8f0;
+  --panel-text-muted: #94a3b8;
+  --panel-text-faint: #64748b;
+  --input-bg: #1e2a45;
+  --input-border: rgba(255, 255, 255, 0.12);
+  --tab-active-bg: rgba(30, 58, 138, 0.50);
+  --tab-active-text: #93c5fd;
+  --header-bg: rgba(15, 23, 42, 0.85);
 }
 
 [data-theme="dark-oled"] {
@@ -55,12 +100,28 @@
   --bg-solid: #000000;
   --scrollbar-thumb: rgba(80, 80, 80, 0.50);
   --scrollbar-thumb-hover: rgba(120, 120, 120, 0.75);
+
+  /* Panel / UI element colors — pure black OLED */
+  --panel-bg: rgba(8, 8, 8, 0.95);
+  --panel-bg-solid: #0a0a0a;
+  --panel-bg-secondary: rgba(16, 16, 16, 0.95);
+  --panel-bg-hover: rgba(30, 30, 30, 0.60);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-text: #f1f5f9;
+  --panel-text-muted: #94a3b8;
+  --panel-text-faint: #475569;
+  --input-bg: #111111;
+  --input-border: rgba(255, 255, 255, 0.10);
+  --tab-active-bg: rgba(20, 20, 20, 0.80);
+  --tab-active-text: #93c5fd;
+  --header-bg: rgba(8, 8, 8, 0.95);
 }
 
 /* ─── Windows 11 Mica — background consumes theme variables ──────────────── */
 body {
   background: var(--bg-gradient);
   min-height: 100vh;
+  color: var(--panel-text);
 }
 
 /* Fallback for .dark class without explicit data-theme (preserves legacy behavior) */
@@ -72,6 +133,105 @@ body {
     #0e1222 100%
   ));
 }
+
+/* ─── Theme-aware panel overrides ────────────────────────────────────────── */
+/*
+  Override the hardcoded Tailwind panel classes (bg-white/80, bg-slate-900/80,
+  bg-gray-900, bg-gray-800, etc.) so ALL theme variants affect the full UI,
+  not just the body background.
+  Uses [data-theme] attribute (set on <html> by App.tsx) with !important to
+  win over Tailwind's generated utility classes.
+*/
+
+/* Main panels: sidebar, strongs, search results — use semi-transparent panel bg */
+[data-theme] .br-panel {
+  background-color: var(--panel-bg) !important;
+  border-color: var(--panel-border) !important;
+  color: var(--panel-text) !important;
+}
+
+/* Apply panel bg to all backdrop-blur elements (sidebar, strongs, pane headers, popovers) */
+[data-theme] .backdrop-blur-xl,
+[data-theme] .backdrop-blur-lg,
+[data-theme] .backdrop-blur-md,
+[data-theme] .backdrop-blur-sm {
+  background-color: var(--panel-bg) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Solid panel backgrounds (no backdrop blur) — search results, dropdowns */
+[data-theme] .br-panel-solid {
+  background-color: var(--panel-bg-solid) !important;
+  color: var(--panel-text) !important;
+}
+
+/* Header bars */
+[data-theme] .br-header {
+  background-color: var(--header-bg) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Text color overrides */
+[data-theme] .br-text { color: var(--panel-text) !important; }
+[data-theme] .br-text-muted { color: var(--panel-text-muted) !important; }
+
+/* Input backgrounds */
+[data-theme] input,
+[data-theme] textarea,
+[data-theme] select {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--panel-text);
+}
+
+/* Hover states for interactive rows/buttons */
+[data-theme] .br-hover:hover {
+  background-color: var(--panel-bg-hover) !important;
+}
+
+/* Secondary / nested panels */
+[data-theme] .br-panel-secondary {
+  background-color: var(--panel-bg-secondary) !important;
+}
+
+/* Search results panel specifically — bg-white dark:bg-gray-900 */
+[data-theme] .bg-white {
+  background-color: var(--panel-bg-solid) !important;
+  color: var(--panel-text);
+}
+
+/* Dropdown / popover panels — bg-white dark:bg-gray-800 */
+[data-theme] .bg-gray-800,
+[data-theme] .dark\:bg-gray-800:is(.dark *) {
+  background-color: var(--panel-bg-solid) !important;
+}
+
+[data-theme] .bg-gray-900,
+[data-theme] .dark\:bg-gray-900:is(.dark *) {
+  background-color: var(--panel-bg-solid) !important;
+}
+
+/* Tab / pill active state */
+[data-theme] .br-tab-active {
+  background-color: var(--tab-active-bg) !important;
+  color: var(--tab-active-text) !important;
+}
+
+/* Borders — override common gray border patterns */
+[data-theme] .border-gray-200 { border-color: var(--panel-border) !important; }
+[data-theme] .border-gray-700 { border-color: var(--panel-border) !important; }
+[data-theme] .border-gray-600 { border-color: var(--panel-border) !important; }
+
+/* Secondary panel backgrounds — bg-gray-50 used in search header, bg-gray-100 in drag handle */
+[data-theme] .bg-gray-50  { background-color: var(--panel-bg-secondary) !important; }
+[data-theme] .bg-gray-100 { background-color: var(--panel-bg-secondary) !important; }
+
+/* Primary text for warm theme — light themes only, since dark handles via .dark class */
+/* We only override for light-warm to give text a warm tint */
+[data-theme="light-warm"] .text-gray-800 { color: var(--panel-text) !important; }
+[data-theme="light-warm"] .text-gray-700 { color: var(--panel-text) !important; }
+[data-theme="light-warm"] .text-gray-600 { color: var(--panel-text-muted) !important; }
+[data-theme="light-warm"] .text-gray-500 { color: var(--panel-text-muted) !important; }
 
 /* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
 * {

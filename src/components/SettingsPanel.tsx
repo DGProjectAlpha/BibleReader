@@ -83,8 +83,8 @@ export function SettingsPanel() {
       {open && createPortal(
         <div
           ref={panelRef}
-          style={{ top: pos.top, left: pos.left }}
-          className="fixed z-[9999] w-56 rounded-lg shadow-xl border p-3 space-y-3
+          style={{ top: pos.top, left: pos.left, zIndex: 99999 }}
+          className="fixed w-56 rounded-lg shadow-xl border p-3 space-y-3
             bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600"
         >
           {/* Active mode variants */}
