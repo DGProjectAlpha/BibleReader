@@ -3,6 +3,7 @@ import { useBibleStore } from '../store/bibleStore';
 import { getTSKRefs } from '../data/tskLoader';
 import type { TSKRef } from '../data/tskLoader';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 export function TskPanel() {
   const { t } = useTranslation();
@@ -32,13 +33,14 @@ export function TskPanel() {
   if (collapsed) {
     return (
       <div className="w-9 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center justify-start pt-2 h-full">
-        <button
-          onClick={() => setCollapsed(false)}
-          title={t('expandCrossRefs')}
-          className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none mb-3"
-        >
-          ‹
-        </button>
+        <Tooltip label={t('expandCrossRefs')} position="bottom">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none mb-3"
+          >
+            ‹
+          </button>
+        </Tooltip>
         <span
           className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-300 select-none"
           style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
@@ -58,21 +60,23 @@ export function TskPanel() {
         </span>
         <div className="flex items-center gap-2">
           {tskVerse && (
-            <button
-              onClick={() => setTskVerse(null)}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
-              title={t('clearCrossRefs')}
-            >
-              ✕
-            </button>
+            <Tooltip label={t('clearCrossRefs')}>
+              <button
+                onClick={() => setTskVerse(null)}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </Tooltip>
           )}
-          <button
-            onClick={() => setCollapsed(true)}
-            title={t('collapseCrossRefs')}
-            className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
-          >
-            ›
-          </button>
+          <Tooltip label={t('collapseCrossRefs')}>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
+            >
+              ›
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -96,13 +100,14 @@ export function TskPanel() {
             </div>
             <div className="divide-y divide-black/[0.10] dark:divide-white/[0.10]">
               {refs.map((ref, i) => (
-                <button
-                  key={i}
-                  onClick={() => navigateToRef(ref)}
-                  className="w-full text-left px-3 py-2 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                >
-                  {ref.label}
-                </button>
+                <Tooltip label={t('navigateToCrossRef')} key={i}>
+                  <button
+                    onClick={() => navigateToRef(ref)}
+                    className="w-full text-left px-3 py-2 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                  >
+                    {ref.label}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           </div>

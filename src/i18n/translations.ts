@@ -170,13 +170,45 @@ export type TranslationKey =
   | 'exportNotesToPdf'
   // StrongsPanel
   | 'clearStrongs'
+  // Tooltips — generic
+  | 'clearSearchTooltip'
+  | 'closeSearchTooltip'
+  | 'closeResultsTooltip'
+  | 'closeNoteEditorTooltip'
+  | 'backToResultsTooltip'
+  | 'toggleVersesListTooltip'
+  | 'viewFullDetailTooltip'
+  | 'navigateToCrossRef'
+  | 'moveUpTooltip'
+  | 'moveDownTooltip'
+  | 'selectAllTooltip'
+  | 'selectNoneTooltip'
+  | 'selectAllVersionsTooltip'
+  | 'resetVersionsTooltip'
+  | 'closeExportTooltip'
+  | 'exportPdfTooltip'
+  // ExportNotesModal tabs + sort
+  | 'exportTitle'
+  | 'exportTabSelect'
+  | 'exportTabOrder'
+  | 'exportTabVersions'
+  | 'sortLabel'
+  | 'sortByLocation'
+  | 'sortByLastEdited'
+  | 'sortByDateAdded'
+  | 'searchNotesPlaceholder'
+  | 'noNotesMatch'
+  | 'noNotesSelected'
+  | 'versionsDescription'
+  | 'savedToDocuments'
+  | 'exportCountLabel'
 
 export type Translations = Record<TranslationKey, string>
 
 const en: Translations = {
   // App / global
   appTitle: 'BibleReader',
-  addPane: 'Add pane',
+  addPane: 'Add new reading pane',
   ctrlFHint: 'Ctrl+F',
 
   // Sidebar
@@ -196,10 +228,10 @@ const en: Translations = {
   unsyncPane: 'Unsync pane (currently synced)',
   synced: 'Synced',
   sync: 'Sync',
-  splitRight: 'Split right',
-  splitDown: 'Split down',
-  popOut: 'Pop out window',
-  closePane: 'Close pane',
+  splitRight: 'Split pane to the right',
+  splitDown: 'Split pane downward',
+  popOut: 'Open pane in separate window',
+  closePane: 'Close this reading pane',
   loading: 'Loading...',
   selectBookChapter: 'Select a book and chapter above to start reading.',
   removeBookmark: 'Remove bookmark',
@@ -217,7 +249,7 @@ const en: Translations = {
 
   // SearchBar
   searchBibleTitle: 'Search Bible (Ctrl+F)',
-  searchButton: 'Search',
+  searchButton: 'Run search',
   searchPlaceholder: 'Search the Bible...',
   searchScope: 'Scope:',
   scopeWholeBible: 'Whole Bible',
@@ -230,7 +262,7 @@ const en: Translations = {
 
   // SearchResults
   syncAllPanes: 'Sync all panes',
-  openParallel: 'Open parallel',
+  openParallel: 'Open result in parallel pane',
   closeButton: 'Close',
   dragToResize: 'Drag to resize',
   navigateTo: 'Navigate →',
@@ -267,7 +299,7 @@ const en: Translations = {
   collapseCrossRefs: 'Collapse cross-references panel',
   crossRefsHeader: 'Cross-References',
   tskCollapsedLabel: 'TSK Refs',
-  clearCrossRefs: 'Clear',
+  clearCrossRefs: 'Clear cross-references',
   tskEmptyHint: 'Click a verse number in the text to view TSK cross-references.',
   tskNoRefs: 'No cross-references found for {book} {chapter}:{verse}.',
   tskRefHeader: '{book} {chapter}:{verse} — {count} reference(s)',
@@ -282,9 +314,9 @@ const en: Translations = {
   // NoteEditor
   noteEditorHeader: 'Note — {book} {chapter}:{verse}',
   notePlaceholder: 'Write your note here...',
-  deleteButton: 'Delete',
-  cancelButton: 'Cancel',
-  saveButton: 'Save',
+  deleteButton: 'Delete this note',
+  cancelButton: 'Cancel editing',
+  saveButton: 'Save note',
 
   // FontControls
   fontSizeStyle: 'Font size & style',
@@ -293,7 +325,7 @@ const en: Translations = {
   fontSans: 'Sans',
   fontSerif: 'Serif',
   fontMono: 'Mono',
-  resetDefaults: 'Reset to defaults',
+  resetDefaults: 'Reset font settings to defaults',
 
   // SettingsModal
   settingsTitle: 'Settings',
@@ -310,7 +342,7 @@ const en: Translations = {
   sectionLanguage: 'Language',
 
   // CrossRefPopover
-  openInPane: 'Open in pane',
+  openInPane: 'Open cross-reference in active pane',
   verseNotFound: 'Verse not found.',
 
   // ManageTranslationsPanel
@@ -318,7 +350,7 @@ const en: Translations = {
   noImportedTranslations: 'No imported translations.',
   useImportButton: 'Use the Import button above to add a translation.',
   removingLabel: 'Removing\u2026',
-  deleteButton2: 'Delete',
+  deleteButton2: 'Confirm deletion',
   confirmRemoveTranslation: 'This will remove the translation from all panes. Continue?',
 
   // ImportModal
@@ -352,13 +384,45 @@ const en: Translations = {
   // NotesPanel
   exportNotesToPdf: 'Export notes to PDF',
   // StrongsPanel
-  clearStrongs: 'Clear',
+  clearStrongs: "Clear Strong's results",
+  // Tooltips — generic
+  clearSearchTooltip: 'Clear search text',
+  closeSearchTooltip: 'Close search bar',
+  closeResultsTooltip: 'Close search results',
+  closeNoteEditorTooltip: 'Close without saving',
+  backToResultsTooltip: 'Back to results list',
+  toggleVersesListTooltip: 'Show/hide verses containing this word',
+  viewFullDetailTooltip: 'View full definition',
+  navigateToCrossRef: 'Navigate to this cross-reference',
+  moveUpTooltip: 'Move note up in order',
+  moveDownTooltip: 'Move note down in order',
+  selectAllTooltip: 'Select all notes',
+  selectNoneTooltip: 'Deselect all notes',
+  selectAllVersionsTooltip: 'Include all versions',
+  resetVersionsTooltip: 'Reset to active translation only',
+  closeExportTooltip: 'Close export dialog',
+  exportPdfTooltip: 'Generate and save PDF to Documents',
+  // ExportNotesModal tabs + sort
+  exportTitle: 'Export Notes to PDF',
+  exportTabSelect: '1. Select Notes',
+  exportTabOrder: '2. Set Order',
+  exportTabVersions: '3. Select Versions',
+  sortLabel: 'Sort:',
+  sortByLocation: 'Location',
+  sortByLastEdited: 'Last Edited',
+  sortByDateAdded: 'Date Added',
+  searchNotesPlaceholder: 'Search by reference or text…',
+  noNotesMatch: 'No notes match your search.',
+  noNotesSelected: 'No notes selected. Go back and select some.',
+  versionsDescription: 'Choose which Bible versions to include alongside each note. The verse text will be printed for every selected version.',
+  savedToDocuments: 'Saved to Documents\\Bible Reader PDF\\',
+  exportCountLabel: 'Export {noteCount} note(s) · {versionCount} version(s)',
 }
 
 const ru: Translations = {
   // App / global
   appTitle: 'BibleReader',
-  addPane: 'Добавить панель',
+  addPane: 'Добавить панель чтения',
   ctrlFHint: 'Ctrl+F',
 
   // Sidebar
@@ -378,10 +442,10 @@ const ru: Translations = {
   unsyncPane: 'Отключить синхронизацию',
   synced: 'Синхр.',
   sync: 'Синхр.',
-  splitRight: 'Разделить вправо',
-  splitDown: 'Разделить вниз',
-  popOut: 'Открыть в окне',
-  closePane: 'Закрыть панель',
+  splitRight: 'Разделить панель вправо',
+  splitDown: 'Разделить панель вниз',
+  popOut: 'Открыть панель в отдельном окне',
+  closePane: 'Закрыть эту панель',
   loading: 'Загрузка...',
   selectBookChapter: 'Выберите книгу и главу, чтобы начать чтение.',
   removeBookmark: 'Удалить закладку',
@@ -399,7 +463,7 @@ const ru: Translations = {
 
   // SearchBar
   searchBibleTitle: 'Поиск по Библии (Ctrl+F)',
-  searchButton: 'Найти',
+  searchButton: 'Выполнить поиск',
   searchPlaceholder: 'Поиск по Библии...',
   searchScope: 'Область:',
   scopeWholeBible: 'Вся Библия',
@@ -412,7 +476,7 @@ const ru: Translations = {
 
   // SearchResults
   syncAllPanes: 'Синхронизировать все панели',
-  openParallel: 'Открыть параллельно',
+  openParallel: 'Открыть результат в параллельной панели',
   closeButton: 'Закрыть',
   dragToResize: 'Потяните для изменения размера',
   navigateTo: 'Перейти →',
@@ -449,7 +513,7 @@ const ru: Translations = {
   collapseCrossRefs: 'Свернуть панель перекрёстных ссылок',
   crossRefsHeader: 'Перекрёстные ссылки',
   tskCollapsedLabel: 'ПСС',
-  clearCrossRefs: 'Очистить',
+  clearCrossRefs: 'Очистить перекрёстные ссылки',
   tskEmptyHint: 'Нажмите на номер стиха, чтобы увидеть перекрёстные ссылки TSK.',
   tskNoRefs: 'Перекрёстные ссылки для {book} {chapter}:{verse} не найдены.',
   tskRefHeader: '{book} {chapter}:{verse} — {count} ссылок',
@@ -464,9 +528,9 @@ const ru: Translations = {
   // NoteEditor
   noteEditorHeader: 'Заметка — {book} {chapter}:{verse}',
   notePlaceholder: 'Введите заметку здесь...',
-  deleteButton: 'Удалить',
-  cancelButton: 'Отмена',
-  saveButton: 'Сохранить',
+  deleteButton: 'Удалить заметку',
+  cancelButton: 'Отменить редактирование',
+  saveButton: 'Сохранить заметку',
 
   // FontControls
   fontSizeStyle: 'Размер и стиль шрифта',
@@ -475,7 +539,7 @@ const ru: Translations = {
   fontSans: 'Без засечек',
   fontSerif: 'С засечками',
   fontMono: 'Моноширинный',
-  resetDefaults: 'Сбросить настройки',
+  resetDefaults: 'Сбросить настройки шрифта',
 
   // SettingsModal
   settingsTitle: 'Настройки',
@@ -492,7 +556,7 @@ const ru: Translations = {
   sectionLanguage: 'Язык',
 
   // CrossRefPopover
-  openInPane: 'Открыть в панели',
+  openInPane: 'Открыть ссылку в активной панели',
   verseNotFound: 'Стих не найден.',
 
   // ManageTranslationsPanel
@@ -500,7 +564,7 @@ const ru: Translations = {
   noImportedTranslations: 'Нет импортированных переводов.',
   useImportButton: 'Используйте кнопку «Импортировать» выше, чтобы добавить перевод.',
   removingLabel: 'Удаление\u2026',
-  deleteButton2: 'Удалить',
+  deleteButton2: 'Подтвердить удаление',
   confirmRemoveTranslation: 'Перевод будет удалён из всех панелей. Продолжить?',
 
   // ImportModal
@@ -534,7 +598,39 @@ const ru: Translations = {
   // NotesPanel
   exportNotesToPdf: 'Экспорт заметок в PDF',
   // StrongsPanel
-  clearStrongs: 'Очистить',
+  clearStrongs: 'Очистить результаты Стронга',
+  // Tooltips — generic
+  clearSearchTooltip: 'Очистить поиск',
+  closeSearchTooltip: 'Закрыть панель поиска',
+  closeResultsTooltip: 'Закрыть результаты поиска',
+  closeNoteEditorTooltip: 'Закрыть без сохранения',
+  backToResultsTooltip: 'Назад к результатам',
+  toggleVersesListTooltip: 'Показать/скрыть стихи с этим словом',
+  viewFullDetailTooltip: 'Подробное определение',
+  navigateToCrossRef: 'Перейти к перекрёстной ссылке',
+  moveUpTooltip: 'Переместить заметку вверх',
+  moveDownTooltip: 'Переместить заметку вниз',
+  selectAllTooltip: 'Выбрать все заметки',
+  selectNoneTooltip: 'Снять выделение со всех заметок',
+  selectAllVersionsTooltip: 'Включить все переводы',
+  resetVersionsTooltip: 'Сбросить к активному переводу',
+  closeExportTooltip: 'Закрыть экспорт',
+  exportPdfTooltip: 'Создать и сохранить PDF в Документы',
+  // ExportNotesModal tabs + sort
+  exportTitle: 'Экспорт заметок в PDF',
+  exportTabSelect: '1. Выбрать заметки',
+  exportTabOrder: '2. Задать порядок',
+  exportTabVersions: '3. Выбрать переводы',
+  sortLabel: 'Сортировка:',
+  sortByLocation: 'По расположению',
+  sortByLastEdited: 'По редактированию',
+  sortByDateAdded: 'По добавлению',
+  searchNotesPlaceholder: 'Поиск по ссылке или тексту…',
+  noNotesMatch: 'Заметки не найдены.',
+  noNotesSelected: 'Заметки не выбраны. Вернитесь и выберите.',
+  versionsDescription: 'Выберите, какие переводы Библии включить рядом с каждой заметкой. Текст стиха будет напечатан для каждого выбранного перевода.',
+  savedToDocuments: 'Сохранено в Документы\\Bible Reader PDF\\',
+  exportCountLabel: 'Экспорт {noteCount} заметок · {versionCount} переводов',
 }
 
 export const translations: Record<Language, Translations> = { en, ru }

@@ -4,6 +4,7 @@ import { getTranslit, isHebrew } from '../data/strongs';
 import type { StrongsResult } from '../store/bibleStore';
 import { getBible } from '../data/bibleLoader';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 interface VerseRef {
   book: string;
@@ -96,12 +97,14 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10]">
-        <button
-          onClick={onClose}
-          className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-        >
-          {t('backButton')}
-        </button>
+        <Tooltip label={t('backToResultsTooltip')}>
+          <button
+            onClick={onClose}
+            className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            {t('backButton')}
+          </button>
+        </Tooltip>
         <span className="text-xs text-gray-500 dark:text-gray-400">{isHebrew(num) ? t('langHebrew') : t('langGreek')}</span>
       </div>
 
@@ -184,6 +187,7 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
 
         {/* Verses using this word */}
         <div className="border-t border-black/[0.10] dark:border-white/[0.10] pt-3">
+          <Tooltip label={t('toggleVersesListTooltip')}>
           <button
             onClick={handleToggleVerses}
             className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
@@ -193,6 +197,7 @@ function EntryDetail({ result, onClose, onNavigate }: EntryDetailProps) {
               {versesOpen ? '▲' : '▼'}
             </span>
           </button>
+          </Tooltip>
 
           {versesOpen && verseRefs !== null && (
             <div className="mt-2 space-y-0.5">
@@ -329,12 +334,14 @@ function InlineDetail({ result, onViewFull }: InlineDetailProps) {
         <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
           {isHebrew(num) ? t('langHebrew') : t('langGreek')}
         </span>
-        <button
-          onClick={onViewFull}
-          className="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-        >
-          {t('fullDetail')}
-        </button>
+        <Tooltip label={t('viewFullDetailTooltip')}>
+          <button
+            onClick={onViewFull}
+            className="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            {t('fullDetail')}
+          </button>
+        </Tooltip>
       </div>
 
       {/* Definition */}
@@ -440,13 +447,14 @@ export function StrongsPanel() {
   if (collapsed) {
     return (
       <div className="w-9 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col items-center h-full">
-        <button
-          onClick={() => setCollapsed(false)}
-          title={t('expandStrongs')}
-          className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors border-b border-black/[0.08] dark:border-white/[0.08]"
-        >
-          ‹
-        </button>
+        <Tooltip label={t('expandStrongs')} position="bottom">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors border-b border-black/[0.08] dark:border-white/[0.08]"
+          >
+            ‹
+          </button>
+        </Tooltip>
         <div className="flex-1 flex items-center justify-center">
           <span
             className="text-xs font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-300 select-none"
@@ -464,13 +472,14 @@ export function StrongsPanel() {
       <div className="w-64 shrink-0 border-l border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[-1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[-1px_0_12px_rgba(0,0,0,0.3)] flex flex-col h-full text-sm">
         {/* Collapse button row */}
         <div className="flex items-center justify-end px-2 pt-1">
-          <button
-            onClick={() => setCollapsed(true)}
-            title={t('collapseStrongs')}
-            className="text-xs text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 px-1 py-0.5 transition-colors"
-          >
-            ›
-          </button>
+          <Tooltip label={t('collapseStrongs')}>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-xs text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 px-1 py-0.5 transition-colors"
+            >
+              ›
+            </button>
+          </Tooltip>
         </div>
         <EntryDetail result={effectiveResult} onClose={handleClose} onNavigate={handleNavigate} />
       </div>
@@ -486,21 +495,23 @@ export function StrongsPanel() {
         </span>
         <div className="flex items-center gap-2">
           {hasSelection && (
-            <button
-              onClick={() => { setStrongsWord(null); setStrongsNum(null); setSelectedResult(null); }}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
-              title={t('clearStrongs')}
-            >
-              ✕
-            </button>
+            <Tooltip label={t('clearStrongs')}>
+              <button
+                onClick={() => { setStrongsWord(null); setStrongsNum(null); setSelectedResult(null); }}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </Tooltip>
           )}
-          <button
-            onClick={() => setCollapsed(true)}
-            title={t('collapseStrongs')}
-            className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
-          >
-            ›
-          </button>
+          <Tooltip label={t('collapseStrongs')}>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors leading-none"
+            >
+              ›
+            </button>
+          </Tooltip>
         </div>
       </div>
 

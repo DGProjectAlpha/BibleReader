@@ -3,6 +3,7 @@ import { X, Trash2 } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { VerseKey } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 interface NoteEditorProps {
   verseKey: VerseKey;
@@ -68,12 +69,14 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
             {t('noteEditorHeader', { book, chapter, verse })}
           </span>
-          <button
-            onClick={onClose}
-            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X size={16} />
-          </button>
+          <Tooltip label={t('closeNoteEditorTooltip')}>
+            <button
+              onClick={onClose}
+              className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Verse preview */}
@@ -100,28 +103,34 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <div>
             {existing && (
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              >
-                <Trash2 size={14} />
-                {t('deleteButton')}
-              </button>
+              <Tooltip label={t('deleteButton')}>
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <Trash2 size={14} />
+                  {t('deleteButton')}
+                </button>
+              </Tooltip>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="px-3 py-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              {t('cancelButton')}
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-1.5 rounded text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-            >
-              {t('saveButton')}
-            </button>
+            <Tooltip label={t('cancelButton')}>
+              <button
+                onClick={onClose}
+                className="px-3 py-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {t('cancelButton')}
+              </button>
+            </Tooltip>
+            <Tooltip label={t('saveButton')}>
+              <button
+                onClick={handleSave}
+                className="px-4 py-1.5 rounded text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                {t('saveButton')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

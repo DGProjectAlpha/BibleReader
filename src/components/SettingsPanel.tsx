@@ -5,6 +5,7 @@ import { useBibleStore } from '../store/bibleStore';
 import type { Theme, AppLanguage } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
+import Tooltip from './Tooltip';
 
 interface ThemeOption {
   id: Theme;
@@ -34,14 +35,15 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        title={t('settingsTitle')}
-        aria-label={t('openSettings')}
-        className="p-1.5 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
-      >
-        <Settings size={16} />
-      </button>
+      <Tooltip label={t('settingsTitle')}>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label={t('openSettings')}
+          className="p-1.5 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
+        >
+          <Settings size={16} />
+        </button>
+      </Tooltip>
 
       {open && createPortal(
         <div
@@ -56,13 +58,15 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">{t('settingsTitle')}</h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-                aria-label={t('closeSettings')}
-              >
-                <X size={16} />
-              </button>
+              <Tooltip label={t('closeSettings')}>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  aria-label={t('closeSettings')}
+                >
+                  <X size={16} />
+                </button>
+              </Tooltip>
             </div>
 
             {/* Theme section */}
@@ -74,8 +78,8 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
                 {THEME_OPTIONS.map((opt) => {
                   const active = theme === opt.id;
                   return (
+                    <Tooltip label={t(opt.labelKey)} key={opt.id}>
                     <button
-                      key={opt.id}
                       onClick={() => setTheme(opt.id)}
                       className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all
                         ${active
@@ -94,6 +98,7 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{opt.description}</span>
                       </div>
                     </button>
+                    </Tooltip>
                   );
                 })}
               </div>
@@ -111,17 +116,18 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
                 ] as { id: AppLanguage; label: string }[]).map(({ id, label }) => {
                   const active = language === id;
                   return (
-                    <button
-                      key={id}
-                      onClick={() => setLanguage(id)}
-                      className={`flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all
-                        ${active
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-400 text-blue-700 dark:text-blue-300'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200'
-                        }`}
-                    >
-                      {label}
-                    </button>
+                    <Tooltip label={label} key={id}>
+                      <button
+                        onClick={() => setLanguage(id)}
+                        className={`flex-1 px-3 py-2 rounded-lg border text-xs font-medium transition-all
+                          ${active
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-400 text-blue-700 dark:text-blue-300'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+                          }`}
+                      >
+                        {label}
+                      </button>
+                    </Tooltip>
                   );
                 })}
               </div>
@@ -133,14 +139,16 @@ export function SettingsPanel({ onOpenImport }: SettingsPanelProps) {
                 <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400 block mb-3">
                   {t('sectionBibleImport')}
                 </span>
-                <button
-                  onClick={() => { console.log('[SettingsPanel] Import button clicked — closing settings, opening import modal'); setOpen(false); onOpenImport(); }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors w-full
-                    bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                >
-                  <Upload size={15} />
-                  {t('importBibleButton')}
-                </button>
+                <Tooltip label={t('importBibleButton')}>
+                  <button
+                    onClick={() => { console.log('[SettingsPanel] Import button clicked — closing settings, opening import modal'); setOpen(false); onOpenImport(); }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors w-full
+                      bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                  >
+                    <Upload size={15} />
+                    {t('importBibleButton')}
+                  </button>
+                </Tooltip>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
                   {t('importBibleDesc')}
                 </p>

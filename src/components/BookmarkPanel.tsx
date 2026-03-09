@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Bookmark, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 interface BookmarkPanelProps {
   /** When true, renders as full-height tab content (no collapsible header) */
@@ -58,13 +59,14 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
                 )}
               </button>
 
-              <button
-                onClick={() => removeBookmark({ book: bm.book, chapter: bm.chapter, verse: bm.verse })}
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-opacity"
-                title={t('removeBookmarkTitle')}
-              >
-                <X size={11} />
-              </button>
+              <Tooltip label={t('removeBookmarkTitle')}>
+                <button
+                  onClick={() => removeBookmark({ book: bm.book, chapter: bm.chapter, verse: bm.verse })}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-opacity"
+                >
+                  <X size={11} />
+                </button>
+              </Tooltip>
             </li>
           ))}
         </ul>
@@ -80,6 +82,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 shrink-0">
       {/* Section header */}
+      <Tooltip label={collapsed ? t('expandPanel') : t('collapsePanel')}>
       <button
         onClick={() => setCollapsed((c) => !c)}
         className="flex items-center gap-2 w-full px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -91,6 +94,7 @@ export function BookmarkPanel({ fullHeight = false }: BookmarkPanelProps) {
         </span>
         {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
       </button>
+      </Tooltip>
 
       {!collapsed && (
         <div className="max-h-56 overflow-y-auto">{listContent}</div>

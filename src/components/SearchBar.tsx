@@ -6,6 +6,7 @@ import { books } from '../data/books';
 import { getChapterText, getBook } from '../data/bibleLoader';
 import type { Translation } from '../data/bibleLoader';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 // Run the actual text search against the active translation
 function runSearch(
@@ -105,14 +106,15 @@ export function SearchBar() {
 
   if (!searchOpen) {
     return (
-      <button
-        onClick={() => setSearchOpen(true)}
-        title={t('searchBibleTitle')}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-      >
-        <Search size={14} />
-        <span>{t('searchButton')}</span>
-      </button>
+      <Tooltip label={t('searchBibleTitle')}>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+        >
+          <Search size={14} />
+          <span>{t('searchButton')}</span>
+        </button>
+      </Tooltip>
     );
   }
 
@@ -133,43 +135,53 @@ export function SearchBar() {
         />
 
         {searchQuery && (
-          <button onClick={clearSearch} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-            <X size={14} />
-          </button>
+          <Tooltip label={t('clearSearchTooltip')}>
+            <button onClick={clearSearch} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <X size={14} />
+            </button>
+          </Tooltip>
         )}
 
-        <button
-          onClick={handleSearch}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
-        >
-          {t('searchButton')}
-        </button>
+        <Tooltip label={t('searchButton')}>
+          <button
+            onClick={handleSearch}
+            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md transition-colors"
+          >
+            {t('searchButton')}
+          </button>
+        </Tooltip>
 
-        <button
-          onClick={() => setSearchOpen(false)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <X size={16} />
-        </button>
+        <Tooltip label={t('closeSearchTooltip')}>
+          <button
+            onClick={() => setSearchOpen(false)}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <X size={16} />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Scope controls */}
       <div className="flex flex-wrap items-center gap-2 px-3 pb-2 text-xs">
         <span className="text-gray-500 dark:text-gray-400 font-medium">{t('searchScope')}</span>
 
-        {(['bible', 'OT', 'NT', 'book', 'chapter'] as SearchScope[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setSearchScope(s)}
-            className={`px-2 py-0.5 rounded-full border transition-colors ${
-              searchScope === s
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
-            }`}
-          >
-            {s === 'bible' ? t('scopeWholeBible') : s === 'OT' ? t('scopeOT') : s === 'NT' ? t('scopeNT') : s === 'book' ? t('scopeBook') : t('scopeChapter')}
-          </button>
-        ))}
+        {(['bible', 'OT', 'NT', 'book', 'chapter'] as SearchScope[]).map((s) => {
+          const labelKey = s === 'bible' ? 'scopeWholeBible' as const : s === 'OT' ? 'scopeOT' as const : s === 'NT' ? 'scopeNT' as const : s === 'book' ? 'scopeBook' as const : 'scopeChapter' as const;
+          return (
+            <Tooltip label={t(labelKey)} key={s}>
+              <button
+                onClick={() => setSearchScope(s)}
+                className={`px-2 py-0.5 rounded-full border transition-colors ${
+                  searchScope === s
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400'
+                }`}
+              >
+                {t(labelKey)}
+              </button>
+            </Tooltip>
+          );
+        })}
 
         {/* Book selector (shown for 'book' and 'chapter' scopes) */}
         {(searchScope === 'book' || searchScope === 'chapter') && (

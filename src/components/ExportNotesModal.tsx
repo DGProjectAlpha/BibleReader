@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { X, Search, ArrowUpDown, FileDown, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useBibleStore, Note } from '../store/bibleStore';
+import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 import { getChapterText } from '../data/bibleLoader';
 import { mkdir, writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 import { openPath } from '@tauri-apps/plugin-opener';
@@ -39,6 +41,7 @@ function bookIndex(book: string) {
 }
 
 export function ExportNotesModal({ onClose, standalone = false }: ExportNotesModalProps) {
+  const { t } = useTranslation();
   const notes = useBibleStore((s) => s.notes);
   const panes = useBibleStore((s) => s.panes);
   const activePaneIndex = useBibleStore((s) => s.activePaneIndex);
@@ -54,7 +57,39 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
   const [exportOrder, setExportOrder] = useState<string[]>(() => notes.map((n) => n.id));
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
-  const [tab, setTab] = useState<'select' | 'order'>('select');
+  const [tab, setTab] = useState<'select' | 'order' | 'versions'>('select');
+
+  // Available translations: built-ins + custom imports
+  const customTranslations = useBibleStore((s) => s.customTranslations);
+  const BUILTIN_TRANSLATIONS = ['KJV', 'ASV', 'SYN'];
+  const allTranslationAbbrs = useMemo(() => {
+    const customs = customTranslations.map((t) => t.abbreviation);
+    return [...BUILTIN_TRANSLATIONS, ...customs.filter((a) => !BUILTIN_TRANSLATIONS.includes(a))];
+  }, [customTranslations]);
+
+  // Selected versions for export — default to the active pane's translation
+  const [selectedVersions, setSelectedVersions] = useState<Set<string>>(() => new Set([translation]));
+
+  function toggleVersion(abbr: string) {
+    setSelectedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(abbr)) {
+        if (next.size > 1) next.delete(abbr); // keep at least one
+      } else {
+        next.add(abbr);
+      }
+      return next;
+    });
+  }
+
+  function selectAllVersions() {
+    setSelectedVersions(new Set(allTranslationAbbrs));
+  }
+
+  function selectNoVersions() {
+    // Keep at least one — the active pane translation
+    setSelectedVersions(new Set([translation]));
+  }
 
   // Filtered + sorted list for the selection tab
   const displayNotes = useMemo(() => {
@@ -211,12 +246,13 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
     doc.text('Bible Notes', marginL, y);
     y += 7;
 
-    // Subtitle: translation + date
+    // Subtitle: versions + date
+    const versionsLabel = Array.from(selectedVersions).join(', ');
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `${translation} · ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} · ${orderedSelected.length} note${orderedSelected.length !== 1 ? 's' : ''}`,
+      `${versionsLabel} · ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} · ${orderedSelected.length} note${orderedSelected.length !== 1 ? 's' : ''}`,
       marginL,
       y,
     );
@@ -230,32 +266,37 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
 
     doc.setLineWidth(0.2);
 
+    const versionsArr = Array.from(selectedVersions);
+
     for (const note of orderedSelected) {
       const ref = verseRef(note);
 
-      // Look up verse text from bundled bible data
-      let verseText = '';
-      try {
-        const verses = getChapterText(translation, note.book, note.chapter);
-        verseText = verses[note.verse - 1] ?? '';
-      } catch {
-        // Translation may not have this book — leave empty
+      // Look up verse text for each selected version
+      const verseLines: { abbr: string; wrapped: string[] }[] = [];
+      for (const ver of versionsArr) {
+        let verseText = '';
+        try {
+          const verses = getChapterText(ver, note.book, note.chapter);
+          verseText = verses[note.verse - 1] ?? '';
+        } catch {
+          // Translation may not have this book — skip
+        }
+        if (verseText) {
+          doc.setFontSize(9);
+          const wrapped = doc.splitTextToSize(`\u201c${verseText}\u201d`, usableW);
+          verseLines.push({ abbr: ver, wrapped });
+        }
       }
 
-      // Pre-compute wrapped lines to estimate block height
-      doc.setFontSize(9);
-      const verseWrapped = verseText
-        ? doc.splitTextToSize(`\u201c${verseText}\u201d`, usableW)
-        : [];
       doc.setFontSize(10);
       const noteWrapped = doc.splitTextToSize(note.text, usableW);
 
-      // ref=5.5, verse lines * 4.2, gap=2, note lines * 4.8, divider+gap=8
-      const blockH =
-        5.5 +
-        (verseWrapped.length > 0 ? verseWrapped.length * 4.2 + 3 : 0) +
-        noteWrapped.length * 4.8 +
-        8;
+      // Estimate block height: ref + each version (label + lines) + note + divider
+      let verseBlockH = 0;
+      for (const vl of verseLines) {
+        verseBlockH += 4 + vl.wrapped.length * 4.2 + 2; // label + lines + gap
+      }
+      const blockH = 5.5 + verseBlockH + noteWrapped.length * 4.8 + 8;
 
       if (y + blockH > pageH - marginBottom) {
         doc.addPage();
@@ -269,14 +310,24 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
       doc.text(ref, marginL, y);
       y += 5.5;
 
-      // ── Verse text (italic, muted) ───────────────────
-      if (verseWrapped.length > 0) {
+      // ── Verse text per version (italic, muted) ───────
+      for (const vl of verseLines) {
+        // Version label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`[${vl.abbr}]`, marginL, y);
+        y += 3.5;
+
+        // Verse text
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(9);
         doc.setTextColor(90, 90, 90);
-        doc.text(verseWrapped, marginL, y);
-        y += verseWrapped.length * 4.2 + 3;
+        doc.text(vl.wrapped, marginL, y);
+        y += vl.wrapped.length * 4.2 + 2;
       }
+
+      if (verseLines.length > 0) y += 1; // extra gap before note
 
       // ── Note text (regular, dark) ────────────────────
       doc.setFont('helvetica', 'normal');
@@ -348,32 +399,38 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="flex items-center gap-2">
             <FileDown size={16} className="text-amber-500" />
-            <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">Export Notes to PDF</span>
+            <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">{t('exportTitle')}</span>
             <span className="text-xs text-gray-400 ml-1">({selected.size} selected)</span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            <X size={15} />
-          </button>
+          <Tooltip label={t('closeExportTooltip')}>
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              <X size={15} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
-          {(['select', 'order'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-5 py-2 text-xs font-medium transition-colors ${
-                tab === t
-                  ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {t === 'select' ? '1. Select Notes' : '2. Set Order'}
-            </button>
-          ))}
+          {(['select', 'order', 'versions'] as const).map((tb) => {
+            const labelKey = tb === 'select' ? 'exportTabSelect' as const : tb === 'order' ? 'exportTabOrder' as const : 'exportTabVersions' as const;
+            return (
+              <Tooltip label={t(labelKey)} key={tb} position="bottom">
+                <button
+                  onClick={() => setTab(tb)}
+                  className={`px-5 py-2 text-xs font-medium transition-colors ${
+                    tab === tb
+                      ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {t(labelKey)}
+                </button>
+              </Tooltip>
+            );
+          })}
         </div>
 
         {/* SELECT TAB */}
@@ -385,39 +442,47 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
                 <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by reference or text…"
+                  placeholder={t('searchNotesPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-400"
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 mr-1">Sort:</span>
-                {(['location', 'updated', 'created'] as SortField[]).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => toggleSort(f)}
-                    className={`px-2 py-0.5 rounded text-xs transition-colors ${
-                      sortField === f
-                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    {f === 'location' ? 'Location' : f === 'updated' ? 'Last Edited' : 'Date Added'}
-                    <SortIcon field={f} />
-                  </button>
-                ))}
+                <span className="text-xs text-gray-400 mr-1">{t('sortLabel')}</span>
+                {(['location', 'updated', 'created'] as SortField[]).map((f) => {
+                  const labelKey = f === 'location' ? 'sortByLocation' as const : f === 'updated' ? 'sortByLastEdited' as const : 'sortByDateAdded' as const;
+                  return (
+                    <Tooltip label={t(labelKey)} key={f}>
+                      <button
+                        onClick={() => toggleSort(f)}
+                        className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                          sortField === f
+                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        {t(labelKey)}
+                        <SortIcon field={f} />
+                      </button>
+                    </Tooltip>
+                  );
+                })}
                 <div className="flex-1" />
-                <button onClick={selectAll} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">All</button>
+                <Tooltip label={t('selectAllTooltip')}>
+                  <button onClick={selectAll} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('selectAllTooltip')}</button>
+                </Tooltip>
                 <span className="text-gray-300 dark:text-gray-600 mx-1">|</span>
-                <button onClick={selectNone} className="text-xs text-gray-400 hover:underline">None</button>
+                <Tooltip label={t('selectNoneTooltip')}>
+                  <button onClick={selectNone} className="text-xs text-gray-400 hover:underline">{t('selectNoneTooltip')}</button>
+                </Tooltip>
               </div>
             </div>
 
             {/* List */}
             <div className="flex-1 overflow-y-auto">
               {displayNotes.length === 0 ? (
-                <p className="px-4 py-6 text-xs text-center text-gray-400">No notes match your search.</p>
+                <p className="px-4 py-6 text-xs text-center text-gray-400">{t('noNotesMatch')}</p>
               ) : (
                 <ul>
                   {displayNotes.map((note) => (
@@ -453,7 +518,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
         {tab === 'order' && (
           <div className="flex-1 overflow-y-auto">
             {orderedSelected.length === 0 ? (
-              <p className="px-4 py-6 text-xs text-center text-gray-400">No notes selected. Go back and select some.</p>
+              <p className="px-4 py-6 text-xs text-center text-gray-400">{t('noNotesSelected')}</p>
             ) : (
               <ul>
                 {orderedSelected.map((note, idx) => (
@@ -482,25 +547,86 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
                       </span>
                     </div>
                     <div className="flex flex-col gap-0.5 shrink-0">
-                      <button
-                        onClick={() => moveUp(note.id)}
-                        disabled={idx === 0}
-                        className="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-20"
-                      >
-                        <ChevronUp size={12} />
-                      </button>
-                      <button
-                        onClick={() => moveDown(note.id)}
-                        disabled={idx === orderedSelected.length - 1}
-                        className="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-20"
-                      >
-                        <ChevronDown size={12} />
-                      </button>
+                      <Tooltip label={t('moveUpTooltip')}>
+                        <button
+                          onClick={() => moveUp(note.id)}
+                          disabled={idx === 0}
+                          className="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-20"
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip label={t('moveDownTooltip')}>
+                        <button
+                          onClick={() => moveDown(note.id)}
+                          disabled={idx === orderedSelected.length - 1}
+                          className="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-20"
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      </Tooltip>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+        )}
+
+        {/* VERSIONS TAB */}
+        {tab === 'versions' && (
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                {t('versionsDescription')}
+              </p>
+              <div className="flex items-center gap-2">
+                <Tooltip label={t('selectAllVersionsTooltip')}>
+                  <button onClick={selectAllVersions} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">{t('selectAllTooltip')}</button>
+                </Tooltip>
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <Tooltip label={t('resetVersionsTooltip')}>
+                  <button onClick={selectNoVersions} className="text-xs text-gray-400 hover:underline">{t('resetVersionsTooltip')}</button>
+                </Tooltip>
+                <span className="flex-1" />
+                <span className="text-xs text-gray-400">{selectedVersions.size} selected</span>
+              </div>
+            </div>
+            <ul>
+              {allTranslationAbbrs.map((abbr) => {
+                const meta = customTranslations.find((ct) => ct.abbreviation === abbr);
+                const isBuiltIn = BUILTIN_TRANSLATIONS.includes(abbr);
+                return (
+                  <li
+                    key={abbr}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors cursor-pointer"
+                    onClick={() => toggleVersion(abbr)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedVersions.has(abbr)}
+                      onChange={() => toggleVersion(abbr)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="accent-amber-500 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{abbr}</span>
+                      {meta && (
+                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">{meta.fullName}</span>
+                      )}
+                      {isBuiltIn && !meta && (
+                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                          {abbr === 'KJV' ? 'King James Version' : abbr === 'ASV' ? 'American Standard Version' : abbr === 'SYN' ? 'Синодальный перевод' : ''}
+                        </span>
+                      )}
+                    </div>
+                    {isBuiltIn && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">built-in</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
 
@@ -513,25 +639,29 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
           )}
           {exportStatus === 'done' && (
             <span className="text-xs text-green-600 dark:text-green-400 flex-1">
-              Saved to Documents\Bible Reader PDF\
+              {t('savedToDocuments')}
             </span>
           )}
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            {exportStatus === 'done' ? 'Close' : 'Cancel'}
-          </button>
-          <button
-            onClick={() => void handleExport()}
-            disabled={selected.size === 0 || exportStatus === 'saving'}
-            className="flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
-          >
-            <FileDown size={13} />
-            {exportStatus === 'saving'
-              ? 'Saving…'
-              : `Export ${selected.size > 0 ? `${selected.size} note${selected.size > 1 ? 's' : ''}` : ''}`}
-          </button>
+          <Tooltip label={t('closeExportTooltip')}>
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              {exportStatus === 'done' ? t('closeButton') : t('cancelButton')}
+            </button>
+          </Tooltip>
+          <Tooltip label={t('exportPdfTooltip')}>
+            <button
+              onClick={() => void handleExport()}
+              disabled={selected.size === 0 || exportStatus === 'saving'}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
+            >
+              <FileDown size={13} />
+              {exportStatus === 'saving'
+                ? t('loading')
+                : t('exportCountLabel', { noteCount: selected.size, versionCount: selectedVersions.size })}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>

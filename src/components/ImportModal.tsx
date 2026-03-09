@@ -9,6 +9,7 @@ import type { BibleDataTagged } from '../types/brbmod';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useTranslation } from '../i18n/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
+import Tooltip from './Tooltip';
 
 /** Defer a synchronous callback behind one event-loop tick so React can paint loading states first. */
 function defer<T>(fn: () => T): Promise<T> {
@@ -385,22 +386,28 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
           <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">
             {t('importModalHeader')}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-          >
-            <X size={16} />
-          </button>
+          <Tooltip label={t('closeSettings')}>
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+            >
+              <X size={16} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-600 shrink-0 px-2">
-          <button className={tabCls(tab === 'file')} onClick={() => setTab('file')}>
-            <span className="flex items-center gap-1.5"><FolderOpen size={13} /> {t('tabLocalFile')}</span>
-          </button>
-          <button className={tabCls(tab === 'api')} onClick={() => setTab('api')}>
-            <span className="flex items-center gap-1.5"><Globe size={13} /> {t('tabApiBible')}</span>
-          </button>
+          <Tooltip label={t('tabLocalFile')} position="bottom">
+            <button className={tabCls(tab === 'file')} onClick={() => setTab('file')}>
+              <span className="flex items-center gap-1.5"><FolderOpen size={13} /> {t('tabLocalFile')}</span>
+            </button>
+          </Tooltip>
+          <Tooltip label={t('tabApiBible')} position="bottom">
+            <button className={tabCls(tab === 'api')} onClick={() => setTab('api')}>
+              <span className="flex items-center gap-1.5"><Globe size={13} /> {t('tabApiBible')}</span>
+            </button>
+          </Tooltip>
         </div>
 
         {/* Body — scrollable */}
@@ -412,18 +419,20 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 {t('localFileInstructions')}
               </p>
-              <button
-                onClick={handlePickFile}
-                disabled={filePhase === 'loading'}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors
-                  bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-                  text-white border-transparent self-start"
-              >
-                {filePhase === 'loading'
-                  ? <Loader size={14} className="animate-spin" />
-                  : <FolderOpen size={14} />}
-                {filePhase === 'loading' ? (loadingStep || t('loadingFile')) : t('chooseFile')}
-              </button>
+              <Tooltip label={t('chooseFile')}>
+                <button
+                  onClick={handlePickFile}
+                  disabled={filePhase === 'loading'}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors
+                    bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+                    text-white border-transparent self-start"
+                >
+                  {filePhase === 'loading'
+                    ? <Loader size={14} className="animate-spin" />
+                    : <FolderOpen size={14} />}
+                  {filePhase === 'loading' ? (loadingStep || t('loadingFile')) : t('chooseFile')}
+                </button>
+              </Tooltip>
 
               {/* Large file warning — shown while loading a big file */}
               {filePhase === 'loading' && fileLarge && (
@@ -525,17 +534,19 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
                   />
                 </div>
 
-                <button
-                  onClick={handlePreview}
-                  disabled={!apiKey.trim() || !bibleId.trim() || apiPhase === 'previewing' || apiImporting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors self-start
-                    bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white"
-                >
-                  {apiPhase === 'previewing'
-                    ? <Loader size={14} className="animate-spin" />
-                    : <Globe size={14} />}
-                  {apiPhase === 'previewing' ? t('fetchingPreview') : t('previewGenesis')}
-                </button>
+                <Tooltip label={t('previewGenesis')}>
+                  <button
+                    onClick={handlePreview}
+                    disabled={!apiKey.trim() || !bibleId.trim() || apiPhase === 'previewing' || apiImporting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors self-start
+                      bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white"
+                  >
+                    {apiPhase === 'previewing'
+                      ? <Loader size={14} className="animate-spin" />
+                      : <Globe size={14} />}
+                    {apiPhase === 'previewing' ? t('fetchingPreview') : t('previewGenesis')}
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Preview error */}
@@ -612,24 +623,28 @@ export function ImportModal({ onClose, onImport }: ImportModalProps) {
 
         {/* Footer */}
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-gray-200 dark:border-gray-600 shrink-0">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors
-              bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200
-              border-gray-300 dark:border-gray-500
-              hover:bg-gray-50 dark:hover:bg-gray-600"
-          >
-            {t('cancelButton')}
-          </button>
-          <button
-            onClick={handlePrimaryAction}
-            disabled={primaryDisabled}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white"
-          >
-            {apiImporting && tab === 'api' && <Loader size={14} className="animate-spin" />}
-            {primaryLabel}
-          </button>
+          <Tooltip label={t('cancelButton')}>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors
+                bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200
+                border-gray-300 dark:border-gray-500
+                hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              {t('cancelButton')}
+            </button>
+          </Tooltip>
+          <Tooltip label={t('importTranslationButton')}>
+            <button
+              onClick={handlePrimaryAction}
+              disabled={primaryDisabled}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white"
+            >
+              {apiImporting && tab === 'api' && <Loader size={14} className="animate-spin" />}
+              {primaryLabel}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useBibleStore, selectActivePane, MAX_PANES } from '../store/bibleStore'
 import type { SearchResult } from '../store/bibleStore';
 import { getChapterText } from '../data/bibleLoader';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 // Highlight matched substring
 function HighlightedText({ text, query }: { text: string; query: string }) {
@@ -102,21 +103,25 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
       {/* Action buttons */}
       <div className="px-4 pb-3 flex items-center gap-3">
         {multiPane && (
-          <button
-            onClick={onSyncAll}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md ring-1 ring-indigo-500/50 transition-colors"
-          >
-            <ArrowLeftRight size={12} strokeWidth={2.5} />
-            {t('syncAllPanes')}
-          </button>
+          <Tooltip label={t('syncAllPanes')}>
+            <button
+              onClick={onSyncAll}
+              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md ring-1 ring-indigo-500/50 transition-colors"
+            >
+              <ArrowLeftRight size={12} strokeWidth={2.5} />
+              {t('syncAllPanes')}
+            </button>
+          </Tooltip>
         )}
         {canAddPane && (
-          <button
-            onClick={onOpenParallel}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:underline"
-          >
-            {t('openParallel')}
-          </button>
+          <Tooltip label={t('openParallel')}>
+            <button
+              onClick={onOpenParallel}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:underline"
+            >
+              {t('openParallel')}
+            </button>
+          </Tooltip>
         )}
       </div>
     </div>
@@ -209,12 +214,14 @@ export function SearchResults() {
           {label} <span className="text-blue-600 dark:text-blue-400 font-semibold">{t('forQuery', { query: searchQuery })}</span>
           <span className="ml-2 text-gray-500 dark:text-gray-400">{t('clickToNavigate')}</span>
         </span>
-        <button
-          onClick={() => setSearchOpen(false)}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          {t('closeButton')}
-        </button>
+        <Tooltip label={t('closeResultsTooltip')}>
+          <button
+            onClick={() => setSearchOpen(false)}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {t('closeButton')}
+          </button>
+        </Tooltip>
       </div>
 
       {/* Scrollable result list */}
@@ -235,13 +242,14 @@ export function SearchResults() {
       </div>
 
       {/* Drag-to-resize handle */}
+      <Tooltip label={t('dragToResize')} position="bottom">
       <div
         onMouseDown={onDragHandleMouseDown}
         className="shrink-0 h-2 cursor-ns-resize flex items-center justify-center bg-gray-100 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors group"
-        title={t('dragToResize')}
       >
         <div className="w-8 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-500 transition-colors" />
       </div>
+      </Tooltip>
     </div>
   );
 }

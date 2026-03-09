@@ -5,6 +5,7 @@ import type { Translation } from '../data/bibleLoader';
 import type { RefSegment } from '../utils/crossRefs';
 import { useBibleStore } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 interface CrossRefPopoverProps {
   refSeg: RefSegment;
@@ -70,16 +71,17 @@ export function CrossRefPopover({ refSeg, anchor, translation, onClose }: CrossR
         <div className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide">
           {label} &middot; {translation}
         </div>
-        <button
-          onClick={() => {
-            addPaneWithRef(refSeg.book, refSeg.chapter, translation);
-            onClose?.();
-          }}
-          title={t('openInPane')}
-          className="ml-3 text-xs px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors whitespace-nowrap"
-        >
-          {t('openInPane')}
-        </button>
+        <Tooltip label={t('openInPane')}>
+          <button
+            onClick={() => {
+              addPaneWithRef(refSeg.book, refSeg.chapter, translation);
+              onClose?.();
+            }}
+            className="ml-3 text-xs px-2 py-0.5 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors whitespace-nowrap"
+          >
+            {t('openInPane')}
+          </button>
+        </Tooltip>
       </div>
       {verseText == null && !error && (
         <div className="text-sm text-gray-400 dark:text-gray-500 italic">{t('loading')}</div>

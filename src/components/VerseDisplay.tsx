@@ -347,37 +347,39 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                   {/* Action buttons column */}
                   <div className="mt-0.5 shrink-0 flex flex-col gap-0.5">
                     {/* Bookmark button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        bookmarked ? removeBookmark(verseKey) : addBookmark(verseKey);
-                      }}
-                      title={bookmarked ? t('removeBookmark') : t('bookmarkVerse')}
-                      className={`p-0.5 rounded transition-colors
-                        ${bookmarked
-                          ? 'text-blue-500 dark:text-blue-400'
-                          : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-blue-400'}
-                      `}
-                    >
-                      <Bookmark size={13} fill={bookmarked ? 'currentColor' : 'none'} strokeWidth={2} />
-                    </button>
-
-                    {/* Highlight button */}
-                    <div className="relative" ref={pickerOpen ? pickerRef : null}>
+                    <Tooltip label={bookmarked ? t('removeBookmark') : t('bookmarkVerse')}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenPickerIdx(pickerOpen ? null : idx);
+                          bookmarked ? removeBookmark(verseKey) : addBookmark(verseKey);
                         }}
-                        title={t('highlightVerse')}
                         className={`p-0.5 rounded transition-colors
-                          ${highlight
-                            ? 'text-amber-500 dark:text-amber-400'
-                            : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-amber-400'}
+                          ${bookmarked
+                            ? 'text-blue-500 dark:text-blue-400'
+                            : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-blue-400'}
                         `}
                       >
-                        <Highlighter size={13} strokeWidth={2} />
+                        <Bookmark size={13} fill={bookmarked ? 'currentColor' : 'none'} strokeWidth={2} />
                       </button>
+                    </Tooltip>
+
+                    {/* Highlight button */}
+                    <div className="relative" ref={pickerOpen ? pickerRef : null}>
+                      <Tooltip label={t('highlightVerse')}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenPickerIdx(pickerOpen ? null : idx);
+                          }}
+                          className={`p-0.5 rounded transition-colors
+                            ${highlight
+                              ? 'text-amber-500 dark:text-amber-400'
+                              : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-amber-400'}
+                          `}
+                        >
+                          <Highlighter size={13} strokeWidth={2} />
+                        </button>
+                      </Tooltip>
 
                       {/* Color picker popover */}
                       {pickerOpen && (
@@ -387,51 +389,53 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                             bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl"
                         >
                           {HIGHLIGHT_COLORS.map(({ color, bg, labelKey }) => (
-                            <button
-                              key={color}
-                              title={t(labelKey)}
-                              onClick={() => {
-                                addHighlight(verseKey, color);
-                                setOpenPickerIdx(null);
-                              }}
-                              className={`w-5 h-5 rounded-full ${bg} border-2 transition-transform hover:scale-110
-                                ${highlight?.color === color ? 'border-gray-700 dark:border-gray-200 scale-110' : 'border-transparent'}
-                              `}
-                            />
+                            <Tooltip label={t(labelKey)} key={color}>
+                              <button
+                                onClick={() => {
+                                  addHighlight(verseKey, color);
+                                  setOpenPickerIdx(null);
+                                }}
+                                className={`w-5 h-5 rounded-full ${bg} border-2 transition-transform hover:scale-110
+                                  ${highlight?.color === color ? 'border-gray-700 dark:border-gray-200 scale-110' : 'border-transparent'}
+                                `}
+                              />
+                            </Tooltip>
                           ))}
                           {/* Remove highlight */}
                           {highlight && (
-                            <button
-                              title={t('removeHighlight')}
-                              onClick={() => {
-                                removeHighlight(verseKey);
-                                setOpenPickerIdx(null);
-                              }}
-                              className="w-5 h-5 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 border-2 border-transparent hover:border-red-400 transition-colors"
-                            >
-                              <X size={10} strokeWidth={2.5} className="text-gray-500 dark:text-gray-400" />
-                            </button>
+                            <Tooltip label={t('removeHighlight')}>
+                              <button
+                                onClick={() => {
+                                  removeHighlight(verseKey);
+                                  setOpenPickerIdx(null);
+                                }}
+                                className="w-5 h-5 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 border-2 border-transparent hover:border-red-400 transition-colors"
+                              >
+                                <X size={10} strokeWidth={2.5} className="text-gray-500 dark:text-gray-400" />
+                              </button>
+                            </Tooltip>
                           )}
                         </div>
                       )}
                     </div>
 
                     {/* Note button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenNoteIdx(noteOpen ? null : idx);
-                        setOpenPickerIdx(null);
-                      }}
-                      title={note ? t('editNote') : t('addNote')}
-                      className={`p-0.5 rounded transition-colors
-                        ${note
-                          ? 'text-emerald-500 dark:text-emerald-400'
-                          : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-emerald-400'}
-                      `}
-                    >
-                      <NotebookPen size={13} strokeWidth={2} />
-                    </button>
+                    <Tooltip label={note ? t('editNote') : t('addNote')}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenNoteIdx(noteOpen ? null : idx);
+                          setOpenPickerIdx(null);
+                        }}
+                        className={`p-0.5 rounded transition-colors
+                          ${note
+                            ? 'text-emerald-500 dark:text-emerald-400'
+                            : 'text-transparent group-hover:text-gray-500 dark:group-hover:text-gray-400 hover:!text-emerald-400'}
+                        `}
+                      >
+                        <NotebookPen size={13} strokeWidth={2} />
+                      </button>
+                    </Tooltip>
                   </div>
 
                   {/* Verse text */}
@@ -440,13 +444,14 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                     style={{ fontSize: 'var(--bible-font-size)', fontFamily: 'var(--bible-font-family)' }}
                   >
                     {/* Verse number — click to view TSK cross-references */}
-                    <span
-                      className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-1.5 select-none cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                      title={t('viewCrossRefs')}
-                      onClick={(e) => { e.stopPropagation(); setTskVerse(verseKey); }}
-                    >
-                      {idx + 1}
-                    </span>
+                    <Tooltip label={t('viewCrossRefs')}>
+                      <span
+                        className="text-xs font-bold text-blue-500 dark:text-blue-400 mr-1.5 select-none cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setTskVerse(verseKey); }}
+                      >
+                        {idx + 1}
+                      </span>
+                    </Tooltip>
                     {/* Word tokens — each word carrying its Strong's number(s) */}
                     {verseText.map((tok, j) => (
                       tok.strongs.length > 0 ? (

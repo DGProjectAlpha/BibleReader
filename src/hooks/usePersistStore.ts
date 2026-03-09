@@ -35,6 +35,8 @@ import {
   verseKey,
   getLayoutState,
   saveLayoutState,
+  getLanguage,
+  saveLanguage,
 } from '../utils/persistence';
 import type { PersistedLayoutState } from '../utils/persistence';
 import { isBrbModPlain, isBrbModTagged } from '../types/brbmod';
@@ -45,7 +47,7 @@ export function usePersistStore() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods, layoutState] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods, layoutState, language] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
@@ -56,6 +58,7 @@ export function usePersistStore() {
           getTheme(),
           scanAndLoadModules(),
           getLayoutState(),
+          getLanguage(),
         ]);
 
         // Record<verseKey, text>  →  Note[]
@@ -170,6 +173,7 @@ export function usePersistStore() {
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
           theme: resolvedTheme !== null ? resolvedTheme : state.theme,
+          language: language !== null ? language : state.language,
           panes: restoredPanes !== null ? restoredPanes : state.panes,
           layoutTree: restoredLayoutTree !== null ? restoredLayoutTree : state.layoutTree,
         }));
@@ -267,6 +271,7 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
     if (state.fontSize !== prevState.fontSize) await setFontSize(state.fontSize);
     if (state.fontFamily !== prevState.fontFamily) await setFontFamily(state.fontFamily);
     if (state.theme !== prevState.theme) await saveTheme(state.theme);
+    if (state.language !== prevState.language) await saveLanguage(state.language);
 
     // Layout state (panes + layoutTree) — save together when either changes
     if (state.panes !== prevState.panes || state.layoutTree !== prevState.layoutTree) {

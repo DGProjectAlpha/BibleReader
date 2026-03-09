@@ -6,6 +6,7 @@ import { ManageTranslationsPanel } from './ManageTranslationsPanel';
 import { Bookmark, FileText, ChevronLeft, ChevronRight, Languages } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 type SidebarTab = 'bookmarks' | 'notes' | 'translations';
 
@@ -32,21 +33,23 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
   if (collapsed) {
     return (
       <div className="flex flex-col h-full w-9 shrink-0 border-r border-black/[0.12] dark:border-white/[0.12] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[1px_0_12px_rgba(0,0,0,0.06)] dark:shadow-[1px_0_12px_rgba(0,0,0,0.3)] items-center py-2 gap-2">
-        <button
-          onClick={() => setCollapsed(false)}
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-          title={t('expandPanel')}
-        >
-          <ChevronRight size={16} />
-        </button>
-        <span
-          className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 tracking-widest cursor-pointer select-none"
-          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
-          onClick={() => setCollapsed(false)}
-          title={t('expandPanel')}
-        >
-          {activeTab === 'bookmarks' ? t('sidebarCollapsedBookmarks') : activeTab === 'notes' ? t('sidebarCollapsedNotes') : t('sidebarCollapsedTranslations')}
-        </span>
+        <Tooltip label={t('expandPanel')}>
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip label={t('expandPanel')}>
+          <span
+            className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 tracking-widest cursor-pointer select-none"
+            style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
+            onClick={() => setCollapsed(false)}
+          >
+            {activeTab === 'bookmarks' ? t('sidebarCollapsedBookmarks') : activeTab === 'notes' ? t('sidebarCollapsedNotes') : t('sidebarCollapsedTranslations')}
+          </span>
+        </Tooltip>
       </div>
     );
   }
@@ -58,20 +61,22 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
         <span className="font-bold text-lg text-gray-800 dark:text-gray-100">{t('appTitle')}</span>
         <div className="flex items-center gap-1">
           <SettingsPanel onOpenImport={onOpenImport} />
-          <button
-            onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
-            aria-label={t('collapsePanel')}
-            title={t('collapsePanel')}
-          >
-            <ChevronLeft size={16} />
-          </button>
+          <Tooltip label={t('collapsePanel')}>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+              aria-label={t('collapsePanel')}
+            >
+              <ChevronLeft size={16} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       {/* Tab bar */}
       <div className="flex border-b border-black/[0.10] dark:border-white/[0.10] shrink-0">
         {tabs.map((tab) => (
+          <Tooltip label={tab.label} position="bottom">
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -80,7 +85,6 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
                 ? 'text-blue-600 dark:text-blue-400'
                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
               }`}
-            title={tab.label}
           >
             <span className="relative">
               {tab.icon}
@@ -95,6 +99,7 @@ export function Sidebar({ onOpenImport }: SidebarProps) {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t" />
             )}
           </button>
+          </Tooltip>
         ))}
       </div>
 

@@ -3,6 +3,7 @@ import { Trash2, BookOpen } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { deleteCustomTranslation, deleteCustomBibleData } from '../utils/persistence';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 export function ManageTranslationsPanel() {
   const customTranslations = useBibleStore((s) => s.customTranslations);
@@ -80,35 +81,40 @@ export function ManageTranslationsPanel() {
 
               {/* Delete / confirm buttons */}
               {!isConfirming ? (
-                <button
-                  onClick={() => setConfirmAbbr(trans.abbreviation)}
-                  disabled={isDeleting}
-                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20
-                    text-gray-400 hover:text-red-500 dark:hover:text-red-400
-                    transition-colors shrink-0"
-                  title={tr('removeTranslation')}
-                >
-                  <Trash2 size={14} />
-                </button>
+                <Tooltip label={tr('removeTranslation')}>
+                  <button
+                    onClick={() => setConfirmAbbr(trans.abbreviation)}
+                    disabled={isDeleting}
+                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20
+                      text-gray-400 hover:text-red-500 dark:hover:text-red-400
+                      transition-colors shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </Tooltip>
               ) : (
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => handleDelete(trans.abbreviation)}
-                    disabled={isDeleting}
-                    className="px-2 py-1 rounded text-[11px] font-medium
-                      bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white transition-colors"
-                  >
-                    {isDeleting ? tr('removingLabel') : tr('deleteButton2')}
-                  </button>
-                  <button
-                    onClick={() => setConfirmAbbr(null)}
-                    disabled={isDeleting}
-                    className="px-2 py-1 rounded text-[11px] font-medium
-                      bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600
-                      text-gray-600 dark:text-gray-300 transition-colors"
-                  >
-                    {tr('cancelButton')}
-                  </button>
+                  <Tooltip label={tr('deleteButton2')}>
+                    <button
+                      onClick={() => handleDelete(trans.abbreviation)}
+                      disabled={isDeleting}
+                      className="px-2 py-1 rounded text-[11px] font-medium
+                        bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white transition-colors"
+                    >
+                      {isDeleting ? tr('removingLabel') : tr('deleteButton2')}
+                    </button>
+                  </Tooltip>
+                  <Tooltip label={tr('cancelButton')}>
+                    <button
+                      onClick={() => setConfirmAbbr(null)}
+                      disabled={isDeleting}
+                      className="px-2 py-1 rounded text-[11px] font-medium
+                        bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600
+                        text-gray-600 dark:text-gray-300 transition-colors"
+                    >
+                      {tr('cancelButton')}
+                    </button>
+                  </Tooltip>
                 </div>
               )}
             </div>

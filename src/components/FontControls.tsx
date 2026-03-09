@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Type } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
+import Tooltip from './Tooltip';
 
 // Font family ids — labels are resolved via translation keys at render time
 export const FONT_FAMILIES: { id: string; labelKey: 'fontSans' | 'fontSerif' | 'fontMono'; css: string }[] = [
@@ -40,19 +41,20 @@ export function FontControls() {
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        onClick={() => setOpen((o) => !o)}
-        title={t('fontSizeStyle')}
-        className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-sm border transition-colors
-          ${open
-            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-600'
-          }`}
-      >
-        <Type size={14} strokeWidth={2} />
-        <span className="text-xs font-medium">{fontSize}px</span>
-      </button>
+      <Tooltip label={t('fontSizeStyle')}>
+        <button
+          ref={buttonRef}
+          onClick={() => setOpen((o) => !o)}
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded text-sm border transition-colors
+            ${open
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+        >
+          <Type size={14} strokeWidth={2} />
+          <span className="text-xs font-medium">{fontSize}px</span>
+        </button>
+      </Tooltip>
 
       {open && (
         <div
@@ -86,30 +88,32 @@ export function FontControls() {
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide block mb-1.5">{t('sectionFont')}</span>
             <div className="flex gap-1.5">
               {FONT_FAMILIES.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFontFamily(f.id)}
-                  title={t(f.labelKey)}
-                  style={{ fontFamily: f.css }}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium border transition-colors
-                    ${fontFamily === f.id
-                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-500'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
-                    }`}
-                >
-                  {t(f.labelKey)}
-                </button>
+                <Tooltip label={t(f.labelKey)} key={f.id}>
+                  <button
+                    onClick={() => setFontFamily(f.id)}
+                    style={{ fontFamily: f.css }}
+                    className={`flex-1 py-1.5 rounded text-xs font-medium border transition-colors
+                      ${fontFamily === f.id
+                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-500'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                      }`}
+                  >
+                    {t(f.labelKey)}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           </div>
 
           {/* Reset to defaults */}
-          <button
-            onClick={() => { setFontSize(16); setFontFamily('sans'); }}
-            className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            {t('resetDefaults')}
-          </button>
+          <Tooltip label={t('resetDefaults')}>
+            <button
+              onClick={() => { setFontSize(16); setFontFamily('sans'); }}
+              className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {t('resetDefaults')}
+            </button>
+          </Tooltip>
         </div>
       )}
     </div>
