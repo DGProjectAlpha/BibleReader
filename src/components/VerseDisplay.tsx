@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off } from 'lucide-react';
+import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off, ExternalLink } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
 import { getChapter, BUILTIN_TRANSLATIONS, getBuiltinBookNames } from '../data/bibleLoader';
@@ -31,9 +31,11 @@ interface VerseDisplayProps {
   onActivate: () => void;
   onRemove: () => void;
   canRemove: boolean;
+  /** True when this component is already rendered inside a pop-out OS window */
+  isPopout?: boolean;
 }
 
-export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove }: VerseDisplayProps) {
+export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove, isPopout = false }: VerseDisplayProps) {
   const { t } = useTranslation();
   const pane = useBibleStore((s) => s.panes.find((p) => p.id === paneId));
   const updatePane = useBibleStore((s) => s.updatePane);
@@ -47,6 +49,8 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const removeHighlight = useBibleStore((s) => s.removeHighlight);
   const getHighlightForVerse = useBibleStore((s) => s.getHighlightForVerse);
   const getNoteForVerse = useBibleStore((s) => s.getNoteForVerse);
+  const theme = useBibleStore((s) => s.theme);
+  const darkMode = useBibleStore((s) => s.darkMode);
 
   const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
   const customTranslations = useBibleStore((s) => s.customTranslations);
@@ -137,6 +141,42 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
 
   if (!pane) return null;
 
+  /**
+   * Opens the current pane as a standalone OS window using the Tauri WebviewWindow API.
+   * The new window loads the same SPA with ?popout=1 and the current pane state as
+   * query params. Only available in Tauri context — silently no-ops in browser dev mode.
+   */
+  async function openPopout() {
+    try {
+      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+      const label = `popout-${Date.now()}`;
+      const params = new URLSearchParams({
+        popout: '1',
+        book: selectedBook,
+        chapter: String(selectedChapter),
+        translation: selectedTranslation,
+        theme,
+        darkMode: String(darkMode),
+      });
+      // Use current window's origin so it works in both dev (localhost:1420) and production (tauri://localhost)
+      const base = window.location.href.split('?')[0];
+      const url = `${base}?${params.toString()}`;
+      const webview = new WebviewWindow(label, {
+        url,
+        title: `${selectedBook} ${selectedChapter} — ${selectedTranslation}`,
+        width: 700,
+        height: 900,
+        decorations: true,
+      });
+      webview.once('tauri://error', (e) => {
+        console.error('[VerseDisplay] Failed to open pop-out window:', e);
+      });
+    } catch (err) {
+      // Running in browser dev mode (no Tauri) — expected, not an error
+      console.warn('[VerseDisplay] openPopout not available outside Tauri context:', err);
+    }
+  }
+
   return (
     <div
       onClick={onActivate}
@@ -221,6 +261,17 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                 ? <><Link2 size={13} strokeWidth={2} /><span>{t('synced')}</span></>
                 : <><Link2Off size={13} strokeWidth={2} /><span>{t('sync')}</span></>
               }
+            </button>
+          )}
+
+          {/* Pop-out button — not shown when already in a pop-out window */}
+          {!isPopout && (
+            <button
+              onClick={(e) => { e.stopPropagation(); void openPopout(); }}
+              title="Pop out into separate window"
+              className="px-2 py-1 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <ExternalLink size={14} strokeWidth={2} />
             </button>
           )}
 
