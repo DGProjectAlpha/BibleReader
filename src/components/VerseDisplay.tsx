@@ -184,7 +184,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   return (
     <div
       onClick={onActivate}
-      className={`flex flex-col flex-1 min-w-0 border-r last:border-r-0 transition-colors
+      className={`flex flex-col flex-1 min-w-0 min-h-0 border-r last:border-r-0 transition-colors
         ${isActive
           ? 'border-blue-400/60 dark:border-blue-500/50'
           : 'border-black/[0.10] dark:border-white/[0.10]'}
@@ -321,7 +321,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
         {/* Loading state */}
         {isLoading && (
           <div className="text-gray-500 dark:text-gray-400 italic">{t('loading')}</div>

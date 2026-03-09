@@ -17,7 +17,9 @@ export default function Tooltip({ label, children, position = 'top' }: TooltipPr
 
   const show = () => {
     if (!wrapRef.current) return
-    const rect = wrapRef.current.getBoundingClientRect()
+    // display:contents means the span has no box — measure the first child instead
+    const el = (wrapRef.current.firstElementChild as HTMLElement) ?? wrapRef.current
+    const rect = el.getBoundingClientRect()
     if (position === 'top') {
       setCoords({ top: rect.top - 4, left: rect.left + rect.width / 2 })
     } else {

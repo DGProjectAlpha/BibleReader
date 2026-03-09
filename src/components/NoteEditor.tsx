@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Trash2 } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import type { VerseKey } from '../store/bibleStore';
@@ -52,7 +53,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
 
   const { book, chapter, verse } = verseKey;
 
-  return (
+  return createPortal(
     // Backdrop
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -61,7 +62,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
       <div
         className="w-full max-w-lg mx-4 rounded-xl shadow-2xl border
           bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600
-          flex flex-col overflow-hidden"
+          flex flex-col overflow-hidden max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -134,6 +135,7 @@ export function NoteEditor({ verseKey, verseText, onClose }: NoteEditorProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
