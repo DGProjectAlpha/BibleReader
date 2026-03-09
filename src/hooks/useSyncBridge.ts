@@ -60,9 +60,9 @@ export function useSyncBridge() {
 
     void (async () => {
       try {
-        const { emit }       = await import('@tauri-apps/api/event');
-        const { getCurrent } = await import('@tauri-apps/api/window');
-        const sourceWindow   = getCurrent().label;
+        const { emit }              = await import('@tauri-apps/api/event');
+        const { getCurrentWindow }  = await import('@tauri-apps/api/window');
+        const sourceWindow          = getCurrentWindow().label;
         await emit('bible:sync-nav', { book, chapter, scrollToVerse, sourceWindow } satisfies SyncNavPayload);
       } catch {
         // Running in browser dev mode — no Tauri available
@@ -76,9 +76,9 @@ export function useSyncBridge() {
 
     void (async () => {
       try {
-        const { listen }     = await import('@tauri-apps/api/event');
-        const { getCurrent } = await import('@tauri-apps/api/window');
-        const myLabel        = getCurrent().label;
+        const { listen }            = await import('@tauri-apps/api/event');
+        const { getCurrentWindow }  = await import('@tauri-apps/api/window');
+        const myLabel               = getCurrentWindow().label;
 
         unlisten = await listen<SyncNavPayload>('bible:sync-nav', (event) => {
           if (event.payload.sourceWindow === myLabel) return; // ignore own emits
@@ -120,9 +120,9 @@ export function useSyncBridge() {
 
     void (async () => {
       try {
-        const { emit }       = await import('@tauri-apps/api/event');
-        const { getCurrent } = await import('@tauri-apps/api/window');
-        const sourceWindow   = getCurrent().label;
+        const { emit }              = await import('@tauri-apps/api/event');
+        const { getCurrentWindow }  = await import('@tauri-apps/api/window');
+        const sourceWindow          = getCurrentWindow().label;
         await emit('bible:theme-change', { theme, darkMode, sourceWindow } satisfies ThemePayload);
       } catch {
         // Not in Tauri context
@@ -136,9 +136,9 @@ export function useSyncBridge() {
 
     void (async () => {
       try {
-        const { listen }     = await import('@tauri-apps/api/event');
-        const { getCurrent } = await import('@tauri-apps/api/window');
-        const myLabel        = getCurrent().label;
+        const { listen }            = await import('@tauri-apps/api/event');
+        const { getCurrentWindow }  = await import('@tauri-apps/api/window');
+        const myLabel               = getCurrentWindow().label;
 
         unlisten = await listen<ThemePayload>('bible:theme-change', (event) => {
           if (event.payload.sourceWindow === myLabel) return;
