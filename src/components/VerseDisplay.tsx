@@ -146,12 +146,12 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           : 'border-black/[0.10] dark:border-white/[0.10]'}
         bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl text-gray-900 dark:text-gray-100`}
     >
-      {/* Sticky header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b
-        border-black/[0.10] dark:border-white/[0.10] bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg shadow-[0_1px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_8px_rgba(0,0,0,0.25)] gap-2">
+      {/* Sticky header — wraps to two rows when pane is too narrow (3+ panes) */}
+      <div className="sticky top-0 z-10 flex items-center flex-wrap px-3 py-1.5 border-b
+        border-black/[0.10] dark:border-white/[0.10] bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg shadow-[0_1px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_8px_rgba(0,0,0,0.25)] gap-1.5">
 
-        {/* Per-pane book + chapter navigation */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Per-pane book + chapter navigation — grows to fill available space */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <select
             value={selectedBook}
             onChange={(e) => {
@@ -159,7 +159,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
               updatePane(paneId, { selectedBook: e.target.value, selectedChapter: 1 });
             }}
             onClick={(e) => e.stopPropagation()}
-            className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-[140px] truncate"
+            className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-0 flex-1 max-w-[160px] truncate"
           >
             {books.map((b) => (
               <option key={b.name} value={b.name}>{getBookDisplayName(b.name)}</option>
@@ -173,7 +173,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
               updatePane(paneId, { selectedChapter: Number(e.target.value) });
             }}
             onClick={(e) => e.stopPropagation()}
-            className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer w-[80px]"
+            className="px-2 py-1 rounded text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer w-[68px] shrink-0"
           >
             {Array.from(
               { length: books.find((b) => b.name === selectedBook)?.chapters ?? 1 },
@@ -184,7 +184,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           </select>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <select
             value={selectedTranslation}
             onChange={(e) => { e.stopPropagation(); setSelectedTranslation(e.target.value as Translation); }}
