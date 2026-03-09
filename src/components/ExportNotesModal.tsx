@@ -9,6 +9,8 @@ import { documentDir, join } from '@tauri-apps/api/path';
 
 interface ExportNotesModalProps {
   onClose: () => void;
+  /** When true, renders as a full-screen panel (no backdrop overlay) for use in pop-out windows */
+  standalone?: boolean;
 }
 
 type SortField = 'location' | 'updated' | 'created';
@@ -36,7 +38,7 @@ function bookIndex(book: string) {
   return idx === -1 ? 999 : idx;
 }
 
-export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
+export function ExportNotesModal({ onClose, standalone = false }: ExportNotesModalProps) {
   const notes = useBibleStore((s) => s.notes);
   const panes = useBibleStore((s) => s.panes);
   const activePaneIndex = useBibleStore((s) => s.activePaneIndex);
@@ -323,9 +325,17 @@ export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
       <ArrowUpDown size={11} className="inline ml-0.5 opacity-40" />
     );
 
+  const panelCls = standalone
+    ? 'flex flex-col h-screen w-screen bg-white dark:bg-gray-900 overflow-hidden'
+    : 'bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[560px] max-h-[85vh] flex flex-col overflow-hidden';
+
+  const wrapperCls = standalone
+    ? ''
+    : 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[560px] max-h-[85vh] flex flex-col overflow-hidden">
+    <div className={wrapperCls}>
+      <div className={panelCls}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="flex items-center gap-2">

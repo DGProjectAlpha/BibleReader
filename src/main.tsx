@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { PopoutApp } from './PopoutApp';
+import { ExportApp } from './ExportApp';
 import './index.css';
 import { initBibleData } from './data/bibleLoader';
 import { initStrongs } from './data/strongs';
@@ -12,12 +13,14 @@ async function bootstrap() {
   // (not bundled by Vite) so build memory is not a problem.
   await Promise.all([initBibleData(), initStrongs(), initTsk()]);
 
+  const params = new URLSearchParams(window.location.search);
   // Detect pop-out mode via URL param injected by the parent window
-  const isPopout = new URLSearchParams(window.location.search).get('popout') === '1';
+  const isPopout   = params.get('popout')  === '1';
+  const isExport   = params.get('export')  === '1';
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      {isPopout ? <PopoutApp /> : <App />}
+      {isExport ? <ExportApp /> : isPopout ? <PopoutApp /> : <App />}
     </React.StrictMode>
   );
 }
