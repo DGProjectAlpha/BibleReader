@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off, ExternalLink } from 'lucide-react';
-import { useBibleStore } from '../store/bibleStore';
+import { Bookmark, Highlighter, X, NotebookPen, Link2, Link2Off, ExternalLink, PanelRightOpen, PanelBottomOpen } from 'lucide-react';
+import { useBibleStore, MAX_PANES } from '../store/bibleStore';
 import type { HighlightColor } from '../store/bibleStore';
 import { getChapter, BUILTIN_TRANSLATIONS, getBuiltinBookNames } from '../data/bibleLoader';
 import type { Translation, TaggedVerse } from '../data/bibleLoader';
@@ -55,6 +55,8 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
   const scrollToVerse = useBibleStore((s) => s.panes.find((p) => p.id === paneId)?.scrollToVerse ?? null);
   const customTranslations = useBibleStore((s) => s.customTranslations);
   const modulesReady = useBibleStore((s) => s.modulesReady);
+  const splitPane = useBibleStore((s) => s.splitPane);
+  const paneCount = useBibleStore((s) => s.panes.length);
 
   const [verses, setVerses] = useState<TaggedVerse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -263,6 +265,26 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
                 : <><Link2Off size={13} strokeWidth={2} /><span>{t('sync')}</span></>
               }
             </button>
+          )}
+
+          {/* Split right / split down buttons — hidden in pop-out, hidden when at MAX_PANES */}
+          {!isPopout && paneCount < MAX_PANES && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'horizontal'); }}
+                title="Split right — add pane beside this one"
+                className="px-2 py-1 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <PanelRightOpen size={14} strokeWidth={2} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'vertical'); }}
+                title="Split down — add pane below this one"
+                className="px-2 py-1 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <PanelBottomOpen size={14} strokeWidth={2} />
+              </button>
+            </>
           )}
 
           {/* Pop-out button — not shown when already in a pop-out window */}
