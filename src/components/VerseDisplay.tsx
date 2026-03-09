@@ -157,6 +157,7 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
         translation: selectedTranslation,
         theme,
         darkMode: String(darkMode),
+        synced: String(pane?.synced ?? false),
       });
       // Use current window's origin so it works in both dev (localhost:1420) and production (tauri://localhost)
       const base = window.location.href.split('?')[0];

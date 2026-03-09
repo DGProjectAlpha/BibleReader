@@ -12,6 +12,7 @@ import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import { useTranslation } from './i18n/useTranslation';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
+import { useSyncBridge } from './hooks/useSyncBridge';
 import type { BibleData } from './data/bibleLoader';
 import { extractBookNames } from './data/bibleLoader';
 import type { ValidationResult } from './utils/bibleImport';
@@ -21,6 +22,8 @@ import { saveCustomBibleData, saveCustomTranslation } from './utils/persistence'
 export function App() {
   // Load persisted state on mount; sync changes back to disk
   usePersistStore();
+  // Bridge navigation and theme changes to/from pop-out windows via Tauri events
+  useSyncBridge();
 
   const [importOpen, setImportOpen] = useState(false);
   const addCustomTranslation = useBibleStore((s) => s.addCustomTranslation);

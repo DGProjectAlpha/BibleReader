@@ -4,6 +4,7 @@ import { StrongsPanel } from './components/StrongsPanel';
 import { useBibleStore } from './store/bibleStore';
 import { FONT_FAMILIES } from './components/FontControls';
 import { usePersistStore } from './hooks/usePersistStore';
+import { useSyncBridge } from './hooks/useSyncBridge';
 import type { Translation } from './data/bibleLoader';
 
 /**
@@ -14,11 +15,15 @@ import type { Translation } from './data/bibleLoader';
 export function PopoutApp() {
   // Wire persistence so theme/fonts/notes/highlights and modulesReady are loaded.
   usePersistStore();
+  // Bridge navigation and theme changes to/from the main window via Tauri events
+  useSyncBridge();
 
   const params = new URLSearchParams(window.location.search);
   const initBook        = params.get('book')        ?? 'Genesis';
   const initChapter     = parseInt(params.get('chapter') ?? '1', 10);
   const initTranslation = (params.get('translation') ?? 'KJV') as Translation;
+  // If the source pane was synced, keep it synced in the pop-out so cross-window sync works
+  const initSynced   = params.get('synced') === 'true';
   // Theme override from URL (passed by parent window so the popout matches immediately)
   const initTheme    = params.get('theme');
   const initDarkMode = params.get('darkMode');
@@ -66,6 +71,11 @@ export function PopoutApp() {
   // tries to load — no separate effect needed since VerseDisplay already gates on it.
   useEffect(() => {
     if (!modulesReady || panes.length === 0) return;
+    const store = useBibleStore.getState();
+    // Set synced flag directly so useSyncBridge can start bridging immediately
+    if (initSynced) {
+      store.togglePaneSync(panes[0].id);
+    }
     updatePane(panes[0].id, {
       selectedBook: initBook,
       selectedChapter: initChapter,
