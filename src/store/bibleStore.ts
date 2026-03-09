@@ -10,6 +10,23 @@ export type { WordToken, TaggedVerse };
 
 export type SearchScope = 'bible' | 'OT' | 'NT' | 'book' | 'chapter';
 
+export type LayoutDirection = 'horizontal' | 'vertical';
+
+export interface LayoutLeaf {
+  type: 'leaf';
+  paneId: string;
+}
+
+export interface LayoutSplit {
+  type: 'split';
+  id: string;             // stable UUID for tracking resize state
+  direction: LayoutDirection;
+  children: LayoutNode[]; // at least 2 children
+  sizes: number[];        // flex sizes, one per child, must sum to total
+}
+
+export type LayoutNode = LayoutLeaf | LayoutSplit;
+
 export type Theme = 'dark-blue' | 'dark-oled' | 'light-cool' | 'light-warm';
 
 export type AppLanguage = 'en' | 'ru';
@@ -84,6 +101,10 @@ interface BibleStore {
   addPaneWithRef: (book: string, chapter: number, translation: Translation, scrollToVerse?: number | null) => void;
   removePane: (id: string) => void;
   setActivePaneIndex: (index: number) => void;
+  layoutTree: LayoutNode;
+  splitPane: (paneId: string, direction: LayoutDirection) => void;
+  removePaneFromLayout: (paneId: string) => void;
+  updateLayoutSizes: (splitId: string, sizes: number[]) => void;
   updatePane: (id: string, updates: Partial<Pick<Pane, 'selectedBook' | 'selectedChapter' | 'selectedTranslation' | 'scrollToVerse'>>) => void;
   navigateAllPanes: (book: string, chapter: number, scrollToVerse?: number | null) => void;
   togglePaneSync: (id: string) => void;
@@ -187,8 +208,48 @@ const DEFAULT_PANE = (): Pane => ({
   synced: false,
 });
 
+/** Walk the layout tree and replace the leaf with paneId with a replacement node. */
+function replaceLeaf(node: LayoutNode, paneId: string, replacement: LayoutNode): LayoutNode {
+  if (node.type === 'leaf') {
+    return node.paneId === paneId ? replacement : node;
+  }
+  return {
+    ...node,
+    children: node.children.map((c) => replaceLeaf(c, paneId, replacement)),
+  };
+}
+
+/** Walk the layout tree and remove the leaf with paneId.
+ *  If a split ends up with 1 child, collapse it to that child.
+ *  Returns null if the root itself was the only leaf removed. */
+function removeLeaf(node: LayoutNode, paneId: string): LayoutNode | null {
+  if (node.type === 'leaf') {
+    return node.paneId === paneId ? null : node;
+  }
+  const newChildren: LayoutNode[] = [];
+  for (const child of node.children) {
+    const result = removeLeaf(child, paneId);
+    if (result !== null) newChildren.push(result);
+  }
+  if (newChildren.length === 0) return null;
+  if (newChildren.length === 1) return newChildren[0];
+  // Recalculate equal sizes for remaining children
+  const equalSize = 100 / newChildren.length;
+  return { ...node, children: newChildren, sizes: newChildren.map(() => equalSize) };
+}
+
+/** Update sizes on a split node identified by splitId. */
+function updateSplitSizes(node: LayoutNode, splitId: string, sizes: number[]): LayoutNode {
+  if (node.type === 'leaf') return node;
+  if (node.id === splitId) return { ...node, sizes };
+  return { ...node, children: node.children.map((c) => updateSplitSizes(c, splitId, sizes)) };
+}
+
+const INITIAL_PANE = DEFAULT_PANE();
+
 export const useBibleStore = create<BibleStore>((set, get) => ({
-  panes: [DEFAULT_PANE()],
+  panes: [INITIAL_PANE],
+  layoutTree: { type: 'leaf', paneId: INITIAL_PANE.id } as LayoutNode,
   activePaneIndex: 0,
   syncScroll: false,
   darkMode: false,
@@ -203,9 +264,30 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   addPane: () =>
     set((state) => {
       if (state.panes.length >= MAX_PANES) return state;
+      const newPane = DEFAULT_PANE();
+      const newLeaf: LayoutLeaf = { type: 'leaf', paneId: newPane.id };
+      // Append into root: if root is a horizontal split, add child; otherwise wrap in a new horizontal split
+      let newLayoutTree: LayoutNode;
+      if (state.layoutTree.type === 'split' && state.layoutTree.direction === 'horizontal') {
+        const n = state.layoutTree.children.length + 1;
+        newLayoutTree = {
+          ...state.layoutTree,
+          children: [...state.layoutTree.children, newLeaf],
+          sizes: Array(n).fill(100 / n),
+        };
+      } else {
+        newLayoutTree = {
+          type: 'split',
+          id: crypto.randomUUID(),
+          direction: 'horizontal',
+          children: [state.layoutTree, newLeaf],
+          sizes: [50, 50],
+        };
+      }
       return {
-        panes: [...state.panes, DEFAULT_PANE()],
+        panes: [...state.panes, newPane],
         activePaneIndex: state.panes.length,
+        layoutTree: newLayoutTree,
       };
     }),
 
@@ -220,19 +302,76 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
         scrollToVerse: scrollToVerse ?? null,
         synced: false,
       };
+      const newLeaf: LayoutLeaf = { type: 'leaf', paneId: newPane.id };
+      let newLayoutTree: LayoutNode;
+      if (state.layoutTree.type === 'split' && state.layoutTree.direction === 'horizontal') {
+        const n = state.layoutTree.children.length + 1;
+        newLayoutTree = {
+          ...state.layoutTree,
+          children: [...state.layoutTree.children, newLeaf],
+          sizes: Array(n).fill(100 / n),
+        };
+      } else {
+        newLayoutTree = {
+          type: 'split',
+          id: crypto.randomUUID(),
+          direction: 'horizontal',
+          children: [state.layoutTree, newLeaf],
+          sizes: [50, 50],
+        };
+      }
       return {
         panes: [...state.panes, newPane],
         activePaneIndex: state.panes.length,
+        layoutTree: newLayoutTree,
       };
     }),
 
   removePane: (id) =>
     set((state) => {
-      if (state.panes.length <= 1) return state; // always keep at least one pane
+      if (state.panes.length <= 1) return state;
       const newPanes = state.panes.filter((p) => p.id !== id);
       const newActive = Math.min(state.activePaneIndex, newPanes.length - 1);
-      return { panes: newPanes, activePaneIndex: newActive };
+      const newLayoutTree = removeLeaf(state.layoutTree, id);
+      if (newLayoutTree === null) return state;
+      return { panes: newPanes, activePaneIndex: newActive, layoutTree: newLayoutTree };
     }),
+
+  splitPane: (paneId, direction) =>
+    set((state) => {
+      if (state.panes.length >= MAX_PANES) return state;
+      const newPane = DEFAULT_PANE();
+      const newLeaf: LayoutLeaf = { type: 'leaf', paneId: newPane.id };
+      const existingLeaf: LayoutLeaf = { type: 'leaf', paneId };
+      const splitNode: LayoutSplit = {
+        type: 'split',
+        id: crypto.randomUUID(),
+        direction,
+        children: [existingLeaf, newLeaf],
+        sizes: [50, 50],
+      };
+      const newLayoutTree = replaceLeaf(state.layoutTree, paneId, splitNode);
+      return {
+        panes: [...state.panes, newPane],
+        activePaneIndex: state.panes.length,
+        layoutTree: newLayoutTree,
+      };
+    }),
+
+  removePaneFromLayout: (paneId) =>
+    set((state) => {
+      if (state.panes.length <= 1) return state;
+      const newPanes = state.panes.filter((p) => p.id !== paneId);
+      const newActive = Math.min(state.activePaneIndex, newPanes.length - 1);
+      const newLayoutTree = removeLeaf(state.layoutTree, paneId);
+      if (newLayoutTree === null) return state;
+      return { panes: newPanes, activePaneIndex: newActive, layoutTree: newLayoutTree };
+    }),
+
+  updateLayoutSizes: (splitId, sizes) =>
+    set((state) => ({
+      layoutTree: updateSplitSizes(state.layoutTree, splitId, sizes),
+    })),
 
   setActivePaneIndex: (index) => set({ activePaneIndex: index }),
 

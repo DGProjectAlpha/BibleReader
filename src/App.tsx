@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useCallback, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { VerseDisplay } from './components/VerseDisplay';
 import { StrongsPanel } from './components/StrongsPanel';
 import { TskPanel } from './components/TskPanel';
 import { SearchBar } from './components/SearchBar';
@@ -8,6 +7,7 @@ import { SearchResults } from './components/SearchResults';
 import { FontControls } from './components/FontControls';
 import { FONT_FAMILIES } from './components/FontControls';
 import { ImportModal } from './components/ImportModal';
+import { LayoutRenderer } from './components/LayoutRenderer';
 import { useBibleStore, MAX_PANES } from './store/bibleStore';
 import { useTranslation } from './i18n/useTranslation';
 import type { CustomTranslationMeta } from './store/bibleStore';
@@ -148,10 +148,8 @@ export function App() {
   const fontSize = useBibleStore((s) => s.fontSize);
   const fontFamily = useBibleStore((s) => s.fontFamily);
   const panes = useBibleStore((s) => s.panes);
-  const activePaneIndex = useBibleStore((s) => s.activePaneIndex);
   const addPane = useBibleStore((s) => s.addPane);
-  const removePane = useBibleStore((s) => s.removePane);
-  const setActivePaneIndex = useBibleStore((s) => s.setActivePaneIndex);
+  const layoutTree = useBibleStore((s) => s.layoutTree);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
   const searchOpen = useBibleStore((s) => s.searchOpen);
   const { t } = useTranslation();
@@ -226,18 +224,9 @@ export function App() {
         {/* Search results — renders between header and panes when open */}
         <SearchResults />
 
-      {/* Multi-pane reading area */}
+      {/* Multi-pane reading area — recursive layout tree */}
       <div className="flex flex-1 overflow-hidden">
-        {panes.map((pane, index) => (
-          <VerseDisplay
-            key={pane.id}
-            paneId={pane.id}
-            isActive={index === activePaneIndex}
-            onActivate={() => setActivePaneIndex(index)}
-            onRemove={() => removePane(pane.id)}
-            canRemove={panes.length > 1}
-          />
-        ))}
+        <LayoutRenderer node={layoutTree} />
 
         {/* Add pane button — hidden at max panes */}
         {panes.length < MAX_PANES && (
