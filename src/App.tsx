@@ -8,7 +8,7 @@ import { FontControls } from './components/FontControls';
 import { FONT_FAMILIES } from './components/FontControls';
 import { ImportModal } from './components/ImportModal';
 import { LayoutRenderer } from './components/LayoutRenderer';
-import { useBibleStore, MAX_PANES } from './store/bibleStore';
+import { useBibleStore } from './store/bibleStore';
 import { useTranslation } from './i18n/useTranslation';
 import type { CustomTranslationMeta } from './store/bibleStore';
 import { usePersistStore } from './hooks/usePersistStore';
@@ -147,8 +147,6 @@ export function App() {
   const theme = useBibleStore((s) => s.theme);
   const fontSize = useBibleStore((s) => s.fontSize);
   const fontFamily = useBibleStore((s) => s.fontFamily);
-  const panes = useBibleStore((s) => s.panes);
-  const addPane = useBibleStore((s) => s.addPane);
   const layoutTree = useBibleStore((s) => s.layoutTree);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
   const searchOpen = useBibleStore((s) => s.searchOpen);

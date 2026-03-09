@@ -134,6 +134,9 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
   function handleDragStart(e: React.DragEvent, id: string) {
     setDragId(id);
     e.dataTransfer.effectAllowed = 'move';
+    // Required by browsers (esp. Chrome/Edge on Windows) — without setData the
+    // drag is not considered "valid" and dropEffect reverts to 'none' (shows Ø).
+    e.dataTransfer.setData('text/plain', id);
   }
 
   function handleDragEnter(id: string) {

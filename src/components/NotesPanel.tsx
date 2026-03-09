@@ -44,6 +44,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
         height: 640,
         decorations: true,
         resizable: true,
+        dragDropEnabled: false,
       });
       win.once('tauri://error', (e) => console.error('Export window error:', e));
     } catch {
