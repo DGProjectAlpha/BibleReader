@@ -118,6 +118,16 @@
 }
 
 /* ─── Windows 11 Mica — background consumes theme variables ──────────────── */
+/*
+  Set background on both html AND body so pop-out windows never flash white
+  between the time the webview paints the root element and when body is ready.
+  The inline script in index.html applies data-theme before first paint, so
+  the CSS variables are resolved immediately and the correct color shows.
+*/
+html {
+  background: var(--bg-solid);
+}
+
 body {
   background: var(--bg-gradient);
   min-height: 100vh;

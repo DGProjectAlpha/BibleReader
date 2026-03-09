@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/src-tauri/icons/32x32.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BibleReader</title>
+
+    <!--
+      Theme pre-injection script — runs synchronously before CSS or React,
+      so pop-out windows never flash white before applying the correct theme.
+
+      For pop-out windows, the parent passes ?theme=<name>&darkMode=<bool> in
+      the URL. We read those params here and set data-theme + .dark on <html>
+      immediately, before the stylesheet is even parsed by the browser.
+
+      For the main window, we read from localStorage (plugin-store saves the
+      theme there under 'bible-reader-store'). This avoids a white flash on
+      app startup as well.
+    -->
+    <script>
+      (function () {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var theme = params.get('theme');
+          var darkMode = params.get('darkMode');
+
+          // Pop-out window: theme is passed as URL params by the parent window
+          if (theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            if (darkMode === 'true') {
+              document.documentElement.classList.add('dark');
+            }
+            return; // done — no need to check localStorage
+          }
+
+          // Main window: read last-saved theme from Tauri plugin-store
+          // The store serialises to localStorage under this key in dev mode,
+          // and to the app data directory in production. We attempt localStorage
+          // as a best-effort fallback (works in dev; harmless no-op in prod).
+          var raw = localStorage.getItem('bible-reader-store');
+          if (raw) {
+            var saved = JSON.parse(raw);
+            var savedTheme = saved.theme || 'light-cool';
+            var savedDark  = saved.darkMode === true;
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (savedDark) {
+              document.documentElement.classList.add('dark');
+            }
+          } else {
+            // Default: light-cool so the background matches the CSS :root default
+            document.documentElement.setAttribute('data-theme', 'light-cool');
+          }
+        } catch (e) {
+          // Ignore — worst case the flash still happens, but no crash
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
