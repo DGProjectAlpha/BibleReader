@@ -11,6 +11,11 @@
     "fs:allow-document-write-recursive",
     "fs:allow-mkdir",
     "opener:default",
-    "opener:allow-open-path"
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        { "path": "$DOCUMENT/**" }
+      ]
+    }
   ]
 }

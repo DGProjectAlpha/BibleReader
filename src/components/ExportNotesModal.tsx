@@ -311,7 +311,12 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
       // Build absolute path: C:\Users\<user>\Documents\Bible Reader PDF\<filename>
       const docDir = await documentDir();
       const fullPath = await join(docDir, subDir, fileName);
-      await openPath(fullPath);
+      try {
+        await openPath(fullPath);
+      } catch (openErr) {
+        console.warn('[ExportNotesModal] Could not auto-open PDF:', openErr);
+        // Non-fatal — file was saved successfully, just couldn't open it
+      }
 
       setExportStatus('done');
     } catch (err) {
