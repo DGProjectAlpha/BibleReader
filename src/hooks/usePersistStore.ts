@@ -33,7 +33,10 @@ import {
   getTheme,
   saveTheme,
   verseKey,
+  getLayoutState,
+  saveLayoutState,
 } from '../utils/persistence';
+import type { PersistedLayoutState } from '../utils/persistence';
 import { isBrbModPlain, isBrbModTagged } from '../types/brbmod';
 import type { CustomTranslationMeta } from '../store/bibleStore';
 
@@ -42,7 +45,7 @@ export function usePersistStore() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods] = await Promise.all([
+        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods, layoutState] = await Promise.all([
           getNotes(),
           getHighlights(),
           getBookmarks(),
@@ -52,6 +55,7 @@ export function usePersistStore() {
           getFontFamily(),
           getTheme(),
           scanAndLoadModules(),
+          getLayoutState(),
         ]);
 
         // Record<verseKey, text>  →  Note[]
@@ -139,6 +143,22 @@ export function usePersistStore() {
           }
         }
 
+        // Restore panes + layoutTree if a valid layout was persisted.
+        // scrollToVerse is ephemeral — always reset to null on load.
+        let restoredPanes: import('../store/bibleStore').Pane[] | null = null;
+        let restoredLayoutTree: import('../store/bibleStore').LayoutNode | null = null;
+        if (layoutState && layoutState.panes.length > 0) {
+          restoredPanes = layoutState.panes.map((p) => ({
+            id: p.id,
+            selectedBook: p.selectedBook,
+            selectedChapter: p.selectedChapter,
+            selectedTranslation: p.selectedTranslation as import('../data/bibleLoader').Translation,
+            scrollToVerse: null,
+            synced: p.synced,
+          }));
+          restoredLayoutTree = layoutState.layoutTree as import('../store/bibleStore').LayoutNode;
+        }
+
         // Hydrate store — only override if there's actually data to restore.
         // customTranslations is already updated by the addCustomTranslation calls above.
         useBibleStore.setState((state) => ({
@@ -150,6 +170,8 @@ export function usePersistStore() {
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
           theme: resolvedTheme !== null ? resolvedTheme : state.theme,
+          panes: restoredPanes !== null ? restoredPanes : state.panes,
+          layoutTree: restoredLayoutTree !== null ? restoredLayoutTree : state.layoutTree,
         }));
       } catch (err) {
         // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.
@@ -245,6 +267,21 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
     if (state.fontSize !== prevState.fontSize) await setFontSize(state.fontSize);
     if (state.fontFamily !== prevState.fontFamily) await setFontFamily(state.fontFamily);
     if (state.theme !== prevState.theme) await saveTheme(state.theme);
+
+    // Layout state (panes + layoutTree) — save together when either changes
+    if (state.panes !== prevState.panes || state.layoutTree !== prevState.layoutTree) {
+      const layout: PersistedLayoutState = {
+        panes: state.panes.map((p) => ({
+          id: p.id,
+          selectedBook: p.selectedBook,
+          selectedChapter: p.selectedChapter,
+          selectedTranslation: p.selectedTranslation,
+          synced: p.synced,
+        })),
+        layoutTree: state.layoutTree as PersistedLayoutState['layoutTree'],
+      };
+      await saveLayoutState(layout);
+    }
   } catch (err) {
     console.debug('[usePersistStore] sync error:', err);
   }

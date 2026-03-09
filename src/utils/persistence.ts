@@ -223,6 +223,39 @@ export async function saveLanguage(value: AppLanguage): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Layout state (panes + layout tree)
+// ---------------------------------------------------------------------------
+
+export interface PersistedPane {
+  id: string;
+  selectedBook: string;
+  selectedChapter: number;
+  selectedTranslation: string;
+  synced: boolean;
+}
+
+// LayoutNode is recursive — we persist it as-is (JSON-serializable by design)
+export type PersistedLayoutNode =
+  | { type: 'leaf'; paneId: string }
+  | { type: 'split'; id: string; direction: string; children: PersistedLayoutNode[]; sizes: number[] };
+
+export interface PersistedLayoutState {
+  panes: PersistedPane[];
+  layoutTree: PersistedLayoutNode;
+}
+
+export async function getLayoutState(): Promise<PersistedLayoutState | null> {
+  const store = await getStore();
+  return (await store.get<PersistedLayoutState>('layoutState')) ?? null;
+}
+
+export async function saveLayoutState(state: PersistedLayoutState): Promise<void> {
+  const store = await getStore();
+  await store.set('layoutState', state);
+  await store.save();
+}
+
+// ---------------------------------------------------------------------------
 // Custom translations metadata
 // ---------------------------------------------------------------------------
 
