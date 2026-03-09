@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X, Search, ArrowUpDown, FileDown, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { registerUnicodeFonts } from '../fonts/registerFonts';
 import { useBibleStore, Note } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
 import Tooltip from './Tooltip';
@@ -237,10 +238,11 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
     const usableW = pageW - marginL - marginR; // 174mm
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    await registerUnicodeFonts(doc);
     let y = marginTop;
 
     // Title
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('DejaVuSans', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(30, 30, 30);
     doc.text('Bible Notes', marginL, y);
@@ -248,7 +250,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
 
     // Subtitle: versions + date
     const versionsLabel = Array.from(selectedVersions).join(', ');
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('DejaVuSans', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
     doc.text(
@@ -304,7 +306,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
       }
 
       // ── Verse reference ──────────────────────────────
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('DejaVuSans', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(160, 100, 20); // amber-brown
       doc.text(ref, marginL, y);
@@ -313,14 +315,14 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
       // ── Verse text per version (italic, muted) ───────
       for (const vl of verseLines) {
         // Version label
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('DejaVuSans', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(120, 120, 120);
         doc.text(`[${vl.abbr}]`, marginL, y);
         y += 3.5;
 
         // Verse text
-        doc.setFont('helvetica', 'italic');
+        doc.setFont('DejaVuSans', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(90, 90, 90);
         doc.text(vl.wrapped, marginL, y);
@@ -330,7 +332,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
       if (verseLines.length > 0) y += 1; // extra gap before note
 
       // ── Note text (regular, dark) ────────────────────
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('DejaVuSans', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(30, 30, 30);
       doc.text(noteWrapped, marginL, y);
