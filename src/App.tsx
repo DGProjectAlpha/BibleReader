@@ -228,16 +228,6 @@ export function App() {
       <div className="flex flex-1 overflow-hidden">
         <LayoutRenderer node={layoutTree} />
 
-        {/* Add pane button — hidden at max panes */}
-        {panes.length < MAX_PANES && (
-          <button
-            onClick={addPane}
-            title={t('addPane')}
-            className="shrink-0 w-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors text-2xl border-l border-black/[0.10] dark:border-white/[0.12]"
-          >
-            +
-          </button>
-        )}
       </div>
       </div>
 

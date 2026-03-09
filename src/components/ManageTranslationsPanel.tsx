@@ -86,7 +86,7 @@ export function ManageTranslationsPanel() {
                   className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20
                     text-gray-400 hover:text-red-500 dark:hover:text-red-400
                     transition-colors shrink-0"
-                  title="Remove translation"
+                  title={tr('removeTranslation')}
                 >
                   <Trash2 size={14} />
                 </button>

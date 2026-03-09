@@ -197,7 +197,7 @@ interface BibleStore {
   setSearchOpen: (open: boolean) => void;
 }
 
-export const MAX_PANES = 4;
+export const MAX_PANES = 8;
 
 const DEFAULT_PANE = (): Pane => ({
   id: crypto.randomUUID(),

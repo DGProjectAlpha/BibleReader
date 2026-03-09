@@ -489,7 +489,7 @@ export function StrongsPanel() {
             <button
               onClick={() => { setStrongsWord(null); setStrongsNum(null); setSelectedResult(null); }}
               className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
-              title="Clear"
+              title={t('clearStrongs')}
             >
               ✕
             </button>

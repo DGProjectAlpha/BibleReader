@@ -8,6 +8,7 @@ import { NoteEditor } from './NoteEditor';
 import { books } from '../data/books';
 import { useTranslation } from '../i18n/useTranslation';
 import type { TranslationKey } from '../i18n/translations';
+import Tooltip from './Tooltip';
 
 const HIGHLIGHT_COLORS: { color: HighlightColor; bg: string; labelKey: TranslationKey }[] = [
   { color: 'yellow', bg: 'bg-yellow-300', labelKey: 'colorYellow' },
@@ -252,20 +253,21 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
         {/* Row 2: action buttons — always fits since they're compact icon buttons */}
         <div className="flex items-center gap-0.5 min-w-0 w-full">
           {canRemove && (
-            <button
-              onClick={(e) => { e.stopPropagation(); togglePaneSync(paneId); }}
-              title={pane.synced ? t('unsyncPane') : t('syncPane')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border transition-colors shrink-0
-                ${pane.synced
-                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-800/50'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-            >
-              {pane.synced
-                ? <><Link2 size={12} strokeWidth={2} /><span>{t('synced')}</span></>
-                : <><Link2Off size={12} strokeWidth={2} /><span>{t('sync')}</span></>
-              }
-            </button>
+            <Tooltip label={pane.synced ? t('unsyncPane') : t('syncPane')}>
+              <button
+                onClick={(e) => { e.stopPropagation(); togglePaneSync(paneId); }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border transition-colors shrink-0
+                  ${pane.synced
+                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-600 hover:bg-blue-200 dark:hover:bg-blue-800/50'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+              >
+                {pane.synced
+                  ? <><Link2 size={12} strokeWidth={2} /><span>{t('synced')}</span></>
+                  : <><Link2Off size={12} strokeWidth={2} /><span>{t('sync')}</span></>
+                }
+              </button>
+            </Tooltip>
           )}
 
           {/* Spacer pushes close button to far right */}
@@ -274,42 +276,46 @@ export function VerseDisplay({ paneId, isActive, onActivate, onRemove, canRemove
           {/* Split right / split down buttons — hidden in pop-out, hidden when at MAX_PANES */}
           {!isPopout && paneCount < MAX_PANES && (
             <>
-              <button
-                onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'horizontal'); }}
-                title="Split right — add pane beside this one"
-                className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
-              >
-                <PanelRightOpen size={13} strokeWidth={2} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'vertical'); }}
-                title="Split down — add pane below this one"
-                className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
-              >
-                <PanelBottomOpen size={13} strokeWidth={2} />
-              </button>
+              <Tooltip label={t('splitRight')}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'horizontal'); }}
+                  className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
+                >
+                  <PanelRightOpen size={13} strokeWidth={2} />
+                </button>
+              </Tooltip>
+              <Tooltip label={t('splitDown')}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); splitPane(paneId, 'vertical'); }}
+                  className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
+                >
+                  <PanelBottomOpen size={13} strokeWidth={2} />
+                </button>
+              </Tooltip>
             </>
           )}
 
           {/* Pop-out button — not shown when already in a pop-out window */}
           {!isPopout && (
-            <button
-              onClick={(e) => { e.stopPropagation(); void openPopout(); }}
-              title="Pop out into separate window"
-              className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
-            >
-              <ExternalLink size={13} strokeWidth={2} />
-            </button>
+            <Tooltip label={t('popOut')}>
+              <button
+                onClick={(e) => { e.stopPropagation(); void openPopout(); }}
+                className="px-1.5 py-0.5 rounded text-gray-500 dark:text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shrink-0"
+              >
+                <ExternalLink size={13} strokeWidth={2} />
+              </button>
+            </Tooltip>
           )}
 
           {canRemove && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              title={t('closePane')}
-              className="px-1.5 py-0.5 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base leading-none shrink-0"
-            >
-              ×
-            </button>
+            <Tooltip label={t('closePane')}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                className="px-1.5 py-0.5 rounded text-gray-500 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base leading-none shrink-0"
+              >
+                ×
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

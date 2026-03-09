@@ -24,6 +24,9 @@ export type TranslationKey =
   | 'unsyncPane'
   | 'synced'
   | 'sync'
+  | 'splitRight'
+  | 'splitDown'
+  | 'popOut'
   | 'closePane'
   | 'loading'
   | 'selectBookChapter'
@@ -129,6 +132,7 @@ export type TranslationKey =
   | 'openInPane'
   | 'verseNotFound'
   // ManageTranslationsPanel
+  | 'removeTranslation'
   | 'noImportedTranslations'
   | 'useImportButton'
   | 'removingLabel'
@@ -162,6 +166,10 @@ export type TranslationKey =
   | 'importTranslationButton'
   | 'importingButton'
   | 'importFullBibleButton'
+  // NotesPanel
+  | 'exportNotesToPdf'
+  // StrongsPanel
+  | 'clearStrongs'
 
 export type Translations = Record<TranslationKey, string>
 
@@ -188,6 +196,9 @@ const en: Translations = {
   unsyncPane: 'Unsync pane (currently synced)',
   synced: 'Synced',
   sync: 'Sync',
+  splitRight: 'Split right',
+  splitDown: 'Split down',
+  popOut: 'Pop out window',
   closePane: 'Close pane',
   loading: 'Loading...',
   selectBookChapter: 'Select a book and chapter above to start reading.',
@@ -303,6 +314,7 @@ const en: Translations = {
   verseNotFound: 'Verse not found.',
 
   // ManageTranslationsPanel
+  removeTranslation: 'Remove translation',
   noImportedTranslations: 'No imported translations.',
   useImportButton: 'Use the Import button above to add a translation.',
   removingLabel: 'Removing\u2026',
@@ -337,6 +349,10 @@ const en: Translations = {
   importTranslationButton: 'Import Translation',
   importingButton: 'Importing\u2026',
   importFullBibleButton: 'Import Full Bible',
+  // NotesPanel
+  exportNotesToPdf: 'Export notes to PDF',
+  // StrongsPanel
+  clearStrongs: 'Clear',
 }
 
 const ru: Translations = {
@@ -362,6 +378,9 @@ const ru: Translations = {
   unsyncPane: 'Отключить синхронизацию',
   synced: 'Синхр.',
   sync: 'Синхр.',
+  splitRight: 'Разделить вправо',
+  splitDown: 'Разделить вниз',
+  popOut: 'Открыть в окне',
   closePane: 'Закрыть панель',
   loading: 'Загрузка...',
   selectBookChapter: 'Выберите книгу и главу, чтобы начать чтение.',
@@ -477,6 +496,7 @@ const ru: Translations = {
   verseNotFound: 'Стих не найден.',
 
   // ManageTranslationsPanel
+  removeTranslation: 'Удалить перевод',
   noImportedTranslations: 'Нет импортированных переводов.',
   useImportButton: 'Используйте кнопку «Импортировать» выше, чтобы добавить перевод.',
   removingLabel: 'Удаление\u2026',
@@ -511,6 +531,10 @@ const ru: Translations = {
   importTranslationButton: 'Импортировать перевод',
   importingButton: 'Импортирование\u2026',
   importFullBibleButton: 'Импортировать всю Библию',
+  // NotesPanel
+  exportNotesToPdf: 'Экспорт заметок в PDF',
+  // StrongsPanel
+  clearStrongs: 'Очистить',
 }
 
 export const translations: Record<Language, Translations> = { en, ru }
