@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, ChevronDown, ChevronRight, X, FileDown } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { useTranslation } from '../i18n/useTranslation';
@@ -70,7 +71,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
   if (fullHeight) {
     return (
       <>
-        {showExport && <ExportNotesModal onClose={() => setShowExport(false)} />}
+        {showExport && createPortal(<ExportNotesModal onClose={() => setShowExport(false)} />, document.body)}
         <div>
           {notes.length > 0 && (
             <div className="flex justify-end px-3 py-2 border-b border-gray-100 dark:border-gray-800">
@@ -92,7 +93,7 @@ export function NotesPanel({ fullHeight = false }: NotesPanelProps) {
 
   return (
     <>
-      {showExport && <ExportNotesModal onClose={() => setShowExport(false)} />}
+      {showExport && createPortal(<ExportNotesModal onClose={() => setShowExport(false)} />, document.body)}
       <div className="border-t border-gray-200 dark:border-gray-700 shrink-0">
         {/* Section header */}
         <div className="flex items-center w-full">

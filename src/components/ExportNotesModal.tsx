@@ -3,6 +3,9 @@ import { X, Search, ArrowUpDown, FileDown, GripVertical, ChevronUp, ChevronDown 
 import { jsPDF } from 'jspdf';
 import { useBibleStore, Note } from '../store/bibleStore';
 import { getChapterText } from '../data/bibleLoader';
+import { mkdir, writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { openPath } from '@tauri-apps/plugin-opener';
+import { documentDir, join } from '@tauri-apps/api/path';
 
 interface ExportNotesModalProps {
   onClose: () => void;
@@ -180,7 +183,10 @@ export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
     });
   }
 
-  function handleExport() {
+  const [exportStatus, setExportStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function handleExport() {
     // A4 dimensions in mm
     const pageW = 210;
     const pageH = 297;
@@ -280,7 +286,34 @@ export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
       y += 4;
     }
 
-    doc.save('bible-notes.pdf');
+    // Build a safe filename with timestamp
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const fileName = `bible-notes-${dateStamp}.pdf`;
+    const subDir = 'Bible Reader PDF';
+
+    setExportStatus('saving');
+    setExportError(null);
+    try {
+      // Ensure the Documents/Bible Reader PDF/ folder exists
+      await mkdir(subDir, { baseDir: BaseDirectory.Document, recursive: true });
+
+      // Write the PDF bytes
+      const arrayBuf = doc.output('arraybuffer');
+      const bytes = new Uint8Array(arrayBuf);
+      await writeFile(`${subDir}/${fileName}`, bytes, { baseDir: BaseDirectory.Document });
+
+      // Open with the system default PDF viewer
+      // Build absolute path: C:\Users\<user>\Documents\Bible Reader PDF\<filename>
+      const docDir = await documentDir();
+      const fullPath = await join(docDir, subDir, fileName);
+      await openPath(fullPath);
+
+      setExportStatus('done');
+    } catch (err) {
+      console.error('[ExportNotesModal] PDF save failed:', err);
+      setExportError(err instanceof Error ? err.message : String(err));
+      setExportStatus('error');
+    }
   }
 
   const SortIcon = ({ field }: { field: SortField }) =>
@@ -411,7 +444,7 @@ export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
                     draggable
                     onDragStart={(e) => handleDragStart(e, note.id)}
                     onDragEnter={() => handleDragEnter(note.id)}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
                     onDrop={(e) => handleDrop(e, note.id)}
                     onDragEnd={handleDragEnd}
                     className={`flex items-center gap-2 px-4 py-2.5 transition-colors select-none border-t-2 ${
@@ -455,19 +488,31 @@ export function ExportNotesModal({ onClose }: ExportNotesModalProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          {exportError && (
+            <span className="text-xs text-red-500 flex-1 truncate" title={exportError}>
+              Error: {exportError}
+            </span>
+          )}
+          {exportStatus === 'done' && (
+            <span className="text-xs text-green-600 dark:text-green-400 flex-1">
+              Saved to Documents\Bible Reader PDF\
+            </span>
+          )}
           <button
             onClick={onClose}
             className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
-            Cancel
+            {exportStatus === 'done' ? 'Close' : 'Cancel'}
           </button>
           <button
-            onClick={handleExport}
-            disabled={selected.size === 0}
+            onClick={() => void handleExport()}
+            disabled={selected.size === 0 || exportStatus === 'saving'}
             className="flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
           >
             <FileDown size={13} />
-            Export {selected.size > 0 ? `${selected.size} note${selected.size > 1 ? 's' : ''}` : ''}
+            {exportStatus === 'saving'
+              ? 'Saving…'
+              : `Export ${selected.size > 0 ? `${selected.size} note${selected.size > 1 ? 's' : ''}` : ''}`}
           </button>
         </div>
       </div>
