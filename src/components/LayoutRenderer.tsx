@@ -117,7 +117,7 @@ function SplitContainer({ node, depth, updateLayoutSizes }: SplitContainerProps)
       {node.children.map((child, i) => (
         <div
           key={child.type === 'leaf' ? child.paneId : child.id}
-          className="relative overflow-hidden"
+          className="relative overflow-hidden flex flex-col"
           style={{
             flexBasis: `${node.sizes[i] ?? 100 / node.children.length}%`,
             flexShrink: 0,
