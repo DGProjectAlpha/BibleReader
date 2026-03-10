@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Tailwind v4: enable class-based dark mode (toggles via .dark on <html>) */
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
 
 /* ─── Theme CSS variables ─────────────────────────────────────────────────── */
 /*
@@ -204,64 +204,79 @@ body {
   background-color: var(--panel-bg-secondary) !important;
 }
 
-/* Search results panel specifically — bg-white dark:bg-gray-900 */
-[data-theme] .bg-white {
-  background-color: var(--panel-bg-solid) !important;
-  color: var(--panel-text);
-}
-
-/* Dropdown / popover panels — bg-white dark:bg-gray-800 */
-[data-theme] .bg-gray-800,
-[data-theme] .dark\:bg-gray-800:is(.dark *) {
-  background-color: var(--panel-bg-solid) !important;
-}
-
-[data-theme] .bg-gray-900,
-[data-theme] .dark\:bg-gray-900:is(.dark *) {
-  background-color: var(--panel-bg-solid) !important;
-}
-
 /* Tab / pill active state */
 [data-theme] .br-tab-active {
   background-color: var(--tab-active-bg) !important;
   color: var(--tab-active-text) !important;
 }
 
-/* Borders — override common gray border patterns */
-[data-theme] .border-gray-200 { border-color: var(--panel-border) !important; }
-[data-theme] .border-gray-700 { border-color: var(--panel-border) !important; }
-[data-theme] .border-gray-600 { border-color: var(--panel-border) !important; }
+/*
+  Tailwind utility class overrides — theme-aware colors for bg, text, border.
 
-/* Secondary panel backgrounds — bg-gray-50 used in search header, bg-gray-100 in drag handle */
-[data-theme] .bg-gray-50  { background-color: var(--panel-bg-secondary) !important; }
-[data-theme] .bg-gray-100 { background-color: var(--panel-bg-secondary) !important; }
+  These MUST live inside @layer utilities (the same layer as Tailwind's own
+  utilities) so that hover / focus / active variants can beat them via the
+  natural specificity boost from pseudo-classes.
 
-/* Text color overrides — use CSS variables so dark text follows theme without
-   waiting for the .dark Tailwind class. Light-warm gets a warm tint; dark themes
-   get proper light text regardless of whether .dark has been applied yet. */
-[data-theme="light-warm"] .text-gray-800,
-[data-theme="light-warm"] .text-gray-900 { color: var(--panel-text) !important; }
-[data-theme="light-warm"] .text-gray-700 { color: var(--panel-text) !important; }
-[data-theme="light-warm"] .text-gray-600 { color: var(--panel-text-muted) !important; }
-[data-theme="light-warm"] .text-gray-500 { color: var(--panel-text-muted) !important; }
+  :where([data-theme]) zeroes the attribute-selector specificity so the
+  overall specificity equals that of the base utility (0-1-0). Hover
+  variants like hover:bg-gray-200:hover (0-2-0) then win naturally.
 
-[data-theme="dark-blue"] .text-gray-900,
-[data-theme="dark-blue"] .text-gray-800,
-[data-theme="dark-blue"] .text-gray-700 { color: var(--panel-text) !important; }
-[data-theme="dark-blue"] .text-gray-600,
-[data-theme="dark-blue"] .text-gray-500 { color: var(--panel-text-muted) !important; }
-[data-theme="dark-blue"] .text-gray-400 { color: var(--panel-text-faint) !important; }
+  Because these rules appear AFTER Tailwind's generated utilities in source
+  order, they still beat the base utility at equal specificity.
+*/
+@layer utilities {
+  /* Search results panel, modals — bg-white dark:bg-gray-900 */
+  :where([data-theme]) .bg-white {
+    background-color: var(--panel-bg-solid);
+  }
 
-[data-theme="dark-oled"] .text-gray-900,
-[data-theme="dark-oled"] .text-gray-800,
-[data-theme="dark-oled"] .text-gray-700 { color: var(--panel-text) !important; }
-[data-theme="dark-oled"] .text-gray-600,
-[data-theme="dark-oled"] .text-gray-500 { color: var(--panel-text-muted) !important; }
-[data-theme="dark-oled"] .text-gray-400 { color: var(--panel-text-faint) !important; }
+  /* Dropdown / popover panels — bg-white dark:bg-gray-800 */
+  :where([data-theme]) .bg-gray-800,
+  :where([data-theme]) .dark\:bg-gray-800:is(.dark *) {
+    background-color: var(--panel-bg-solid);
+  }
 
-/* Dark theme — bg-gray-700 used in dropdown/form inputs in dark mode */
-[data-theme="dark-blue"] .bg-gray-700,
-[data-theme="dark-oled"] .bg-gray-700 { background-color: var(--input-bg) !important; }
+  :where([data-theme]) .bg-gray-900,
+  :where([data-theme]) .dark\:bg-gray-900:is(.dark *) {
+    background-color: var(--panel-bg-solid);
+  }
+
+  /* Borders — override common gray border patterns */
+  :where([data-theme]) .border-gray-200 { border-color: var(--panel-border); }
+  :where([data-theme]) .border-gray-700 { border-color: var(--panel-border); }
+  :where([data-theme]) .border-gray-600 { border-color: var(--panel-border); }
+
+  /* Secondary panel backgrounds — bg-gray-50 in search header, bg-gray-100 in controls */
+  :where([data-theme]) .bg-gray-50  { background-color: var(--panel-bg-secondary); }
+  :where([data-theme]) .bg-gray-100 { background-color: var(--panel-bg-secondary); }
+
+  /* Text color overrides — themed text without blocking hover/focus variants.
+     :where() zeroes the theme selector so hover:text-blue-500:hover (0-2-0)
+     beats these (0-1-0). */
+  :where([data-theme="light-warm"]) .text-gray-800,
+  :where([data-theme="light-warm"]) .text-gray-900 { color: var(--panel-text); }
+  :where([data-theme="light-warm"]) .text-gray-700 { color: var(--panel-text); }
+  :where([data-theme="light-warm"]) .text-gray-600 { color: var(--panel-text-muted); }
+  :where([data-theme="light-warm"]) .text-gray-500 { color: var(--panel-text-muted); }
+
+  :where([data-theme="dark-blue"]) .text-gray-900,
+  :where([data-theme="dark-blue"]) .text-gray-800,
+  :where([data-theme="dark-blue"]) .text-gray-700 { color: var(--panel-text); }
+  :where([data-theme="dark-blue"]) .text-gray-600,
+  :where([data-theme="dark-blue"]) .text-gray-500 { color: var(--panel-text-muted); }
+  :where([data-theme="dark-blue"]) .text-gray-400 { color: var(--panel-text-faint); }
+
+  :where([data-theme="dark-oled"]) .text-gray-900,
+  :where([data-theme="dark-oled"]) .text-gray-800,
+  :where([data-theme="dark-oled"]) .text-gray-700 { color: var(--panel-text); }
+  :where([data-theme="dark-oled"]) .text-gray-600,
+  :where([data-theme="dark-oled"]) .text-gray-500 { color: var(--panel-text-muted); }
+  :where([data-theme="dark-oled"]) .text-gray-400 { color: var(--panel-text-faint); }
+
+  /* Dark theme — bg-gray-700 used in dropdown/form inputs */
+  :where([data-theme="dark-blue"]) .bg-gray-700,
+  :where([data-theme="dark-oled"]) .bg-gray-700 { background-color: var(--input-bg); }
+}
 
 /* ─── Windows 11 thin scrollbars ─────────────────────────────────────────── */
 * {

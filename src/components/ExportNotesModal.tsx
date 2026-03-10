@@ -62,7 +62,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
 
   // Available translations: built-ins + custom imports
   const customTranslations = useBibleStore((s) => s.customTranslations);
-  const BUILTIN_TRANSLATIONS = ['KJV', 'ASV', 'SYN'];
+  const BUILTIN_TRANSLATIONS = ['KJV', 'ASV'];
   const allTranslationAbbrs = useMemo(() => {
     const customs = customTranslations.map((t) => t.abbreviation);
     return [...BUILTIN_TRANSLATIONS, ...customs.filter((a) => !BUILTIN_TRANSLATIONS.includes(a))];
@@ -618,7 +618,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
                       )}
                       {isBuiltIn && !meta && (
                         <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                          {abbr === 'KJV' ? 'King James Version' : abbr === 'ASV' ? 'American Standard Version' : abbr === 'SYN' ? 'Синодальный перевод' : ''}
+                          {abbr === 'KJV' ? 'King James Version' : abbr === 'ASV' ? 'American Standard Version' : ''}
                         </span>
                       )}
                     </div>
