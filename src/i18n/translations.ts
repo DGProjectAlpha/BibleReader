@@ -200,6 +200,23 @@ export type TranslationKey =
   | 'resetVersionsTooltip'
   | 'closeExportTooltip'
   | 'exportPdfTooltip'
+  // ModuleUpdateChecker
+  | 'moduleCheckForUpdates'
+  | 'moduleCheckingUpdates'
+  | 'moduleLastChecked'
+  | 'moduleAllUpToDate'
+  | 'moduleNewAvailable'
+  | 'moduleUpdatesAvailable'
+  | 'moduleUpToDateCount'
+  | 'moduleNewBadge'
+  | 'moduleDownloadButton'
+  | 'moduleDownloadNew'
+  | 'moduleDownloadUpdate'
+  | 'moduleDownloading'
+  | 'moduleValidating'
+  | 'moduleSaving'
+  | 'moduleDownloadError'
+  | 'moduleInstalled'
   // ExportNotesModal tabs + sort
   | 'exportTitle'
   | 'exportTabSelect'
@@ -429,6 +446,23 @@ const en: Translations = {
   resetVersionsTooltip: 'Reset to active translation only',
   closeExportTooltip: 'Close export dialog',
   exportPdfTooltip: 'Generate and save PDF to Documents',
+  // ModuleUpdateChecker
+  moduleCheckForUpdates: 'Check for New Translations',
+  moduleCheckingUpdates: 'Checking\u2026',
+  moduleLastChecked: 'Last checked',
+  moduleAllUpToDate: 'All modules are up to date.',
+  moduleNewAvailable: 'New Translations',
+  moduleUpdatesAvailable: 'Updates Available',
+  moduleUpToDateCount: '{count} module(s) up to date',
+  moduleNewBadge: 'New',
+  moduleDownloadButton: 'Download',
+  moduleDownloadNew: 'Download this translation',
+  moduleDownloadUpdate: 'Download updated version',
+  moduleDownloading: 'Downloading\u2026',
+  moduleValidating: 'Validating\u2026',
+  moduleSaving: 'Saving\u2026',
+  moduleDownloadError: 'Download failed',
+  moduleInstalled: 'Installed',
   // ExportNotesModal tabs + sort
   exportTitle: 'Export Notes to PDF',
   exportTabSelect: '1. Select Notes',
@@ -657,6 +691,23 @@ const ru: Translations = {
   resetVersionsTooltip: 'Сбросить к активному переводу',
   closeExportTooltip: 'Закрыть экспорт',
   exportPdfTooltip: 'Создать и сохранить PDF в Документы',
+  // ModuleUpdateChecker
+  moduleCheckForUpdates: 'Проверить новые переводы',
+  moduleCheckingUpdates: 'Проверка\u2026',
+  moduleLastChecked: 'Последняя проверка',
+  moduleAllUpToDate: 'Все модули актуальны.',
+  moduleNewAvailable: 'Новые переводы',
+  moduleUpdatesAvailable: 'Доступны обновления',
+  moduleUpToDateCount: '{count} модулей актуально',
+  moduleNewBadge: 'Новый',
+  moduleDownloadButton: 'Скачать',
+  moduleDownloadNew: 'Скачать этот перевод',
+  moduleDownloadUpdate: 'Скачать обновлённую версию',
+  moduleDownloading: 'Загрузка\u2026',
+  moduleValidating: 'Проверка\u2026',
+  moduleSaving: 'Сохранение\u2026',
+  moduleDownloadError: 'Ошибка загрузки',
+  moduleInstalled: 'Установлен',
   // ExportNotesModal tabs + sort
   exportTitle: 'Экспорт заметок в PDF',
   exportTabSelect: '1. Выбрать заметки',
