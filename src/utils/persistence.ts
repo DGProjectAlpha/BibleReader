@@ -44,60 +44,128 @@ export function verseKey(book: string, chapter: number, verse: number): string {
   return `${book}.${chapter}.${verse}`;
 }
 
-// ---------------------------------------------------------------------------
-// Notes
-// ---------------------------------------------------------------------------
-
-export async function getNotes(): Promise<Record<string, string>> {
-  const store = await getStore();
-  return (await store.get<Record<string, string>>('notes')) ?? {};
+/** Build a profile-scoped storage key. */
+function profileKey(profile: string, key: string): string {
+  return `profile:${profile}:${key}`;
 }
 
-export async function setNote(key: string, text: string): Promise<void> {
+// ---------------------------------------------------------------------------
+// Profile management (global, not per-profile)
+// ---------------------------------------------------------------------------
+
+export async function getProfiles(): Promise<string[]> {
   const store = await getStore();
-  const notes = (await store.get<Record<string, string>>('notes')) ?? {};
+  return (await store.get<string[]>('profiles')) ?? ['Default'];
+}
+
+export async function saveProfiles(profiles: string[]): Promise<void> {
+  const store = await getStore();
+  await store.set('profiles', profiles);
+  await store.save();
+}
+
+export async function getActiveProfileName(): Promise<string> {
+  const store = await getStore();
+  return (await store.get<string>('activeProfile')) ?? 'Default';
+}
+
+export async function saveActiveProfileName(name: string): Promise<void> {
+  const store = await getStore();
+  await store.set('activeProfile', name);
+  await store.save();
+}
+
+/** Delete all persisted data for a profile (notes, highlights, bookmarks, layout). */
+export async function deleteProfileData(profile: string): Promise<void> {
+  const store = await getStore();
+  const keysToDelete = ['notes', 'highlights', 'bookmarks', 'layout'];
+  for (const k of keysToDelete) {
+    await store.delete(profileKey(profile, k));
+  }
+  await store.save();
+}
+
+/**
+ * Migrate legacy (un-prefixed) data to the "Default" profile.
+ * Only runs once — sets a flag so it doesn't repeat.
+ */
+export async function migrateToProfiles(): Promise<void> {
+  const store = await getStore();
+  const migrated = await store.get<boolean>('_profilesMigrated');
+  if (migrated) return;
+
+  // Copy legacy keys to profile:Default:* if they exist
+  const legacyKeys = ['notes', 'highlights', 'bookmarks', 'layoutState'] as const;
+  for (const key of legacyKeys) {
+    const val = await store.get(key);
+    if (val != null) {
+      await store.set(profileKey('Default', key), val);
+    }
+  }
+
+  // Mark migration complete
+  await store.set('_profilesMigrated', true);
+  await store.save();
+}
+
+// ---------------------------------------------------------------------------
+// Notes (profile-scoped)
+// ---------------------------------------------------------------------------
+
+export async function getNotes(profile = 'Default'): Promise<Record<string, string>> {
+  const store = await getStore();
+  return (await store.get<Record<string, string>>(profileKey(profile, 'notes'))) ?? {};
+}
+
+export async function setNote(key: string, text: string, profile = 'Default'): Promise<void> {
+  const store = await getStore();
+  const pk = profileKey(profile, 'notes');
+  const notes = (await store.get<Record<string, string>>(pk)) ?? {};
   notes[key] = text;
-  await store.set('notes', notes);
+  await store.set(pk, notes);
   await store.save();
 }
 
-export async function deleteNote(key: string): Promise<void> {
+export async function deleteNote(key: string, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  const notes = (await store.get<Record<string, string>>('notes')) ?? {};
+  const pk = profileKey(profile, 'notes');
+  const notes = (await store.get<Record<string, string>>(pk)) ?? {};
   delete notes[key];
-  await store.set('notes', notes);
+  await store.set(pk, notes);
   await store.save();
 }
 
 // ---------------------------------------------------------------------------
-// Highlights
+// Highlights (profile-scoped)
 // ---------------------------------------------------------------------------
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
 
-export async function getHighlights(): Promise<Record<string, HighlightColor>> {
+export async function getHighlights(profile = 'Default'): Promise<Record<string, HighlightColor>> {
   const store = await getStore();
-  return (await store.get<Record<string, HighlightColor>>('highlights')) ?? {};
+  return (await store.get<Record<string, HighlightColor>>(profileKey(profile, 'highlights'))) ?? {};
 }
 
-export async function setHighlight(key: string, color: HighlightColor): Promise<void> {
+export async function setHighlight(key: string, color: HighlightColor, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  const highlights = (await store.get<Record<string, HighlightColor>>('highlights')) ?? {};
+  const pk = profileKey(profile, 'highlights');
+  const highlights = (await store.get<Record<string, HighlightColor>>(pk)) ?? {};
   highlights[key] = color;
-  await store.set('highlights', highlights);
+  await store.set(pk, highlights);
   await store.save();
 }
 
-export async function clearHighlight(key: string): Promise<void> {
+export async function clearHighlight(key: string, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  const highlights = (await store.get<Record<string, HighlightColor>>('highlights')) ?? {};
+  const pk = profileKey(profile, 'highlights');
+  const highlights = (await store.get<Record<string, HighlightColor>>(pk)) ?? {};
   delete highlights[key];
-  await store.set('highlights', highlights);
+  await store.set(pk, highlights);
   await store.save();
 }
 
 // ---------------------------------------------------------------------------
-// Bookmarks
+// Bookmarks (profile-scoped)
 // ---------------------------------------------------------------------------
 
 export interface BookmarkEntry {
@@ -109,41 +177,45 @@ export interface BookmarkEntry {
   createdAt: number; // Date.now()
 }
 
-export async function getBookmarks(): Promise<BookmarkEntry[]> {
+export async function getBookmarks(profile = 'Default'): Promise<BookmarkEntry[]> {
   const store = await getStore();
-  return (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
+  return (await store.get<BookmarkEntry[]>(profileKey(profile, 'bookmarks'))) ?? [];
 }
 
 export async function addBookmark(
-  entry: Omit<BookmarkEntry, 'id' | 'createdAt'> & { id?: string; createdAt?: number }
+  entry: Omit<BookmarkEntry, 'id' | 'createdAt'> & { id?: string; createdAt?: number },
+  profile = 'Default'
 ): Promise<BookmarkEntry> {
   const store = await getStore();
-  const bookmarks = (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
+  const pk = profileKey(profile, 'bookmarks');
+  const bookmarks = (await store.get<BookmarkEntry[]>(pk)) ?? [];
   const newEntry: BookmarkEntry = {
     ...entry,
     id: entry.id ?? crypto.randomUUID(),
     createdAt: entry.createdAt ?? Date.now(),
   };
   bookmarks.push(newEntry);
-  await store.set('bookmarks', bookmarks);
+  await store.set(pk, bookmarks);
   await store.save();
   return newEntry;
 }
 
-export async function removeBookmark(id: string): Promise<void> {
+export async function removeBookmark(id: string, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  const bookmarks = (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
-  await store.set('bookmarks', bookmarks.filter((b) => b.id !== id));
+  const pk = profileKey(profile, 'bookmarks');
+  const bookmarks = (await store.get<BookmarkEntry[]>(pk)) ?? [];
+  await store.set(pk, bookmarks.filter((b) => b.id !== id));
   await store.save();
 }
 
-export async function updateBookmarkLabel(id: string, label: string): Promise<void> {
+export async function updateBookmarkLabel(id: string, label: string, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  const bookmarks = (await store.get<BookmarkEntry[]>('bookmarks')) ?? [];
+  const pk = profileKey(profile, 'bookmarks');
+  const bookmarks = (await store.get<BookmarkEntry[]>(pk)) ?? [];
   const idx = bookmarks.findIndex((b) => b.id === id);
   if (idx !== -1) {
     bookmarks[idx] = { ...bookmarks[idx], label };
-    await store.set('bookmarks', bookmarks);
+    await store.set(pk, bookmarks);
     await store.save();
   }
 }
@@ -244,14 +316,14 @@ export interface PersistedLayoutState {
   layoutTree: PersistedLayoutNode;
 }
 
-export async function getLayoutState(): Promise<PersistedLayoutState | null> {
+export async function getLayoutState(profile = 'Default'): Promise<PersistedLayoutState | null> {
   const store = await getStore();
-  return (await store.get<PersistedLayoutState>('layoutState')) ?? null;
+  return (await store.get<PersistedLayoutState>(profileKey(profile, 'layoutState'))) ?? null;
 }
 
-export async function saveLayoutState(state: PersistedLayoutState): Promise<void> {
+export async function saveLayoutState(state: PersistedLayoutState, profile = 'Default'): Promise<void> {
   const store = await getStore();
-  await store.set('layoutState', state);
+  await store.set(profileKey(profile, 'layoutState'), state);
   await store.save();
 }
 

@@ -157,6 +157,13 @@ interface BibleStore {
   removeBookmark: (key: VerseKey) => void;
   isBookmarked: (key: VerseKey) => boolean;
 
+  // Profiles
+  activeProfile: string;
+  profiles: string[];
+  setActiveProfile: (name: string) => void;
+  addProfile: (name: string) => void;
+  deleteProfile: (name: string) => void;
+
   // Font preferences
   fontSize: number;
   fontFamily: string;
@@ -259,8 +266,26 @@ export const useBibleStore = create<BibleStore>((set, get) => ({
   fontSize: 16,
   fontFamily: 'sans',
   modulesReady: false,
+  activeProfile: 'Default',
+  profiles: ['Default'],
 
   setModulesReady: (ready) => set({ modulesReady: ready }),
+
+  setActiveProfile: (name) => set({ activeProfile: name }),
+  addProfile: (name) =>
+    set((state) => {
+      if (state.profiles.includes(name)) return state;
+      return { profiles: [...state.profiles, name] };
+    }),
+  deleteProfile: (name) =>
+    set((state) => {
+      if (name === 'Default') return state; // cannot delete default
+      const newProfiles = state.profiles.filter((p) => p !== name);
+      return {
+        profiles: newProfiles,
+        activeProfile: state.activeProfile === name ? 'Default' : state.activeProfile,
+      };
+    }),
 
   addPane: () =>
     set((state) => {

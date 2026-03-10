@@ -4,6 +4,9 @@
  * On mount: loads saved notes/highlights/bookmarks/preferences and hydrates the store.
  * On change: subscribes to Zustand, diffs state, and writes only changed keys to disk.
  *
+ * Profile support: per-profile data (notes, highlights, bookmarks, layout) is stored
+ * under profile-scoped keys. Preferences (theme, font, language) are global.
+ *
  * Ephemeral state (search query, Strong's panel, search results) is intentionally
  * NOT persisted — it resets to defaults on every app launch.
  */
@@ -37,70 +40,99 @@ import {
   saveLayoutState,
   getLanguage,
   saveLanguage,
+  getProfiles,
+  saveProfiles,
+  getActiveProfileName,
+  saveActiveProfileName,
+  migrateToProfiles,
 } from '../utils/persistence';
 import type { PersistedLayoutState } from '../utils/persistence';
 import { isBrbModPlain, isBrbModTagged } from '../types/brbmod';
 import type { CustomTranslationMeta } from '../store/bibleStore';
+
+/** Deserialize raw persisted data into Zustand-compatible arrays for a given profile. */
+async function loadProfileData(profile: string) {
+  const [rawNotes, rawHighlights, rawBookmarks, layoutState] = await Promise.all([
+    getNotes(profile),
+    getHighlights(profile),
+    getBookmarks(profile),
+    getLayoutState(profile),
+  ]);
+
+  const notes: Note[] = Object.entries(rawNotes).map(([key, text]) => {
+    const [book, chapterStr, verseStr] = key.split('.');
+    return {
+      id: crypto.randomUUID(),
+      book,
+      chapter: Number(chapterStr),
+      verse: Number(verseStr),
+      text,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+  });
+
+  const highlights: Highlight[] = Object.entries(rawHighlights).map(([key, color]) => {
+    const [book, chapterStr, verseStr] = key.split('.');
+    return {
+      id: crypto.randomUUID(),
+      book,
+      chapter: Number(chapterStr),
+      verse: Number(verseStr),
+      color,
+    };
+  });
+
+  const bookmarks: Bookmark[] = rawBookmarks.map((b) => ({
+    id: b.id,
+    book: b.book,
+    chapter: b.chapter,
+    verse: b.verse,
+    label: b.label,
+    createdAt: b.createdAt,
+  }));
+
+  let restoredPanes: import('../store/bibleStore').Pane[] | null = null;
+  let restoredLayoutTree: import('../store/bibleStore').LayoutNode | null = null;
+  if (layoutState && layoutState.panes.length > 0) {
+    restoredPanes = layoutState.panes.map((p) => ({
+      id: p.id,
+      selectedBook: p.selectedBook,
+      selectedChapter: p.selectedChapter,
+      selectedTranslation: p.selectedTranslation as import('../data/bibleLoader').Translation,
+      scrollToVerse: null,
+      synced: p.synced,
+    }));
+    restoredLayoutTree = layoutState.layoutTree as import('../store/bibleStore').LayoutNode;
+  }
+
+  return { notes, highlights, bookmarks, restoredPanes, restoredLayoutTree };
+}
 
 export function usePersistStore() {
   // ── Load persisted state on mount ──────────────────────────────────────────
   useEffect(() => {
     async function loadAll() {
       try {
-        const [rawNotes, rawHighlights, rawBookmarks, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods, layoutState, language] = await Promise.all([
-          getNotes(),
-          getHighlights(),
-          getBookmarks(),
+        // Run one-time migration from legacy un-prefixed keys to Default profile
+        await migrateToProfiles();
+
+        const [profiles, activeProfile, darkMode, syncScroll, fontSize, fontFamily, theme, scannedMods, language] = await Promise.all([
+          getProfiles(),
+          getActiveProfileName(),
           getDarkMode(),
           getSyncScroll(),
           getFontSize(),
           getFontFamily(),
           getTheme(),
           scanAndLoadModules(),
-          getLayoutState(),
           getLanguage(),
         ]);
 
-        // Record<verseKey, text>  →  Note[]
-        const notes: Note[] = Object.entries(rawNotes).map(([key, text]) => {
-          const [book, chapterStr, verseStr] = key.split('.');
-          return {
-            id: crypto.randomUUID(),
-            book,
-            chapter: Number(chapterStr),
-            verse: Number(verseStr),
-            text,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          };
-        });
-
-        // Record<verseKey, color>  →  Highlight[]
-        const highlights: Highlight[] = Object.entries(rawHighlights).map(([key, color]) => {
-          const [book, chapterStr, verseStr] = key.split('.');
-          return {
-            id: crypto.randomUUID(),
-            book,
-            chapter: Number(chapterStr),
-            verse: Number(verseStr),
-            color,
-          };
-        });
-
-        // BookmarkEntry[]  →  Bookmark[] (schema is compatible, just cast)
-        const bookmarks: Bookmark[] = rawBookmarks.map((b) => ({
-          id: b.id,
-          book: b.book,
-          chapter: b.chapter,
-          verse: b.verse,
-          label: b.label,
-          createdAt: b.createdAt,
-        }));
+        // Load profile-scoped data for the active profile
+        const profileData = await loadProfileData(activeProfile);
 
         // Register every module found on disk into bibleLoader so panes can use them.
-        // Route through addCustomTranslation (the store action) so registration and
-        // metadata updates happen in one place — avoids the split-brain bug where
-        // registerCustomTranslation is called but the store action is bypassed.
         console.log(`[usePersistStore] registering ${scannedMods.length} module(s) from disk`);
         const { addCustomTranslation, setModulesReady } = useBibleStore.getState();
         scannedMods.forEach((mod) => {
@@ -121,15 +153,9 @@ export function usePersistStore() {
             console.warn(`[usePersistStore] unknown format for "${(mod as import('../types/brbmod').BrbMod).meta.abbreviation}" — skipped`);
           }
         });
-        // Signal that all on-disk modules are registered — VerseDisplay gates its
-        // first load on this flag to avoid a "no data" flash before custom translations
-        // are available.
         setModulesReady(true);
 
-        // Derive a consistent theme+darkMode pair from persisted values.
-        // Two cases can cause a mismatch (both result in wrong CSS vars):
-        //   1. theme key was never saved (pre-theme-persistence builds) — derive from darkMode
-        //   2. theme and darkMode were both saved but disagree — trust darkMode, reset theme
+        // Derive a consistent theme+darkMode pair
         const resolvedDarkMode = darkMode !== null ? darkMode : null;
         let resolvedTheme: import('../store/bibleStore').Theme | null =
           theme !== null
@@ -138,7 +164,6 @@ export function usePersistStore() {
               ? (resolvedDarkMode ? 'dark-blue' : 'light-cool')
               : null;
 
-        // Validate consistency: if the stored theme's dark/light doesn't match darkMode, correct it.
         if (resolvedDarkMode !== null && resolvedTheme !== null) {
           const themeIsDark = resolvedTheme === 'dark-blue' || resolvedTheme === 'dark-oled';
           if (themeIsDark !== resolvedDarkMode) {
@@ -146,41 +171,27 @@ export function usePersistStore() {
           }
         }
 
-        // Restore panes + layoutTree if a valid layout was persisted.
-        // scrollToVerse is ephemeral — always reset to null on load.
-        let restoredPanes: import('../store/bibleStore').Pane[] | null = null;
-        let restoredLayoutTree: import('../store/bibleStore').LayoutNode | null = null;
-        if (layoutState && layoutState.panes.length > 0) {
-          restoredPanes = layoutState.panes.map((p) => ({
-            id: p.id,
-            selectedBook: p.selectedBook,
-            selectedChapter: p.selectedChapter,
-            selectedTranslation: p.selectedTranslation as import('../data/bibleLoader').Translation,
-            scrollToVerse: null,
-            synced: p.synced,
-          }));
-          restoredLayoutTree = layoutState.layoutTree as import('../store/bibleStore').LayoutNode;
-        }
-
-        // Hydrate store — only override if there's actually data to restore.
-        // customTranslations is already updated by the addCustomTranslation calls above.
+        // Hydrate store with global prefs + profile-scoped data
         useBibleStore.setState((state) => ({
-          notes: notes.length > 0 ? notes : state.notes,
-          highlights: highlights.length > 0 ? highlights : state.highlights,
-          bookmarks: bookmarks.length > 0 ? bookmarks : state.bookmarks,
+          // Profile state
+          profiles,
+          activeProfile,
+          // Profile-scoped data
+          notes: profileData.notes.length > 0 ? profileData.notes : state.notes,
+          highlights: profileData.highlights.length > 0 ? profileData.highlights : state.highlights,
+          bookmarks: profileData.bookmarks.length > 0 ? profileData.bookmarks : state.bookmarks,
+          panes: profileData.restoredPanes !== null ? profileData.restoredPanes : state.panes,
+          layoutTree: profileData.restoredLayoutTree !== null ? profileData.restoredLayoutTree : state.layoutTree,
+          // Global prefs
           darkMode: resolvedDarkMode !== null ? resolvedDarkMode : state.darkMode,
           syncScroll: syncScroll !== null ? syncScroll : state.syncScroll,
           fontSize: fontSize !== null ? fontSize : state.fontSize,
           fontFamily: fontFamily !== null ? fontFamily : state.fontFamily,
           theme: resolvedTheme !== null ? resolvedTheme : state.theme,
           language: language !== null ? language : state.language,
-          panes: restoredPanes !== null ? restoredPanes : state.panes,
-          layoutTree: restoredLayoutTree !== null ? restoredLayoutTree : state.layoutTree,
         }));
       } catch (err) {
-        // Running outside Tauri (browser dev mode) — persistence unavailable, ignore.
         console.debug('[usePersistStore] persistence unavailable:', err);
-        // Still mark modules as ready so VerseDisplay renders (no custom modules to wait for)
         useBibleStore.getState().setModulesReady(true);
       }
     }
@@ -193,7 +204,14 @@ export function usePersistStore() {
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = useBibleStore.subscribe((state, prevState) => {
-      // Debounce: batch rapid changes (e.g. typing in note editor) into one write
+      // Profile switch: save old profile's data, load new profile's data
+      if (state.activeProfile !== prevState.activeProfile) {
+        if (timer) clearTimeout(timer);
+        handleProfileSwitch(prevState, state);
+        return;
+      }
+
+      // Debounce: batch rapid changes into one write
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => syncToStore(state, prevState), 500);
     });
@@ -205,28 +223,109 @@ export function usePersistStore() {
   }, []);
 }
 
+// ── Profile switch handler ──────────────────────────────────────────────────
+
+async function handleProfileSwitch(
+  prevState: ReturnType<typeof useBibleStore.getState>,
+  newState: ReturnType<typeof useBibleStore.getState>
+) {
+  try {
+    const oldProfile = prevState.activeProfile;
+    const newProfile = newState.activeProfile;
+
+    // Save old profile's per-profile data first
+    await saveProfileState(oldProfile, prevState);
+
+    // Persist the active profile name
+    await saveActiveProfileName(newProfile);
+
+    // Load new profile's data
+    const profileData = await loadProfileData(newProfile);
+
+    // Default pane if profile has no saved layout
+    const defaultPane = {
+      id: crypto.randomUUID(),
+      selectedBook: 'Genesis',
+      selectedChapter: 1,
+      selectedTranslation: 'KJV' as import('../data/bibleLoader').Translation,
+      scrollToVerse: null,
+      synced: false,
+    };
+
+    useBibleStore.setState({
+      notes: profileData.notes,
+      highlights: profileData.highlights,
+      bookmarks: profileData.bookmarks,
+      panes: profileData.restoredPanes ?? [defaultPane],
+      layoutTree: profileData.restoredLayoutTree ?? { type: 'leaf', paneId: defaultPane.id },
+      activePaneIndex: 0,
+    });
+  } catch (err) {
+    console.error('[usePersistStore] profile switch error:', err);
+  }
+}
+
+/** Save all per-profile state for a given profile. */
+async function saveProfileState(
+  profile: string,
+  state: ReturnType<typeof useBibleStore.getState>
+) {
+  // Notes: convert Note[] → Record<verseKey, text>
+  for (const note of state.notes) {
+    await setNote(verseKey(note.book, note.chapter, note.verse), note.text, profile);
+  }
+
+  // Highlights: convert Highlight[] → Record<verseKey, color>
+  for (const h of state.highlights) {
+    await setHighlight(verseKey(h.book, h.chapter, h.verse), h.color, profile);
+  }
+
+  // Bookmarks
+  // Overwrite by saving fresh — first get existing and remove all, then add current
+  const existingBookmarks = await getBookmarks(profile);
+  for (const b of existingBookmarks) {
+    await removeBookmark(b.id, profile);
+  }
+  for (const b of state.bookmarks) {
+    await addBookmark({ id: b.id, book: b.book, chapter: b.chapter, verse: b.verse, label: b.label, createdAt: b.createdAt }, profile);
+  }
+
+  // Layout
+  const layout: PersistedLayoutState = {
+    panes: state.panes.map((p) => ({
+      id: p.id,
+      selectedBook: p.selectedBook,
+      selectedChapter: p.selectedChapter,
+      selectedTranslation: p.selectedTranslation,
+      synced: p.synced,
+    })),
+    layoutTree: state.layoutTree as PersistedLayoutState['layoutTree'],
+  };
+  await saveLayoutState(layout, profile);
+}
+
 // ── Diff-and-sync helper ────────────────────────────────────────────────────
 
 type StoreState = ReturnType<typeof useBibleStore.getState>;
 
 async function syncToStore(state: StoreState, prevState: StoreState) {
   try {
+    const profile = state.activeProfile;
+
     // Notes
     if (state.notes !== prevState.notes) {
       const prevMap = new Map(prevState.notes.map((n) => [n.id, n]));
       const currMap = new Map(state.notes.map((n) => [n.id, n]));
 
-      // Deleted
       for (const [id, note] of prevMap) {
         if (!currMap.has(id)) {
-          await deleteNote(verseKey(note.book, note.chapter, note.verse));
+          await deleteNote(verseKey(note.book, note.chapter, note.verse), profile);
         }
       }
-      // Added or updated
       for (const [id, note] of currMap) {
         const prev = prevMap.get(id);
         if (!prev || prev.text !== note.text) {
-          await setNote(verseKey(note.book, note.chapter, note.verse), note.text);
+          await setNote(verseKey(note.book, note.chapter, note.verse), note.text, profile);
         }
       }
     }
@@ -238,13 +337,13 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
 
       for (const [id, h] of prevMap) {
         if (!currMap.has(id)) {
-          await clearHighlight(verseKey(h.book, h.chapter, h.verse));
+          await clearHighlight(verseKey(h.book, h.chapter, h.verse), profile);
         }
       }
       for (const [id, h] of currMap) {
         const prev = prevMap.get(id);
         if (!prev || prev.color !== h.color) {
-          await setHighlight(verseKey(h.book, h.chapter, h.verse), h.color);
+          await setHighlight(verseKey(h.book, h.chapter, h.verse), h.color, profile);
         }
       }
     }
@@ -255,17 +354,16 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
       const currIds = new Set(state.bookmarks.map((b) => b.id));
 
       for (const b of prevState.bookmarks) {
-        if (!currIds.has(b.id)) await removeBookmark(b.id);
+        if (!currIds.has(b.id)) await removeBookmark(b.id, profile);
       }
       for (const b of state.bookmarks) {
         if (!prevIds.has(b.id)) {
-          // Pass through the Zustand id so persisted entry stays in sync
-          await addBookmark({ id: b.id, book: b.book, chapter: b.chapter, verse: b.verse, label: b.label, createdAt: b.createdAt });
+          await addBookmark({ id: b.id, book: b.book, chapter: b.chapter, verse: b.verse, label: b.label, createdAt: b.createdAt }, profile);
         }
       }
     }
 
-    // Preferences
+    // Global preferences (not profile-scoped)
     if (state.darkMode !== prevState.darkMode) await setDarkMode(state.darkMode);
     if (state.syncScroll !== prevState.syncScroll) await setSyncScroll(state.syncScroll);
     if (state.fontSize !== prevState.fontSize) await setFontSize(state.fontSize);
@@ -273,7 +371,7 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
     if (state.theme !== prevState.theme) await saveTheme(state.theme);
     if (state.language !== prevState.language) await saveLanguage(state.language);
 
-    // Layout state (panes + layoutTree) — save together when either changes
+    // Layout state (profile-scoped)
     if (state.panes !== prevState.panes || state.layoutTree !== prevState.layoutTree) {
       const layout: PersistedLayoutState = {
         panes: state.panes.map((p) => ({
@@ -285,8 +383,12 @@ async function syncToStore(state: StoreState, prevState: StoreState) {
         })),
         layoutTree: state.layoutTree as PersistedLayoutState['layoutTree'],
       };
-      await saveLayoutState(layout);
+      await saveLayoutState(layout, profile);
     }
+
+    // Profile list + active profile name (global)
+    if (state.profiles !== prevState.profiles) await saveProfiles(state.profiles);
+    if (state.activeProfile !== prevState.activeProfile) await saveActiveProfileName(state.activeProfile);
   } catch (err) {
     console.debug('[usePersistStore] sync error:', err);
   }

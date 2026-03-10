@@ -150,6 +150,7 @@ export function App() {
   const layoutTree = useBibleStore((s) => s.layoutTree);
   const setSearchOpen = useBibleStore((s) => s.setSearchOpen);
   const searchOpen = useBibleStore((s) => s.searchOpen);
+  const activeProfile = useBibleStore((s) => s.activeProfile);
   const { t } = useTranslation();
 
   // Sync dark mode to <html> class for Tailwind's dark: variant
@@ -210,7 +211,12 @@ export function App() {
             <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.10] dark:border-white/[0.10] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
               <SearchBar />
               <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">{t('ctrlFHint')}</span>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-3">
+                {activeProfile !== 'Default' && (
+                  <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium truncate max-w-[120px]" title={activeProfile}>
+                    {activeProfile}
+                  </span>
+                )}
                 <FontControls />
               </div>
             </div>

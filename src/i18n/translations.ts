@@ -115,6 +115,18 @@ export type TranslationKey =
   | 'fontSerif'
   | 'fontMono'
   | 'resetDefaults'
+  // Profiles
+  | 'sectionProfile'
+  | 'activeProfile'
+  | 'defaultProfileName'
+  | 'newProfileButton'
+  | 'newProfileDialogTitle'
+  | 'newProfilePlaceholder'
+  | 'newProfileCreate'
+  | 'newProfileCancel'
+  | 'profileAlreadyExists'
+  | 'deleteProfileButton'
+  | 'deleteProfileConfirm'
   // SettingsModal
   | 'settingsTitle'
   | 'openSettings'
@@ -326,6 +338,19 @@ const en: Translations = {
   fontSerif: 'Serif',
   fontMono: 'Mono',
   resetDefaults: 'Reset font settings to defaults',
+
+  // Profiles
+  sectionProfile: 'Profile',
+  activeProfile: 'Active profile',
+  defaultProfileName: 'Default',
+  newProfileButton: 'New Profile',
+  newProfileDialogTitle: 'Create New Profile',
+  newProfilePlaceholder: 'Profile name',
+  newProfileCreate: 'Create',
+  newProfileCancel: 'Cancel',
+  profileAlreadyExists: 'A profile with this name already exists',
+  deleteProfileButton: 'Delete',
+  deleteProfileConfirm: 'Delete profile "{name}" and all its bookmarks, highlights, and notes? This cannot be undone.',
 
   // SettingsModal
   settingsTitle: 'Settings',
@@ -540,6 +565,19 @@ const ru: Translations = {
   fontSerif: 'С засечками',
   fontMono: 'Моноширинный',
   resetDefaults: 'Сбросить настройки шрифта',
+
+  // Profiles
+  sectionProfile: 'Профиль',
+  activeProfile: 'Активный профиль',
+  defaultProfileName: 'По умолчанию',
+  newProfileButton: 'Новый профиль',
+  newProfileDialogTitle: 'Создать новый профиль',
+  newProfilePlaceholder: 'Имя профиля',
+  newProfileCreate: 'Создать',
+  newProfileCancel: 'Отмена',
+  profileAlreadyExists: 'Профиль с таким именем уже существует',
+  deleteProfileButton: 'Удалить',
+  deleteProfileConfirm: 'Удалить профиль "{name}" со всеми закладками, выделениями и заметками? Это нельзя отменить.',
 
   // SettingsModal
   settingsTitle: 'Настройки',
