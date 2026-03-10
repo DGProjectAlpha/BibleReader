@@ -13,18 +13,36 @@ interface TooltipProps {
 export default function Tooltip({ label, children, position = 'top' }: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
+  const [resolvedPos, setResolvedPos] = useState(position)
   const wrapRef = useRef<HTMLSpanElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
 
   const show = () => {
     if (!wrapRef.current) return
     // display:contents means the span has no box — measure the first child instead
     const el = (wrapRef.current.firstElementChild as HTMLElement) ?? wrapRef.current
     const rect = el.getBoundingClientRect()
-    if (position === 'top') {
-      setCoords({ top: rect.top - 4, left: rect.left + rect.width / 2 })
-    } else {
-      setCoords({ top: rect.bottom + 4, left: rect.left + rect.width / 2 })
+
+    // Start with centered left position
+    let left = rect.left + rect.width / 2
+    let top: number
+    let resolvedPosition = position
+
+    // Flip position if tooltip would go off-screen vertically
+    if (position === 'top' && rect.top < 40) {
+      resolvedPosition = 'bottom'
+    } else if (position === 'bottom' && rect.bottom > window.innerHeight - 40) {
+      resolvedPosition = 'top'
     }
+
+    if (resolvedPosition === 'top') {
+      top = rect.top - 4
+    } else {
+      top = rect.bottom + 4
+    }
+
+    setCoords({ top, left })
+    setResolvedPos(resolvedPosition)
     setVisible(true)
   }
 
@@ -42,19 +60,36 @@ export default function Tooltip({ label, children, position = 'top' }: TooltipPr
     }
   }, [visible])
 
+  // After rendering, clamp tooltip horizontally so it stays within the viewport
+  useEffect(() => {
+    if (!visible || !tooltipRef.current) return
+    const el = tooltipRef.current
+    const rect = el.getBoundingClientRect()
+    const MARGIN = 6
+    if (rect.right > window.innerWidth - MARGIN) {
+      el.style.left = `${window.innerWidth - rect.width - MARGIN}px`
+      el.style.transform = resolvedPos === 'top' ? 'translateY(-100%)' : ''
+    } else if (rect.left < MARGIN) {
+      el.style.left = `${MARGIN}px`
+      el.style.transform = resolvedPos === 'top' ? 'translateY(-100%)' : ''
+    }
+  }, [visible, coords, resolvedPos])
+
   const tooltipEl = visible ? (
     <div
+      ref={tooltipRef}
       style={{
         position: 'fixed',
-        top: position === 'top' ? coords.top : coords.top,
+        top: coords.top,
         left: coords.left,
-        transform: position === 'top'
+        transform: resolvedPos === 'top'
           ? 'translate(-50%, -100%)'
           : 'translate(-50%, 0)',
         zIndex: 9999,
         pointerEvents: 'none',
+        backgroundColor: '#1e293b',
       }}
-      className="px-2 py-0.5 rounded bg-gray-900 dark:bg-gray-700 text-white text-xs whitespace-nowrap shadow-lg"
+      className="px-2 py-0.5 rounded text-white text-xs whitespace-nowrap shadow-lg"
     >
       {label}
     </div>

@@ -250,6 +250,13 @@ body {
   :where([data-theme]) .bg-gray-50  { background-color: var(--panel-bg-secondary); }
   :where([data-theme]) .bg-gray-100 { background-color: var(--panel-bg-secondary); }
 
+  /* Hover-variant background overrides — without these, hover:bg-gray-100 etc.
+     revert to Tailwind's cool-gray defaults since only the base .bg-gray-100
+     class is overridden above, not the hover variant class. */
+  :where([data-theme]) .hover\:bg-gray-50:hover  { background-color: var(--panel-bg-secondary); }
+  :where([data-theme]) .hover\:bg-gray-100:hover { background-color: var(--panel-bg-secondary); }
+  :where([data-theme]) .hover\:bg-gray-200:hover { background-color: var(--panel-bg-hover); }
+
   /* Text color overrides — themed text without blocking hover/focus variants.
      :where() zeroes the theme selector so hover:text-blue-500:hover (0-2-0)
      beats these (0-1-0). */
@@ -258,6 +265,12 @@ body {
   :where([data-theme="light-warm"]) .text-gray-700 { color: var(--panel-text); }
   :where([data-theme="light-warm"]) .text-gray-600 { color: var(--panel-text-muted); }
   :where([data-theme="light-warm"]) .text-gray-500 { color: var(--panel-text-muted); }
+
+  /* Hover-variant text overrides for light-warm — keeps hover text warm-toned
+     instead of reverting to Tailwind's cool grays */
+  :where([data-theme="light-warm"]) .hover\:text-gray-600:hover { color: var(--panel-text-muted); }
+  :where([data-theme="light-warm"]) .hover\:text-gray-700:hover,
+  :where([data-theme="light-warm"]) .hover\:text-gray-800:hover { color: var(--panel-text); }
 
   :where([data-theme="dark-blue"]) .text-gray-900,
   :where([data-theme="dark-blue"]) .text-gray-800,
