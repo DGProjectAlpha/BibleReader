@@ -3,7 +3,6 @@ import { Trash2, BookOpen } from 'lucide-react';
 import { useBibleStore } from '../store/bibleStore';
 import { deleteCustomTranslation, deleteCustomBibleData } from '../utils/persistence';
 import { useTranslation } from '../i18n/useTranslation';
-import { ModuleUpdateChecker } from './ModuleUpdateChecker';
 import Tooltip from './Tooltip';
 
 export function ManageTranslationsPanel() {
@@ -41,19 +40,14 @@ export function ManageTranslationsPanel() {
 
   if (customTranslations.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
-          <BookOpen size={28} className="text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400 dark:text-gray-500">
-            {tr('noImportedTranslations')}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-600">
-            {tr('useImportButton')}
-          </p>
-        </div>
-        <div className="border-t border-black/[0.07] dark:border-white/[0.07]">
-          <ModuleUpdateChecker />
-        </div>
+      <div className="flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
+        <BookOpen size={28} className="text-gray-300 dark:text-gray-600" />
+        <p className="text-sm text-gray-400 dark:text-gray-500">
+          {tr('noImportedTranslations')}
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-600">
+          {tr('useImportButton')}
+        </p>
       </div>
     );
   }
@@ -134,11 +128,6 @@ export function ManageTranslationsPanel() {
           </div>
         );
       })}
-
-      {/* Module update checker section */}
-      <div className="border-t border-black/[0.07] dark:border-white/[0.07] mt-2">
-        <ModuleUpdateChecker />
-      </div>
     </div>
   );
 }

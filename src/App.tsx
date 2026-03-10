@@ -18,7 +18,6 @@ import { extractBookNames } from './data/bibleLoader';
 import type { ValidationResult } from './utils/bibleImport';
 import type { BibleDataTagged } from './types/brbmod';
 import { saveCustomBibleData, saveCustomTranslation } from './utils/persistence';
-import { Plus } from 'lucide-react';
 
 export function App() {
   // Load persisted state on mount; sync changes back to disk
@@ -176,30 +175,16 @@ export function App() {
     document.documentElement.style.setProperty('--bible-font-family', css);
   }, [fontSize, fontFamily]);
 
-  // Open a new independent reader window via Tauri command
-  const openNewWindow = useCallback(async () => {
-    try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('open_new_window');
-    } catch (err) {
-      console.warn('[App] openNewWindow not available outside Tauri context:', err);
-    }
-  }, []);
-
-  // Ctrl+F / Cmd+F opens search, Ctrl+N / Cmd+N opens new window
+  // Ctrl+F / Cmd+F opens search
   const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
       e.preventDefault();
       setSearchOpen(true);
     }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-      e.preventDefault();
-      openNewWindow();
-    }
     if (e.key === 'Escape' && searchOpen) {
       setSearchOpen(false);
     }
-  }, [searchOpen, setSearchOpen, openNewWindow]);
+  }, [searchOpen, setSearchOpen]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleGlobalKeyDown);
@@ -233,13 +218,6 @@ export function App() {
                   </span>
                 )}
                 <FontControls />
-                <button
-                  onClick={openNewWindow}
-                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-                  title={`${t('newWindow')} (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl+'}N)`}
-                >
-                  <Plus size={16} />
-                </button>
               </div>
             </div>
           ) : (
