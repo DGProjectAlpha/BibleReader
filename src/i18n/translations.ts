@@ -8,6 +8,7 @@ export type TranslationKey =
   | 'appTitle'
   | 'addPane'
   | 'ctrlFHint'
+  | 'newWindow'
   // Sidebar
   | 'collapsePanel'
   | 'expandPanel'
@@ -222,6 +223,7 @@ const en: Translations = {
   appTitle: 'BibleReader',
   addPane: 'Add new reading pane',
   ctrlFHint: 'Ctrl+F',
+  newWindow: 'New Window',
 
   // Sidebar
   collapsePanel: 'Collapse panel',
@@ -449,6 +451,7 @@ const ru: Translations = {
   appTitle: 'BibleReader',
   addPane: 'Добавить панель чтения',
   ctrlFHint: 'Ctrl+F',
+  newWindow: 'Новое окно',
 
   // Sidebar
   collapsePanel: 'Свернуть панель',
