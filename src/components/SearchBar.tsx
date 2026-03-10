@@ -1,63 +1,11 @@
 import { useState, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { useBibleStore, selectActivePane } from '../store/bibleStore';
-import type { SearchScope, SearchResult } from '../store/bibleStore';
+import type { SearchScope } from '../store/bibleStore';
 import { books } from '../data/books';
-import { getChapterText, getBook } from '../data/bibleLoader';
-import type { Translation } from '../data/bibleLoader';
 import { useTranslation } from '../i18n/useTranslation';
 import Tooltip from './Tooltip';
-
-// Run the actual text search against the active translation
-function runSearch(
-  query: string,
-  scope: SearchScope,
-  scopeBook: string,
-  scopeChapter: number,
-  translation: Translation,
-): SearchResult[] {
-  if (!query.trim()) return [];
-
-  const needle = query.trim().toLowerCase();
-  const results: SearchResult[] = [];
-
-  // Determine which books to search
-  const booksToSearch = books.filter((b) => {
-    if (scope === 'OT') return b.testament === 'OT';
-    if (scope === 'NT') return b.testament === 'NT';
-    if (scope === 'book') return b.name === scopeBook;
-    if (scope === 'chapter') return b.name === scopeBook;
-    return true; // 'bible' — search all
-  });
-
-  for (const book of booksToSearch) {
-    if (scope === 'chapter') {
-      // Only search the specified chapter
-      const verses = getChapterText(translation, book.name, scopeChapter);
-      verses.forEach((text, i) => {
-        if (text.toLowerCase().includes(needle)) {
-          results.push({ book: book.name, chapter: scopeChapter, verse: i + 1, text });
-        }
-      });
-    } else {
-      // Search all chapters in this book
-      const chapters = getBook(translation, book.name);
-      chapters.forEach((verses, chIdx) => {
-        verses.forEach((taggedVerse, vIdx) => {
-          const text = taggedVerse.map((t) => t.word).join(' ');
-          if (text.toLowerCase().includes(needle)) {
-            results.push({ book: book.name, chapter: chIdx + 1, verse: vIdx + 1, text });
-          }
-        });
-      });
-    }
-
-    // Cap at 500 results to avoid rendering thousands of rows
-    if (results.length >= 500) break;
-  }
-
-  return results;
-}
+import { searchBible } from '../utils/searchBible';
 
 
 export function SearchBar() {
@@ -82,13 +30,12 @@ export function SearchBar() {
     setLoading(true);
     // Defer to next tick so loading state renders before heavy compute
     setTimeout(() => {
-      const results = runSearch(
-        searchQuery,
-        searchScope,
-        searchScopeBook,
-        searchScopeChapter,
-        activePane.selectedTranslation,
-      );
+      const results = searchBible(searchQuery, {
+        translation: activePane.selectedTranslation,
+        scope: searchScope,
+        scopeBook: searchScopeBook,
+        scopeChapter: searchScopeChapter,
+      });
       setSearchResults(results);
       setLoading(false);
     }, 0);

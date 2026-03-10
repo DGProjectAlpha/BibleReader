@@ -124,13 +124,19 @@
   The inline script in index.html applies data-theme before first paint, so
   the CSS variables are resolved immediately and the correct color shows.
 */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 html {
   background: var(--bg-solid);
 }
 
 body {
   background: var(--bg-gradient);
-  min-height: 100vh;
   color: var(--panel-text);
 }
 

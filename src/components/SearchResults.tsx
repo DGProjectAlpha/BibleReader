@@ -51,8 +51,10 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
   const verseIndex = result.verse - 1; // convert to 0-indexed
   const { t } = useTranslation();
 
-  const prevVerse = getContextVerse(result.book, result.chapter, verseIndex - 1, translation);
-  const nextVerse = getContextVerse(result.book, result.chapter, verseIndex + 1, translation);
+  // Use the result's own translation for context (may differ from active pane)
+  const resultTranslation = result.translation ?? translation;
+  const prevVerse = getContextVerse(result.book, result.chapter, verseIndex - 1, resultTranslation);
+  const nextVerse = getContextVerse(result.book, result.chapter, verseIndex + 1, resultTranslation);
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 group">
@@ -64,6 +66,11 @@ function ResultCard({ result, query, onClick, onSyncAll, onOpenParallel, multiPa
         {/* Reference badge */}
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+            {result.translation && (
+              <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold uppercase">
+                {result.translation}
+              </span>
+            )}
             {result.book} {result.chapter}:{result.verse}
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">

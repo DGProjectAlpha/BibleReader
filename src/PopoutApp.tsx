@@ -87,7 +87,7 @@ export function PopoutApp() {
   if (panes.length === 0) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <VerseDisplay
         paneId={panes[0].id}
         isActive={true}

@@ -74,6 +74,7 @@ export interface SearchResult {
   chapter: number;
   verse: number; // 1-indexed
   text: string;
+  translation?: string; // which module the hit came from (e.g. 'KJV', 'SYN')
 }
 
 export interface StrongsResult {

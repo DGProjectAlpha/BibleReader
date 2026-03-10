@@ -539,6 +539,11 @@ export function isTranslationRegistered(abbreviation: string): boolean {
   return abbreviation in loaders;
 }
 
+/** Returns all currently registered translation keys (built-in + custom). */
+export function getRegisteredTranslations(): string[] {
+  return Object.keys(loaders);
+}
+
 /**
  * Resolve a loader for the given translation key.
  * Custom translations (registered via registerCustomTranslation) are checked first

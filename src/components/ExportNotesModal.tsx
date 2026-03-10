@@ -387,7 +387,7 @@ export function ExportNotesModal({ onClose, standalone = false }: ExportNotesMod
     );
 
   const panelCls = standalone
-    ? 'flex flex-col h-screen w-screen bg-white dark:bg-gray-900 overflow-hidden'
+    ? 'flex flex-col h-full w-full bg-white dark:bg-gray-900 overflow-hidden'
     : 'bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[560px] max-h-[85vh] flex flex-col overflow-hidden';
 
   const wrapperCls = standalone

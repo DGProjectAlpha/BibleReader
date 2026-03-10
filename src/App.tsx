@@ -191,7 +191,7 @@ export function App() {
   }, [handleGlobalKeyDown]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <Sidebar onOpenImport={() => setImportOpen(true)} />
 
       {importOpen && (
