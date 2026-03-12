@@ -62,4 +62,4 @@ Translation modules use the `.brbmod` extension (renamed SQLite databases) with 
 
 ## License
 
-Private repository. All rights reserved.
+Open Source GPL V3. All rights reserved.
